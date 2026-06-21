@@ -1,0 +1,327 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../../apps/backend/src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+// ============================================================
+// Enums
+// ============================================================
+
+enum UserRole {
+  admin           // Hội đồng cấp Học viện / Phòng Công tác SV
+  student         // Sinh viên tự đánh giá
+  class_council   // BCS lớp + Cố vấn học tập – chấm điểm lớp, duyệt minh chứng
+  faculty_council // Hội đồng cấp Khoa – xử lý đặc biệt, khóa dữ liệu
+}
+
+enum FormStatus {
+    draft            // Sinh viên đang điền
+  submitted        // SV đã nộp, chờ BCS/CVHT duyệt
+  class_approved   // BCS/CVHT đã chấm, chuyển lên Khoa
+  faculty_approved // Khoa đã duyệt, chuyển lên Học viện
+  finalized        // Học viện phê duyệt – kết quả chính thức
+  rejected         // Trả về chỉnh sửa
+}
+
+enum EvalRank {
+    excellent
+  good
+  fair
+  average
+  weak
+  poor
+}
+
+enum SemesterNo {
+    SEMESTER_1 @map("1")
+  SEMESTER_2 @map("2")
+summer
+}
+
+enum CriteriaInputType {
+    combobox  // Chọn 1 trong nhiều mức điểm
+  checkbox  // Tick đạt/không đạt
+  textbox   // Sinh viên tự nhập điểm
+  deduction // Phần trừ điểm
+}
+
+// ============================================================
+// Tables (Models)
+// ============================================================
+
+// 1. Users – tất cả actor dùng chung bảng, phân biệt qua role
+model User {
+  id           String @id @default (dbgenerated("gen_random_uuid()")) @db.Uuid
+  email        String @unique @db.VarChar(255)
+  passwordHash String @map("password_hash") @db.VarChar(255)
+  role         UserRole @default (student)
+  fullName     String @map("full_name") @db.VarChar(255)
+  phone        String ? @db.VarChar(20)
+  dateOfBirth  DateTime ? @map("date_of_birth") @db.Date
+  isActive     Boolean @default (true) @map("is_active")
+  createdAt    DateTime @default (now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @default (now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  classStudents             ClassStudent[]
+  classCouncilAssignments   ClassCouncilAssignment[]
+  facultyCouncilAssignments FacultyCouncilAssignment[]
+  evaluationForms           EvaluationForm[]           @relation("StudentForms")
+  classReviewedForms        EvaluationForm[]           @relation("ClassReviewer")
+  facultyReviewedForms      EvaluationForm[]           @relation("FacultyReviewer")
+  adminFinalizedForms       EvaluationForm[]           @relation("AdminFinalizer")
+  posts                     Post[]
+
+    @@map("users")
+}
+
+model Post {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title     String   @db.VarChar(255)
+  content   String   @db.Text
+  authorId  String   @map("author_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([authorId])
+  @@map("posts")
+}
+
+// 2. Khoa
+model Faculty {
+  id        String @id @default (dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String @unique @db.VarChar(20)
+  name      String @db.VarChar(255)
+  isActive  Boolean @default (true) @map("is_active")
+  createdAt DateTime @default (now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  majors                    Major[]
+  facultyCouncilAssignments FacultyCouncilAssignment[]
+
+    @@map("faculties")
+}
+
+// 3. Ngành học
+model Major {
+  id        String @id @default (dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String @unique @db.VarChar(20)
+  name      String @db.VarChar(255)
+  facultyId String @map("faculty_id") @db.Uuid
+  isActive  Boolean @default (true) @map("is_active")
+  createdAt DateTime @default (now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  faculty Faculty @relation(fields: [facultyId], references: [id], onDelete: Cascade)
+  classes Class[]
+
+    @@map("majors")
+}
+
+// 4. Lớp học
+model Class {
+  id             String @id @default (dbgenerated("gen_random_uuid()")) @db.Uuid
+  code           String @unique @db.VarChar(30)
+  name           String @db.VarChar(255)
+  majorId        String @map("major_id") @db.Uuid
+  enrollmentYear Int @map("enrollment_year") @db.SmallInt // CHECK: 2000–2100
+  isActive       Boolean @default (true) @map("is_active")
+  createdAt      DateTime @default (now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  major                   Major @relation(fields: [majorId], references: [id], onDelete: Cascade)
+  classStudents           ClassStudent[]
+  classCouncilAssignments ClassCouncilAssignment[]
+  evaluationForms         EvaluationForm[]
+
+    // Indexes
+    @@index([majorId]) // Tối ưu khi tìm kiếm các lớp thuộc một Ngành học
+    @@map("classes")
+}
+
+// 5. Danh sách lớp – sinh viên thuộc lớp nào
+model ClassStudent {
+  id          String @id @default (dbgenerated("gen_random_uuid()")) @db.Uuid
+  classId     String @map("class_id") @db.Uuid
+  studentId   String @map("student_id") @db.Uuid
+  studentCode String @unique @map("student_code") @db.VarChar(20)
+  enrolledAt  DateTime @default (now()) @map("enrolled_at") @db.Timestamptz
+
+    // Relations
+    class Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+  student User @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+    // Constraints & Indexes
+    @@unique([classId, studentId])
+    @@index([studentId]) // Tối ưu khi truy vấn ngược: "Tìm xem sinh viên này học lớp nào"
+    @@map("class_students")
+}
+
+// 6. Phân quyền class_council cho lớp cụ thể
+model ClassCouncilAssignment {
+  id         String @id @default (dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String @map("user_id") @db.Uuid // role = class_council
+  classId    String @map("class_id") @db.Uuid
+  assignedAt DateTime @default (now()) @map("assigned_at") @db.Timestamptz
+
+  // Relations
+  user  User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    class Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+    @@unique([userId, classId])
+    @@map("class_council_assignments")
+}
+
+// 7. Phân quyền faculty_council cho khoa cụ thể
+model FacultyCouncilAssignment {
+  id         String @id @default (dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String @map("user_id") @db.Uuid // role = faculty_council
+  facultyId  String @map("faculty_id") @db.Uuid
+  assignedAt DateTime @default (now()) @map("assigned_at") @db.Timestamptz
+
+  // Relations
+  user    User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  faculty Faculty @relation(fields: [facultyId], references: [id], onDelete: Cascade)
+
+    @@unique([userId, facultyId])
+    @@map("faculty_council_assignments")
+}
+
+// 8. Học kỳ
+model Semester {
+  id              String @id @default (dbgenerated("gen_random_uuid()")) @db.Uuid
+  year            Int @db.SmallInt // CHECK: 2000–2100
+  semester        SemesterNo
+  startDate       DateTime @map("start_date") @db.Date
+  endDate         DateTime @map("end_date") @db.Date
+  studentDeadline DateTime ? @map("student_deadline") @db.Timestamptz // Hạn SV nộp phiếu
+  classDeadline   DateTime ? @map("class_deadline") @db.Timestamptz // Hạn BCS/CVHT duyệt
+  facultyDeadline DateTime ? @map("faculty_deadline") @db.Timestamptz // Hạn Khoa khóa dữ liệu
+  isActive        Boolean @default (false) @map("is_active")
+
+  // Relations
+  evaluationForms EvaluationForm[]
+
+    @@unique([year, semester])
+    @@map("semesters")
+}
+
+// 9. Tiêu chí đánh giá (cây phân cấp: I → I.1 → I.1.a)
+model EvaluationCriteria {
+  id          String @id @default (dbgenerated("gen_random_uuid()")) @db.Uuid
+  code        String @unique @db.VarChar(20)
+  title       String @db.VarChar(500)
+  description String ? @db.Text
+  maxScore    Int @map("max_score") @db.SmallInt // CHECK: >= 0
+  sortOrder   Int @default (0) @map("sort_order") @db.SmallInt
+  parentId    String ? @map("parent_id") @db.Uuid // Self-ref – cây phân cấp
+  inputType   CriteriaInputType @default (combobox) @map("input_type")
+  isActive    Boolean @default (true) @map("is_active")
+
+  // Relations
+  parent             EvaluationCriteria ? @relation("CriteriaHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children           EvaluationCriteria[] @relation("CriteriaHierarchy")
+  formCriteriaScores FormCriteriaScore[]
+  formAttachments    FormAttachment[]
+
+    @@map("evaluation_criteria")
+}
+
+// 10. Phiếu đánh giá – 1 phiếu / sinh viên / học kỳ
+model EvaluationForm {
+  id         String @id @default (dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId  String @map("student_id") @db.Uuid
+  classId    String @map("class_id") @db.Uuid
+  semesterId String @map("semester_id") @db.Uuid
+  status     FormStatus @default (draft)
+
+  // Điểm 3 cấp
+  studentScore Int ? @map("student_score") @db.SmallInt // SV tự chấm – CHECK: 0–100
+  classScore   Int ? @map("class_score") @db.SmallInt // BCS/CVHT chấm – CHECK: 0–100
+  finalScore   Int ? @map("final_score") @db.SmallInt // Học viện phê duyệt – CHECK: 0–100
+  rank         EvalRank ? // Tự tính từ final_score qua trigger
+
+        // Audit trail – ai duyệt ở từng bước
+        classReviewedBy   String ? @map("class_reviewed_by") @db.Uuid // class_council duyệt
+  facultyReviewedBy String ? @map("faculty_reviewed_by") @db.Uuid // faculty_council duyệt
+  adminFinalizedBy  String ? @map("admin_finalized_by") @db.Uuid // admin phê duyệt cuối
+
+  classReviewedAt   DateTime ? @map("class_reviewed_at") @db.Timestamptz
+  facultyReviewedAt DateTime ? @map("faculty_reviewed_at") @db.Timestamptz
+  adminFinalizedAt  DateTime ? @map("admin_finalized_at") @db.Timestamptz
+
+  submittedAt DateTime ? @map("submitted_at") @db.Timestamptz
+  createdAt   DateTime @default (now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @default (now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  student         User @relation("StudentForms", fields: [studentId], references: [id], onDelete: Cascade)
+    class Class              @relation(fields: [classId], references: [id], onDelete: Cascade)
+  semester        Semester @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+  classReviewer   User ? @relation("ClassReviewer", fields: [classReviewedBy], references: [id], onDelete: SetNull)
+  facultyReviewer User ? @relation("FacultyReviewer", fields: [facultyReviewedBy], references: [id], onDelete: SetNull)
+  adminFinalizer  User ? @relation("AdminFinalizer", fields: [adminFinalizedBy], references: [id], onDelete: SetNull)
+  criteriaScores  FormCriteriaScore[]
+  attachments     FormAttachment[]
+
+    // Constraints & Indexes
+    @@unique([studentId, semesterId])
+    @@index([classId])            // Lấy toàn bộ danh sách phiếu điểm của 1 lớp để BCS/CVHT duyệt điểm nhanh
+    @@index([semesterId, status]) // Lọc phiếu điểm theo trạng thái của từng học kỳ (Ví dụ: tìm các hồ sơ đang 'submitted' tại kì này)
+    @@index([status])             // Tổng hợp số liệu dashboard / Thống kê hồ sơ tắc nghẽn
+    @@map("evaluation_forms")
+}
+
+// 11. Điểm từng tiêu chí trong phiếu
+model FormCriteriaScore {
+  id              String @id @default (dbgenerated("gen_random_uuid()")) @db.Uuid
+  formId          String @map("form_id") @db.Uuid
+  criteriaId      String @map("criteria_id") @db.Uuid
+  studentScore    Int ? @map("student_score") @db.SmallInt // SV tự chấm – CHECK: >= 0
+  classScore      Int ? @map("class_score") @db.SmallInt // BCS/CVHT chấm – CHECK: >= 0
+  note            String ? @db.Text
+  attachmentsMeta Json @default ("[]") @map("attachments_meta") // Metadata minh chứng
+  updatedAt       DateTime @default (now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  form     EvaluationForm @relation(fields: [formId], references: [id], onDelete: Cascade)
+  criteria EvaluationCriteria @relation(fields: [criteriaId], references: [id], onDelete: Cascade)
+
+    // Constraints & Indexes
+    @@unique([formId, criteriaId])
+    @@index([criteriaId]) // Tối ưu khi tính toán tổng điểm hoặc phân tích phổ điểm theo tiêu chí cụ thể
+    @@map("form_criteria_scores")
+}
+
+// 12. File đính kèm minh chứng - Chỉ có Con người kiểm duyệt
+model FormAttachment {
+  id            String @id @default (dbgenerated("gen_random_uuid()")) @db.Uuid
+  formId        String @map("form_id") @db.Uuid
+  criteriaId    String @map("criteria_id") @db.Uuid
+  originalName  String @map("original_name") @db.VarChar(500)
+  storageKey    String @map("storage_key") @db.VarChar(1000) // Đường dẫn lưu file trên server/S3
+  mimeType      String @map("mime_type") @db.VarChar(100)
+  fileSizeBytes Int @map("file_size_bytes")
+
+  // Trạng thái duyệt của Ban cán sự / Cố vấn học tập
+  isApproved    Boolean ? @map("is_approved") // NULL = Chưa duyệt | true = Hợp lệ | false = Bị từ chối
+  rejectReason  String ? @map("reject_reason") @db.Text // Lý do từ chối nếu minh chứng sai/mờ
+  
+  uploadedAt    DateTime @default (now()) @map("uploaded_at") @db.Timestamptz
+
+  // Relations
+  form     EvaluationForm @relation(fields: [formId], references: [id], onDelete: Cascade)
+  criteria EvaluationCriteria @relation(fields: [criteriaId], references: [id], onDelete: Cascade)
+
+    // Indexes
+    @@index([formId])     // Đọc nhanh toàn bộ minh chứng của một form cụ thể khi tải trang chấm điểm
+    @@index([criteriaId]) // Gom nhóm kiểm tra các tài liệu nộp vào cùng 1 mục tiêu chí công tác
+    @@map("form_attachments")
+}
