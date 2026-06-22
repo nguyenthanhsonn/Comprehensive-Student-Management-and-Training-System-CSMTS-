@@ -22,10 +22,6 @@ type AuthTokens = {
   refreshToken: string;
 };
 
-type AuthSession = AuthTokens & {
-  user: User;
-};
-
 type LogoutResult = {
   loggedOut: true;
 };
@@ -44,7 +40,7 @@ export class AuthService {
     private readonly tokenStore: AuthTokenStoreService,
   ) {}
 
-  async login(dto: LoginDto): Promise<AuthSession> {
+  async login(dto: LoginDto): Promise<AuthTokens> {
     const user = await this.usersService.findByEmailWithPassword(dto.email);
 
     if (!user || !(await bcrypt.compare(dto.password, user.passwordHash))) {
@@ -68,7 +64,7 @@ export class AuthService {
     return this.toPublicUser(user);
   }
 
-  async refreshToken(dto: RefreshTokenDto): Promise<AuthSession> {
+  async refreshToken(dto: RefreshTokenDto): Promise<AuthTokens> {
     const payload = await this.verifyRefreshToken(dto.refreshToken);
     const user = await this.usersService.findByIdWithRefreshToken(payload.sub);
 
@@ -156,7 +152,7 @@ export class AuthService {
     };
   }
 
-  private async createSession(user: User): Promise<AuthSession> {
+  private async createSession(user: User): Promise<AuthTokens> {
     const [accessToken, refreshToken] = await Promise.all([
       this.signToken(user, 'access'),
       this.signToken(user, 'refresh'),
@@ -174,7 +170,6 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
-      user,
     };
   }
 

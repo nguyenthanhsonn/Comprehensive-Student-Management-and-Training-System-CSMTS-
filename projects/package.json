@@ -5,13 +5,15 @@
   "packageManager": "pnpm@10.28.0",
   "scripts": {
     "build": "pnpm -r build",
-    "dev": "pnpm --parallel --filter @smaste/frontend --filter @smaste/backend dev",
+    "predev": "pnpm --filter @smaste/shared exec tsc -p tsconfig.json",
+    "dev": "pnpm --filter @smaste/backend start:dev",
     "dev:frontend": "pnpm --filter @smaste/frontend dev",
     "dev:backend": "pnpm --filter @smaste/backend start:dev",
     "db:generate": "pnpm --filter @smaste/backend db:generate",
     "db:migrate": "pnpm --filter @smaste/backend db:migrate",
     "db:deploy": "pnpm --filter @smaste/backend db:deploy",
     "db:studio": "pnpm --filter @smaste/backend db:studio",
+    "db:seed": "pnpm --filter @smaste/backend db:seed",
     "lint": "pnpm -r lint",
     "test": "pnpm -r --if-present test",
     "typecheck": "pnpm -r typecheck"
