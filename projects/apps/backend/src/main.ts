@@ -24,7 +24,7 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalInterceptors(new ResponseInterceptor());
 
-  await app.listen(configService.get<number>('app.port') ?? 3001);
+  await app.listen(configService.get<number>('app.port') ?? 5050);
 }
 
 void bootstrap();
