@@ -13,7 +13,7 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { LogoutDto } from './dto/logout.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
-import { AuthTokenStoreService } from './services/auth-token-store.service';
+import { AuthTokenStoreService } from './jwt/auth-token-store';
 import type { AuthenticatedUser } from './types/authenticated-user.type';
 import type { JwtPayload, JwtTokenType } from './types/jwt-payload.type';
 
