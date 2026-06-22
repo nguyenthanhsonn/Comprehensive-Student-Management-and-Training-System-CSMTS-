@@ -4,7 +4,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import type { UserRole } from '@smaste/shared';
 import { UsersService } from '../../users/users.service';
-import { AuthTokenStoreService } from '../services/auth-token-store.service';
+import { AuthTokenStoreService } from '../jwt/auth-token-store';
 import type { AuthenticatedUser } from '../types/authenticated-user.type';
 import type { JwtPayload } from '../types/jwt-payload.type';
 
