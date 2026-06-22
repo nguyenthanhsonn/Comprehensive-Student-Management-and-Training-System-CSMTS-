@@ -1426,6 +1426,8 @@ export const UserScalarFieldEnum = {
   phone: 'phone',
   dateOfBirth: 'dateOfBirth',
   isActive: 'isActive',
+  refreshTokenHash: 'refreshTokenHash',
+  refreshTokenExpiresAt: 'refreshTokenExpiresAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

@@ -1,0 +1,687 @@
+{
+  "info": {
+    "_postman_id": "7f0bd180-2db8-43ec-80c5-c5ebf1df3e40",
+    "name": "CSMTS Backend - Auth, Response, Students",
+    "description": "Collection test 3 nh?m task BE: chu?n response success/error, auth JWT/refresh-token/logout/change-password/me, v? API sinh vi?n k?m ph?n quy?n role.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00 - Health & Response Standard",
+      "item": [
+        {
+          "name": "GET /health - Success JSON envelope",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/health",
+            "description": "Ki?m tra app ch?y v? response interceptor b?c success JSON."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response d?ng chu?n JSON chung\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/login - Validation Error JSON envelope",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "description": "G?i body l?i ?? ki?m tra Global Exception Filter tr? error JSON chu?n.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"not-an-email\",\n  \"password\": \"123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response d?ng chu?n JSON chung\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Validation error tr? success=false\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(false);",
+                  "  pm.expect(json.data).to.eql(null);",
+                  "  pm.expect(json).to.have.property(\"errors\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "01 - Setup User Test",
+      "item": [
+        {
+          "name": "POST /users - T?o student test n?u DB ch?a c?",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/users",
+            "description": "Endpoint setup ti?n test. N?u email ?? t?n t?i s? tr? 409, l?c ?? b? qua v? login b?ng user c? s?n.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{studentEmail}}\",\n  \"fullName\": \"Sinh vi?n Test\",\n  \"password\": \"{{studentPassword}}\",\n  \"role\": \"student\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response d?ng chu?n JSON chung\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"N?u t?o m?i th?nh c?ng th? l?u userId\", function () {",
+                  "  const json = pm.response.json();",
+                  "  if (json.success && json.data?.id) pm.environment.set(\"userId\", json.data.id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Auth JWT Flow",
+      "item": [
+        {
+          "name": "POST /auth/login - ??ng nh?p v? l?u token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "description": "??ng nh?p b?ng studentEmail/studentPassword. Script t? l?u accessToken v? refreshToken v?o environment.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{studentEmail}}\",\n  \"password\": \"{{studentPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response d?ng chu?n JSON chung\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"L?u accessToken v? refreshToken\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "  pm.expect(json.data).to.have.property(\"accessToken\");",
+                  "  pm.expect(json.data).to.have.property(\"refreshToken\");",
+                  "  pm.environment.set(\"accessToken\", json.data.accessToken);",
+                  "  pm.environment.set(\"refreshToken\", json.data.refreshToken);",
+                  "  if (json.data.user?.id) pm.environment.set(\"userId\", json.data.user.id);",
+                  "  if (json.data.user?.email) pm.environment.set(\"studentEmail\", json.data.user.email);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /auth/me - Th?ng tin user hi?n t?i",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/auth/me",
+            "description": "Y?u c?u Bearer accessToken.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response d?ng chu?n JSON chung\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/refresh-token - C?p token m?i",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/refresh-token",
+            "description": "D?ng refreshToken hi?n t?i ?? rotate session. Script l?u l?i token m?i.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response d?ng chu?n JSON chung\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"L?u accessToken v? refreshToken\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "  pm.expect(json.data).to.have.property(\"accessToken\");",
+                  "  pm.expect(json.data).to.have.property(\"refreshToken\");",
+                  "  pm.environment.set(\"accessToken\", json.data.accessToken);",
+                  "  pm.environment.set(\"refreshToken\", json.data.refreshToken);",
+                  "  if (json.data.user?.id) pm.environment.set(\"userId\", json.data.user.id);",
+                  "  if (json.data.user?.email) pm.environment.set(\"studentEmail\", json.data.user.email);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/change-password - ??i m?t kh?u",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/change-password",
+            "description": "Sau khi ??i m?t kh?u, BE revoke access token hi?n t?i v? clear refresh token. Mu?n test ti?p th? login l?i b?ng newPassword v? c?p nh?t studentPassword trong environment.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"{{currentPassword}}\",\n  \"newPassword\": \"{{newPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response d?ng chu?n JSON chung\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"??i m?t kh?u y?u c?u login l?i\", function () {",
+                  "  const json = pm.response.json();",
+                  "  if (json.success) {",
+                  "    pm.expect(json.data.passwordChanged).to.eql(true);",
+                  "    pm.expect(json.data.requiresLogin).to.eql(true);",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/logout - ??ng xu?t",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/logout",
+            "description": "Revoke accessToken hi?n t?i v? clear refreshToken trong DB. N?n ch?y sau khi ?? login/refresh.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response d?ng chu?n JSON chung\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Logout th?nh c?ng\", function () {",
+                  "  const json = pm.response.json();",
+                  "  if (json.success) pm.expect(json.data.loggedOut).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - Students Me Flow",
+      "item": [
+        {
+          "name": "GET /students/me - H? s? sinh vi?n hi?n t?i",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/students/me",
+            "description": "Ch? role student ???c g?i. Tr? th?ng tin user + m? sinh vi?n/l?p/ng?nh/khoa n?u DB c? d? li?u li?n k?t.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response d?ng chu?n JSON chung\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /students/me - C?p nh?t s? ?i?n tho?i",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/students/me",
+            "description": "Ch? cho c?p nh?t th?ng tin li?n h? phone, kh?ng cho s?a email/fullName/role qua endpoint n?y.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"{{phone}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response d?ng chu?n JSON chung\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Phone ???c tr? l?i trong profile\", function () {",
+                  "  const json = pm.response.json();",
+                  "  if (json.success) pm.expect(json.data.phone).to.eql(pm.environment.get(\"phone\"));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /students/me - X?a s? ?i?n tho?i",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/students/me",
+            "description": "G?i phone=null ?? x?a s? ?i?n tho?i.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response d?ng chu?n JSON chung\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /students/me/evaluations - Phi?u ??nh gi? c?a sinh vi?n",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/students/me/evaluations",
+            "description": "Tr? danh s?ch evaluation forms c?a sinh vi?n hi?n t?i theo th? t? m?i nh?t.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response d?ng chu?n JSON chung\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Data l? m?ng\", function () {",
+                  "  const json = pm.response.json();",
+                  "  if (json.success) pm.expect(json.data).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 - Guard Negative Cases",
+      "item": [
+        {
+          "name": "GET /students/me - Kh?ng g?i token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/students/me",
+            "description": "D?ng ?? ki?m tra JwtAuthGuard tr? l?i qua Global Exception Filter."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response d?ng chu?n JSON chung\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Kh?ng token ph?i fail\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(false);",
+                  "  pm.expect([401, 403]).to.include(json.statusCode);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /students/me - Token kh?ng ph?i student",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/students/me",
+            "description": "Login b?ng t?i kho?n admin/faculty r?i ch?y request n?y ?? ki?m tra RolesGuard tr? 403.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response d?ng chu?n JSON chung\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"N?u token kh?ng ph?i student th? b? 403\", function () {",
+                  "  const json = pm.response.json();",
+                  "  if (!json.success) pm.expect(json.statusCode).to.eql(403);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

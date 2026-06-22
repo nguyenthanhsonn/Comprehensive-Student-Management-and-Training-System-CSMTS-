@@ -76,4 +76,47 @@ export class UsersService {
       where: { email },
     });
   }
+
+  findByIdWithPassword(id: string): Promise<User | null> {
+    return this.prisma.user.findUnique({
+      where: { id },
+    });
+  }
+
+  findByIdWithRefreshToken(id: string): Promise<User | null> {
+    return this.prisma.user.findUnique({
+      where: { id },
+    });
+  }
+
+  async updateRefreshToken(
+    id: string,
+    refreshTokenHash: string,
+    refreshTokenExpiresAt: Date,
+  ): Promise<void> {
+    await this.prisma.user.update({
+      where: { id },
+      data: {
+        refreshTokenHash,
+        refreshTokenExpiresAt,
+      },
+    });
+  }
+
+  async clearRefreshToken(id: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id },
+      data: {
+        refreshTokenHash: null,
+        refreshTokenExpiresAt: null,
+      },
+    });
+  }
+
+  async updatePasswordHash(id: string, passwordHash: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id },
+      data: { passwordHash },
+    });
+  }
 }
