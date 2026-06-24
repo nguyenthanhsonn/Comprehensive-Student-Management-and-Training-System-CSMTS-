@@ -1,6 +1,6 @@
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient, UserRole } from '../../apps/backend/src/generated/prisma/client';
+import { PrismaClient, UserRole } from '../../src/generated/prisma/client';
 import * as bcrypt from 'bcrypt';
 import * as dotenv from 'dotenv';
 import * as path from 'node:path';
