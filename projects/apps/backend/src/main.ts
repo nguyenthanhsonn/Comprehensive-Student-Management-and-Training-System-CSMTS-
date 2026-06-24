@@ -24,7 +24,10 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalInterceptors(new ResponseInterceptor());
 
-  await app.listen(configService.get<number>('app.port') ?? 5050);
+  const port = configService.get<number>('app.port') ?? 3001;
+  const host = configService.get<string>('app.host') ?? '127.0.0.1';
+
+  await app.listen(port, host);
 }
 
 void bootstrap();
