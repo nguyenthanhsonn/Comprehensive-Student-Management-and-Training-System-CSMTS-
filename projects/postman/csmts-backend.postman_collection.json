@@ -1,0 +1,1497 @@
+{
+  "info": {
+    "_postman_id": "7f0bd180-2db8-43ec-80c5-c5ebf1df3e40",
+    "name": "CSMTS Backend - API v1",
+    "description": "Postman collection for CSMTS backend API v1: response envelope, JWT auth, students, and training evaluation score sections I-V.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00 - Health and Response Standard",
+      "item": [
+        {
+          "name": "GET /health - success envelope",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/health",
+            "description": "Check backend is running and success response is wrapped by ResponseInterceptor."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response uses standard JSON envelope\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Request succeeds\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/login - validation error envelope",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "description": "Send invalid body to verify Global Exception Filter returns standard error JSON.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"not-an-email\",\n  \"password\": \"123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response uses standard JSON envelope\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Validation error returns success=false\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(false);",
+                  "  pm.expect(json.data).to.eql(null);",
+                  "  pm.expect(json).to.have.property(\"errors\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "01 - Setup Test User",
+      "item": [
+        {
+          "name": "POST /users - create student test user if missing",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/users",
+            "description": "Convenience setup endpoint. If email already exists, 409 is acceptable and you can continue to login.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{studentEmail}}\",\n  \"fullName\": \"Student Test\",\n  \"password\": \"{{studentPassword}}\",\n  \"role\": \"student\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response uses standard JSON envelope\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Create user success or already exists\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect([201, 409]).to.include(json.statusCode);",
+                  "  if (json.success && json.data?.id) pm.environment.set(\"userId\", json.data.id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Auth JWT Happy Path",
+      "item": [
+        {
+          "name": "POST /auth/login - save tokens",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "description": "Login with studentEmail/studentPassword. Test script saves accessToken and refreshToken.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{studentEmail}}\",\n  \"password\": \"{{studentPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response uses standard JSON envelope\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Request succeeds\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});",
+                  "",
+                  "pm.test(\"Save accessToken and refreshToken\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.data).to.have.property(\"accessToken\");",
+                  "  pm.expect(json.data).to.have.property(\"refreshToken\");",
+                  "  pm.environment.set(\"accessToken\", json.data.accessToken);",
+                  "  pm.environment.set(\"refreshToken\", json.data.refreshToken);",
+                  "  if (json.data.user?.id) pm.environment.set(\"userId\", json.data.user.id);",
+                  "  if (json.data.user?.email) pm.environment.set(\"studentEmail\", json.data.user.email);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /auth/me - current user",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/auth/me",
+            "description": "Requires Bearer accessToken.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response uses standard JSON envelope\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Request succeeds\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/refresh-token - rotate tokens",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/refresh-token",
+            "description": "Use refreshToken to create a new session. Test script saves the new tokens.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response uses standard JSON envelope\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Request succeeds\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});",
+                  "",
+                  "pm.test(\"Save accessToken and refreshToken\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.data).to.have.property(\"accessToken\");",
+                  "  pm.expect(json.data).to.have.property(\"refreshToken\");",
+                  "  pm.environment.set(\"accessToken\", json.data.accessToken);",
+                  "  pm.environment.set(\"refreshToken\", json.data.refreshToken);",
+                  "  if (json.data.user?.id) pm.environment.set(\"userId\", json.data.user.id);",
+                  "  if (json.data.user?.email) pm.environment.set(\"studentEmail\", json.data.user.email);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - Students Me Flow",
+      "item": [
+        {
+          "name": "GET /students/me - current student profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/students/me",
+            "description": "Only student role can call this endpoint. Returns user profile plus class/major/faculty when linked data exists.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response uses standard JSON envelope\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Request succeeds\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /students/me - update phone",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/students/me",
+            "description": "Only contact field phone is updatable here. Email/fullName/role are intentionally blocked.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"{{phone}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response uses standard JSON envelope\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Request succeeds\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});",
+                  "",
+                  "pm.test(\"Phone is updated\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.data.phone).to.eql(pm.environment.get(\"phone\"));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /students/me - clear phone",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/students/me",
+            "description": "Send phone=null to clear phone number.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response uses standard JSON envelope\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Request succeeds\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /students/me/evaluations - current student evaluations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/students/me/evaluations",
+            "description": "Returns evaluation forms of the current student, newest first.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response uses standard JSON envelope\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Request succeeds\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});",
+                  "",
+                  "pm.test(\"Data is an array\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.data).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 - Training Evaluations I-V",
+      "item": [
+        {
+          "name": "POST /training-evaluations - create draft",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/training-evaluations",
+            "description": "Create a DRAFT training evaluation for current student. If one already exists for the semester/year, 409 is acceptable; use GET /training-evaluations/me to save an existing id.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"semester\": \"{{evaluationSemester}}\",\n  \"academicYear\": \"{{evaluationAcademicYear}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response uses standard JSON envelope\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Create succeeds or duplicate is blocked\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect([201, 409]).to.include(json.statusCode);",
+                  "  if (json.success) {",
+                  "    pm.expect(json.data.status).to.eql(\"DRAFT\");",
+                  "    pm.expect(json.data.totalScore).to.eql(0);",
+                  "  }",
+                  "});",
+                  "",
+                  "pm.test(\"Save trainingEvaluationId when available\", function () {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data && json.data.id) {",
+                  "    pm.environment.set(\"trainingEvaluationId\", json.data.id);",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /training-evaluations/me - list mine and save id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/training-evaluations/me",
+            "description": "List current student evaluations and save the matching evaluation id for the configured semester/year.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response uses standard JSON envelope\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Request succeeds\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});",
+                  "",
+                  "pm.test(\"Data is an array and save matching id\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.data).to.be.an(\"array\");",
+                  "  const semester = pm.environment.get(\"evaluationSemester\");",
+                  "  const academicYear = pm.environment.get(\"evaluationAcademicYear\");",
+                  "  const match = json.data.find((item) => item.semester === semester && item.academicYear === academicYear) || json.data[0];",
+                  "  if (match && match.id) pm.environment.set(\"trainingEvaluationId\", match.id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /training-evaluations/:id - detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/training-evaluations/{{trainingEvaluationId}}",
+            "description": "Get detail of the saved training evaluation.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response uses standard JSON envelope\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Request succeeds\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});",
+                  "",
+                  "pm.test(\"Detail contains section scores\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.data).to.have.property(\"studyScore\");",
+                  "  pm.expect(json.data).to.have.property(\"disciplineScore\");",
+                  "  pm.expect(json.data).to.have.property(\"activityScore\");",
+                  "  pm.expect(json.data).to.have.property(\"communityScore\");",
+                  "  pm.expect(json.data).to.have.property(\"roleScore\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /training-evaluations/:id - save draft info",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/training-evaluations/{{trainingEvaluationId}}",
+            "description": "Save draft contact phone and note.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"{{phone}}\",\n  \"note\": \"{{evaluationNote}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response uses standard JSON envelope\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Request succeeds\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /training-evaluations/:id/study-score",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/training-evaluations/{{trainingEvaluationId}}/study-score",
+            "description": "Get section I study score draft data.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response uses standard JSON envelope\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Request succeeds\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /training-evaluations/:id/study-score",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/training-evaluations/{{trainingEvaluationId}}/study-score",
+            "description": "Update section I. Score is sum of checked activities, capped by backend.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"regularScoreLevel\": \"GTE_9\",\n  \"academicRank\": \"EXCELLENT\",\n  \"activities\": [\n    {\n      \"code\": \"ACADEMIC_EVENT_PARTICIPATION\",\n      \"checked\": true\n    },\n    {\n      \"code\": \"SCIENTIFIC_PUBLICATION_OR_CONTEST\",\n      \"checked\": true\n    },\n    {\n      \"code\": \"SCIENTIFIC_AWARD\",\n      \"checked\": true\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response uses standard JSON envelope\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Request succeeds\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});",
+                  "",
+                  "pm.test(\"Study score is calculated\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.data.score).to.eql(5);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /training-evaluations/:id/discipline-score",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/training-evaluations/{{trainingEvaluationId}}/discipline-score",
+            "description": "Get section II discipline score draft data.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response uses standard JSON envelope\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Request succeeds\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /training-evaluations/:id/discipline-score",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/training-evaluations/{{trainingEvaluationId}}/discipline-score",
+            "description": "Update section II. Score = baseScore - sum(count * deductScore), min 0.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"baseScore\": 25,\n  \"violations\": [\n    {\n      \"code\": \"ABSENT_CITIZEN_WEEK\",\n      \"count\": 1,\n      \"deductScore\": 3\n    },\n    {\n      \"code\": \"LATE_MEETING\",\n      \"count\": 2,\n      \"deductScore\": 1\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response uses standard JSON envelope\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Request succeeds\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});",
+                  "",
+                  "pm.test(\"Discipline score is calculated\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.data.score).to.eql(20);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /training-evaluations/:id/activity-score",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/training-evaluations/{{trainingEvaluationId}}/activity-score",
+            "description": "Get section III activity score draft data.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response uses standard JSON envelope\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Request succeeds\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /training-evaluations/:id/activity-score",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/training-evaluations/{{trainingEvaluationId}}/activity-score",
+            "description": "Update section III according to activity level groups.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"politicalActivityLevel\": \"GOOD_PARTICIPATION\",\n  \"cultureSportLevel\": \"FULL_EFFECTIVE_PARTICIPATION\",\n  \"clubActivityLevel\": \"FULL_EFFECTIVE_PARTICIPATION\",\n  \"socialPreventionLevel\": \"MULTIPLE_ACTIVITIES_OR_REPORTING\",\n  \"rewardScore\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response uses standard JSON envelope\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Request succeeds\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});",
+                  "",
+                  "pm.test(\"Activity score is calculated\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.data.score).to.eql(20);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /training-evaluations/:id/community-score",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/training-evaluations/{{trainingEvaluationId}}/community-score",
+            "description": "Get section IV community score draft data.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response uses standard JSON envelope\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Request succeeds\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /training-evaluations/:id/community-score",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/training-evaluations/{{trainingEvaluationId}}/community-score",
+            "description": "Update section IV according to community level groups.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lawComplianceLevel\": \"GOOD_WITH_REWARD\",\n  \"volunteerActivityLevel\": \"ACTIVE_WITH_REWARD\",\n  \"communityRelationshipLevel\": \"GOOD\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response uses standard JSON envelope\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Request succeeds\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});",
+                  "",
+                  "pm.test(\"Community score is calculated\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.data.score).to.eql(25);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /training-evaluations/:id/role-score",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/training-evaluations/{{trainingEvaluationId}}/role-score",
+            "description": "Get section V role score draft data.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response uses standard JSON envelope\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Request succeeds\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /training-evaluations/:id/role-score",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/training-evaluations/{{trainingEvaluationId}}/role-score",
+            "description": "Update section V according to role/position groups.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentRoleType\": \"CLASS_OFFICER\",\n  \"positionGroup\": \"LEADER_GROUP\",\n  \"taskCompletionLevel\": \"EXCELLENT\",\n  \"managementSkillLevel\": \"HEAD_POSITION\",\n  \"normalStudentActivityScore\": null,\n  \"specialAchievementLevel\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response uses standard JSON envelope\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Request succeeds\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "});",
+                  "",
+                  "pm.test(\"Role score is calculated\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.data.score).to.eql(10);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 - Guard Negative Cases",
+      "item": [
+        {
+          "name": "GET /students/me - missing token returns 401 or 403",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/students/me",
+            "description": "Verify missing token is rejected and still uses standard error envelope."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response uses standard JSON envelope\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Missing token is rejected\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(false);",
+                  "  pm.expect([401, 403]).to.include(json.statusCode);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /students/me - non-student valid token should return 403",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/students/me",
+            "description": "Set nonStudentAccessToken to a valid admin/faculty token to verify RolesGuard returns 403. If this variable is empty/invalid, 401 is expected because JwtAuthGuard rejects first.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{nonStudentAccessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response uses standard JSON envelope\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Role guard behavior is correct\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.success).to.eql(false);",
+                  "",
+                  "  const token = pm.environment.get(\"nonStudentAccessToken\");",
+                  "  if (token && token.length > 20) {",
+                  "    pm.expect(json.statusCode).to.eql(403);",
+                  "  } else {",
+                  "    pm.expect(json.statusCode).to.eql(401);",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 - Auth Logout and Change Password Manual",
+      "item": [
+        {
+          "name": "POST /auth/logout - revoke current session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/logout",
+            "description": "Run manually at the end. It revokes current access token and clears refresh token.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response uses standard JSON envelope\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Logout succeeds when token is valid\", function () {",
+                  "  const json = pm.response.json();",
+                  "  if (json.success) pm.expect(json.data.loggedOut).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/change-password - destructive manual test",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/change-password",
+            "description": "Manual only. After password change, current tokens are revoked. Login again with newPassword and update studentPassword if you want to continue.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"{{currentPassword}}\",\n  \"newPassword\": \"{{newPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response uses standard JSON envelope\", function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property(\"success\");",
+                  "  pm.expect(json).to.have.property(\"statusCode\");",
+                  "  pm.expect(json).to.have.property(\"message\");",
+                  "  pm.expect(json).to.have.property(\"data\");",
+                  "  pm.expect(json).to.have.property(\"timestamp\");",
+                  "  pm.expect(json).to.have.property(\"path\");",
+                  "});",
+                  "",
+                  "pm.test(\"Password change succeeds when currentPassword is correct\", function () {",
+                  "  const json = pm.response.json();",
+                  "  if (json.success) {",
+                  "    pm.expect(json.data.passwordChanged).to.eql(true);",
+                  "    pm.expect(json.data.requiresLogin).to.eql(true);",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
