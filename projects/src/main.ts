@@ -9,7 +9,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
 
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix('api/v1');
   app.enableCors({
     origin: configService.get<string>('app.frontendUrl'),
     credentials: true,
@@ -24,7 +24,7 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalInterceptors(new ResponseInterceptor());
 
-  const port = configService.get<number>('app.port') ?? 3001;
+  const port = configService.get<number>('app.port') ?? 5050;
   const host = configService.get<string>('app.host') ?? '127.0.0.1';
 
   await app.listen(port, host);

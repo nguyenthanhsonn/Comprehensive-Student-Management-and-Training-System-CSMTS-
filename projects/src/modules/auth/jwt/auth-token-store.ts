@@ -30,7 +30,7 @@ export class AuthTokenStoreService {
   isTokenRevoked(payload: Pick<JwtPayload, 'sub' | 'jti' | 'iat'>): boolean {
     this.pruneExpiredTokens();
 
-    if (this.revokedTokens.has(payload.jti)) {
+    if (payload.jti && this.revokedTokens.has(payload.jti)) {
       return true;
     }
 

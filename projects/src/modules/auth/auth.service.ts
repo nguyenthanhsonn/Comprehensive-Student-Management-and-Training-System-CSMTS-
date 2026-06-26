@@ -15,7 +15,7 @@ import { LogoutDto } from './dto/logout.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { AuthTokenStoreService } from './jwt/auth-token-store';
 import type { AuthenticatedUser } from './types/authenticated-user.type';
-import type { JwtPayload, JwtTokenType } from './types/jwt-payload.type';
+import type { JwtPayload, TokenSubject } from './types/jwt-payload.type';
 
 type AuthTokens = {
   accessToken: string;
@@ -54,9 +54,7 @@ export class AuthService {
     return this.createSession({
       id: user.id,
       email: user.email,
-      fullName: user.fullName,
       role: user.role as UserRole,
-      isActive: user.isActive,
     });
   }
 
@@ -93,9 +91,7 @@ export class AuthService {
     return this.createSession({
       id: user.id,
       email: user.email,
-      fullName: user.fullName,
       role: user.role as UserRole,
-      isActive: user.isActive,
     });
   }
 
@@ -152,17 +148,17 @@ export class AuthService {
     };
   }
 
-  private async createSession(user: User): Promise<AuthTokens> {
+  private async createSession(subject: TokenSubject): Promise<AuthTokens> {
     const [accessToken, refreshToken] = await Promise.all([
-      this.signToken(user, 'access'),
-      this.signToken(user, 'refresh'),
+      this.signAccessToken(subject),
+      this.signRefreshToken(subject),
     ]);
     const refreshTokenPayload = await this.verifyRefreshToken(refreshToken);
     const refreshTokenExpiresAt = this.getTokenExpiresAt(refreshTokenPayload);
     const refreshTokenHash = await bcrypt.hash(refreshToken, 12);
 
     await this.usersService.updateRefreshToken(
-      user.id,
+      subject.id,
       refreshTokenHash,
       refreshTokenExpiresAt,
     );
@@ -173,47 +169,45 @@ export class AuthService {
     };
   }
 
-  private signToken(user: User, tokenType: JwtTokenType): Promise<string> {
+  private signAccessToken(subject: TokenSubject): Promise<string> {
     const payload: JwtPayload = {
-      sub: user.id,
-      email: user.email,
-      role: user.role,
-      tokenType,
+      sub: subject.id,
+      email: subject.email,
+      role: subject.role,
       jti: randomUUID(),
     };
 
     return this.jwtService.signAsync(payload, {
-      expiresIn: this.getTokenExpiresIn(tokenType) as never,
+      secret: this.configService.getOrThrow<string>('app.jwtAccessSecret'),
+      expiresIn: this.configService.get<string>(
+        'app.jwtAccessExpiresIn',
+        '15m',
+      ) as never,
     });
   }
 
-  private getTokenExpiresIn(tokenType: JwtTokenType): string {
-    if (tokenType === 'refresh') {
-      return this.configService.get<string>('app.jwtRefreshExpiresIn', '7d');
-    }
+  private signRefreshToken(subject: TokenSubject): Promise<string> {
+    const payload: JwtPayload = {
+      sub: subject.id,
+      email: subject.email,
+      role: subject.role,
+    };
 
-    return this.configService.get<string>('app.jwtExpiresIn', '15m');
+    return this.jwtService.signAsync(payload, {
+      secret: this.configService.getOrThrow<string>('app.jwtRefreshSecret'),
+      expiresIn: this.configService.get<string>(
+        'app.jwtRefreshExpiresIn',
+        '7d',
+      ) as never,
+    });
   }
 
   private async verifyRefreshToken(refreshToken: string): Promise<JwtPayload> {
     try {
-      const payload = await this.jwtService.verifyAsync<JwtPayload>(
-        refreshToken,
-        {
-          secret: this.configService.getOrThrow<string>('app.jwtSecret'),
-        },
-      );
-
-      if (payload.tokenType !== 'refresh') {
-        throw new UnauthorizedException('Invalid refresh token');
-      }
-
-      return payload;
-    } catch (error) {
-      if (error instanceof UnauthorizedException) {
-        throw error;
-      }
-
+      return await this.jwtService.verifyAsync<JwtPayload>(refreshToken, {
+        secret: this.configService.getOrThrow<string>('app.jwtRefreshSecret'),
+      });
+    } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }
   }

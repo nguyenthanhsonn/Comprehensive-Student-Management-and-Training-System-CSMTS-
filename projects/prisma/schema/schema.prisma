@@ -250,6 +250,19 @@ model EvaluationForm {
   finalScore   Int?      @map("final_score") @db.SmallInt // Học viện phê duyệt - CHECK: 0-100
   rank         EvalRank? // Tự tính từ final_score qua trigger
 
+  note                String? @db.Text
+  studyScore          Int     @default(0) @map("study_score") @db.SmallInt
+  studyData           Json    @default("{}") @map("study_data")
+  disciplineBaseScore Int     @default(25) @map("discipline_base_score") @db.SmallInt
+  disciplineScore     Int     @default(0) @map("discipline_score") @db.SmallInt
+  disciplineData      Json    @default("{}") @map("discipline_data")
+  activityScore       Int     @default(0) @map("activity_score") @db.SmallInt
+  activityData        Json    @default("{}") @map("activity_data")
+  communityScore      Int     @default(0) @map("community_score") @db.SmallInt
+  communityData       Json    @default("{}") @map("community_data")
+  roleScore           Int     @default(0) @map("role_score") @db.SmallInt
+  roleData            Json    @default("{}") @map("role_data")
+
   // Audit trail - ai duyệt ở từng bước
   classReviewedBy   String? @map("class_reviewed_by") @db.Uuid // class_council duyệt
   facultyReviewedBy String? @map("faculty_reviewed_by") @db.Uuid // faculty_council duyệt

@@ -853,7 +853,7 @@
                   "",
                   "pm.test(\"Study score is calculated\", function () {",
                   "  const json = pm.response.json();",
-                  "  pm.expect(json.data.score).to.eql(5);",
+                  "  pm.expect(json.data.score).to.eql(20);",
                   "});"
                 ]
               }

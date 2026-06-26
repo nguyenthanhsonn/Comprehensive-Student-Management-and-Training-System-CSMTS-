@@ -5,4 +5,3 @@ export class LogoutDto {
   @IsJWT()
   refreshToken?: string;
 }
-2
