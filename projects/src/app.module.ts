@@ -8,6 +8,7 @@ import { PrismaModule } from './database/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { PostsModule } from './modules/posts/posts.module';
 import { StudentsModule } from './modules/students/students.module';
+import { TrainingEvaluationsModule } from './modules/training-evaluations/training-evaluations.module';
 import { UsersModule } from './modules/users/users.module';
 
 @Module({
@@ -26,6 +27,7 @@ import { UsersModule } from './modules/users/users.module';
     AuthModule,
     UsersModule,
     StudentsModule,
+    TrainingEvaluationsModule,
     PostsModule,
   ],
   controllers: [AppController],

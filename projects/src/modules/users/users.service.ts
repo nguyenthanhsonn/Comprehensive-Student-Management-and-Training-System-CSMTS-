@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../database/prisma.service';
-import { Prisma, type User } from '../../generated/prisma/client';
+import { Prisma } from '../../generated/prisma/client';
 import { CreateUserDto } from './dto/create-user.dto';
 
 const publicUserSelect = {
@@ -20,8 +20,42 @@ const publicUserSelect = {
   updatedAt: true,
 } satisfies Prisma.UserSelect;
 
+const loginUserSelect = {
+  id: true,
+  email: true,
+  passwordHash: true,
+  role: true,
+  isActive: true,
+} satisfies Prisma.UserSelect;
+
+const passwordUserSelect = {
+  id: true,
+  passwordHash: true,
+} satisfies Prisma.UserSelect;
+
+const refreshTokenUserSelect = {
+  id: true,
+  email: true,
+  role: true,
+  isActive: true,
+  refreshTokenHash: true,
+  refreshTokenExpiresAt: true,
+} satisfies Prisma.UserSelect;
+
 export type PublicUser = Prisma.UserGetPayload<{
   select: typeof publicUserSelect;
+}>;
+
+export type LoginUser = Prisma.UserGetPayload<{
+  select: typeof loginUserSelect;
+}>;
+
+export type PasswordUser = Prisma.UserGetPayload<{
+  select: typeof passwordUserSelect;
+}>;
+
+export type RefreshTokenUser = Prisma.UserGetPayload<{
+  select: typeof refreshTokenUserSelect;
 }>;
 
 @Injectable()
@@ -71,21 +105,24 @@ export class UsersService {
     return user;
   }
 
-  findByEmailWithPassword(email: string): Promise<User | null> {
+  findByEmailWithPassword(email: string): Promise<LoginUser | null> {
     return this.prisma.user.findUnique({
       where: { email },
+      select: loginUserSelect,
     });
   }
 
-  findByIdWithPassword(id: string): Promise<User | null> {
+  findByIdWithPassword(id: string): Promise<PasswordUser | null> {
     return this.prisma.user.findUnique({
       where: { id },
+      select: passwordUserSelect,
     });
   }
 
-  findByIdWithRefreshToken(id: string): Promise<User | null> {
+  findByIdWithRefreshToken(id: string): Promise<RefreshTokenUser | null> {
     return this.prisma.user.findUnique({
       where: { id },
+      select: refreshTokenUserSelect,
     });
   }
 

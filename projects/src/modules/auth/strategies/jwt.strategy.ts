@@ -18,15 +18,12 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.getOrThrow<string>('app.jwtSecret'),
+      secretOrKey: configService.getOrThrow<string>('app.jwtAccessSecret'),
     });
   }
 
   async validate(payload: JwtPayload): Promise<AuthenticatedUser> {
-    if (
-      payload.tokenType !== 'access' ||
-      this.tokenStore.isTokenRevoked(payload)
-    ) {
+    if (!payload.jti || this.tokenStore.isTokenRevoked(payload)) {
       throw new UnauthorizedException('Invalid access token');
     }
 
