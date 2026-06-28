@@ -11,3 +11,10 @@ coverage/
 
 *.log
 .DS_Store
+<<<<<<< Updated upstream
+=======
+
+.agents/
+prisma/migrations/
+postman/
+>>>>>>> Stashed changes
