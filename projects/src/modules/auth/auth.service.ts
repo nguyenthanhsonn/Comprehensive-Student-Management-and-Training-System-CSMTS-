@@ -1,19 +1,21 @@
 import {
   BadRequestException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { User, UserRole } from 'src/common/shared';
 import * as bcrypt from 'bcrypt';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { UsersService } from '../users/users.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { LogoutDto } from './dto/logout.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { AuthTokenStoreService } from './jwt/auth-token-store';
+import { mapAuthProfileToUser } from '../users/mappers/user.mapper';
 import type { AuthenticatedUser } from './types/authenticated-user.type';
 import type { JwtPayload, TokenSubject } from './types/jwt-payload.type';
 
@@ -31,8 +33,18 @@ type ChangePasswordResult = {
   requiresLogin: true;
 };
 
+type CachedProfile = {
+  user: User;
+  expiresAt: number;
+};
+
+const PROFILE_CACHE_TTL_MS = 30_000;
+const PROFILE_CACHE_MAX_SIZE = 1_000;
+
 @Injectable()
 export class AuthService {
+  private readonly profileCache = new Map<string, CachedProfile>();
+
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
@@ -40,6 +52,7 @@ export class AuthService {
     private readonly tokenStore: AuthTokenStoreService,
   ) {}
 
+  // đăng nhập
   async login(dto: LoginDto): Promise<AuthTokens> {
     const user = await this.usersService.findByEmailWithPassword(dto.email);
 
@@ -58,10 +71,34 @@ export class AuthService {
     });
   }
 
-  me(user: AuthenticatedUser): User {
-    return this.toPublicUser(user);
+  // lấy thông tin người dùng
+  async getProfile(id: string): Promise<User> {
+    const cachedProfile = this.profileCache.get(id);
+    const now = Date.now();
+
+    if (cachedProfile && cachedProfile.expiresAt > now) {
+      return cachedProfile.user;
+    }
+
+    if (cachedProfile) {
+      this.profileCache.delete(id);
+    }
+
+    const user = await this.usersService.findAuthProfileById(id);
+    if (!user) {
+      throw new NotFoundException('Người dùng không tồn tại');
+    }
+    if (!user.isActive) {
+      throw new UnauthorizedException('Người dùng không hoạt động');
+    }
+
+    const profile = mapAuthProfileToUser(user);
+    this.cacheProfile(id, profile, now);
+
+    return profile;
   }
 
+  // làm mới token
   async refreshToken(dto: RefreshTokenDto): Promise<AuthTokens> {
     const payload = await this.verifyRefreshToken(dto.refreshToken);
     const user = await this.usersService.findByIdWithRefreshToken(payload.sub);
@@ -79,7 +116,7 @@ export class AuthService {
       throw new UnauthorizedException('Refresh token has expired');
     }
 
-    const isRefreshTokenValid = await bcrypt.compare(
+    const isRefreshTokenValid = await this.isRefreshTokenHashValid(
       dto.refreshToken,
       user.refreshTokenHash,
     );
@@ -109,6 +146,7 @@ export class AuthService {
     }
 
     await this.usersService.clearRefreshToken(user.id);
+    this.profileCache.delete(user.id);
 
     return { loggedOut: true };
   }
@@ -140,6 +178,7 @@ export class AuthService {
     const passwordHash = await bcrypt.hash(dto.newPassword, 12);
     await this.usersService.updatePasswordHash(user.id, passwordHash);
     await this.usersService.clearRefreshToken(user.id);
+    this.profileCache.delete(user.id);
     this.tokenStore.revokeToken(user.accessTokenId, user.tokenExpiresAt);
 
     return {
@@ -155,7 +194,7 @@ export class AuthService {
     ]);
     const refreshTokenPayload = await this.verifyRefreshToken(refreshToken);
     const refreshTokenExpiresAt = this.getTokenExpiresAt(refreshTokenPayload);
-    const refreshTokenHash = await bcrypt.hash(refreshToken, 12);
+    const refreshTokenHash = this.hashRefreshToken(refreshToken);
 
     await this.usersService.updateRefreshToken(
       subject.id,
@@ -220,13 +259,38 @@ export class AuthService {
     return new Date(payload.exp * 1000);
   }
 
-  private toPublicUser(user: AuthenticatedUser): User {
-    return {
-      id: user.id,
-      email: user.email,
-      fullName: user.fullName,
-      role: user.role,
-      isActive: user.isActive,
-    };
+  private hashRefreshToken(refreshToken: string): string {
+    return createHash('sha256').update(refreshToken).digest('hex');
+  }
+
+  private async isRefreshTokenHashValid(
+    refreshToken: string,
+    refreshTokenHash: string,
+  ): Promise<boolean> {
+    const tokenHash = this.hashRefreshToken(refreshToken);
+
+    if (tokenHash === refreshTokenHash) {
+      return true;
+    }
+
+    if (!refreshTokenHash.startsWith('$2')) {
+      return false;
+    }
+
+    return bcrypt.compare(refreshToken, refreshTokenHash);
+  }
+
+  private cacheProfile(id: string, user: User, now: number): void {
+    if (this.profileCache.size >= PROFILE_CACHE_MAX_SIZE) {
+      const oldestKey = this.profileCache.keys().next().value;
+      if (oldestKey) {
+        this.profileCache.delete(oldestKey);
+      }
+    }
+
+    this.profileCache.set(id, {
+      user,
+      expiresAt: now + PROFILE_CACHE_TTL_MS,
+    });
   }
 }

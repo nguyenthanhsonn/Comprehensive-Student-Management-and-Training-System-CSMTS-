@@ -1,4 +1,4 @@
-import { UserRole } from 'src/common/shared';
+import { UserRole } from 'src/common/shared';       
 import { IsEmail, IsEnum, IsString, MinLength } from 'class-validator';
 
 export class CreateUserDto {

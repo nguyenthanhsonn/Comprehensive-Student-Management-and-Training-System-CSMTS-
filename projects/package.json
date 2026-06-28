@@ -2,9 +2,12 @@
   "name": "smaste-backend",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@10.28.0",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "dev": "node -r ts-node/register/transpile-only -r tsconfig-paths/register src/main.ts",
+    "dev": "node --watch -r ts-node/register/transpile-only -r tsconfig-paths/register src/main.ts",
+    "dev:once": "node -r ts-node/register/transpile-only -r tsconfig-paths/register src/main.ts",
+    "dev:watch": "nest start --watch",
     "start": "nest start",
     "start:dev": "node -r ts-node/register/transpile-only -r tsconfig-paths/register src/main.ts",
     "start:prod": "node dist/main.js",

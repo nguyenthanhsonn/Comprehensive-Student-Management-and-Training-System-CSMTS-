@@ -28,7 +28,7 @@ async function main() {
 
   try {
     console.log('Đang băm mật khẩu mặc định...');
-    const passwordHash = await bcrypt.hash(DEFAULT_PASSWORD, 12);
+    const passwordHash = await bcrypt.hash(DEFAULT_PASSWORD, 10);
 
     // Các tài khoản này đủ để test Auth, Student profile và RoleGuard.
     const admin = await prisma.user.upsert({

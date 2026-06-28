@@ -19,7 +19,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   me(@Req() request: RequestWithUser) {
-    return this.authService.me(request.user);
+    return this.authService.getProfile(request.user.id);
   }
 
   @Post('refresh-token')
