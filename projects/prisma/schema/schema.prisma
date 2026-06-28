@@ -64,10 +64,12 @@ model User {
   phone                 String?   @db.VarChar(20)
   dateOfBirth           DateTime? @map("date_of_birth") @db.Date
   isActive              Boolean   @default(true) @map("is_active")
-  refreshTokenHash      String?   @map("refresh_token_hash") @db.VarChar(255)
+  // Lưu ý: Chuỗi hash SHA-256 có độ dài cố định là 64 ký tự hex, 
+  // nên sửa VarChar(255) thành VarChar(64) để tiết kiệm dung lượng bộ nhớ lưu trữ
+  refreshTokenHash      String?   @map("refresh_token_hash") @db.VarChar(64)
   refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at") @db.Timestamptz
   createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt             DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz // BỎ @default(now())
 
   // Relations
   classStudents             ClassStudent[]
@@ -79,6 +81,8 @@ model User {
   adminFinalizedForms       EvaluationForm[]           @relation("AdminFinalizer")
   posts                     Post[]
 
+  // INDEX QUAN TRỌNG ĐỂ LOGIN SIÊU NHANH
+  @@index([email])
   @@map("users")
 }
 
@@ -88,7 +92,7 @@ model Post {
   content   String   @db.Text
   authorId  String   @map("author_id") @db.Uuid
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz // BỎ @default(now())
 
   author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
@@ -274,7 +278,7 @@ model EvaluationForm {
 
   submittedAt DateTime? @map("submitted_at") @db.Timestamptz
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz // BỎ @default(now())
 
   // Relations
   student         User                @relation("StudentForms", fields: [studentId], references: [id], onDelete: Cascade)

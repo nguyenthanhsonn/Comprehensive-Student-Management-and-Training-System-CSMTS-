@@ -1,5 +1,5 @@
 import { config } from "dotenv";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath } from "url";
 import { defineConfig, env } from "prisma/config";
 
 config({

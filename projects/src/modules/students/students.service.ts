@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -7,125 +8,95 @@ import { PrismaService } from '../../database/prisma.service';
 import { Prisma } from '../../generated/prisma/client';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { UpdateStudentContactDto } from './dto/update-student-contact.dto';
+import {
+  mapStudentProfile,
+  type StudentProfile,
+} from './mappers/student.mapper';
+import {
+  studentEvaluationSelect,
+  studentProfileSelect,
+  type StudentEvaluationRecord,
+  type StudentProfileRecord,
+} from './selects/student.select';
 
-const studentProfileSelect = {
-  id: true,
-  email: true,
-  fullName: true,
-  role: true,
-  phone: true,
-  dateOfBirth: true,
-  isActive: true,
-  createdAt: true,
-  updatedAt: true,
-  classStudents: {
-    orderBy: { enrolledAt: 'desc' },
-    take: 1,
-    select: {
-      studentCode: true,
-      enrolledAt: true,
-      class: {
-        select: {
-          id: true,
-          code: true,
-          name: true,
-          enrollmentYear: true,
-          major: {
-            select: {
-              id: true,
-              code: true,
-              name: true,
-              faculty: {
-                select: {
-                  id: true,
-                  code: true,
-                  name: true,
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  },
-} satisfies Prisma.UserSelect;
+type CachedStudentProfile = {
+  profile: StudentProfile;
+  expiresAt: number;
+};
 
-const studentEvaluationSelect = {
-  id: true,
-  status: true,
-  studentScore: true,
-  classScore: true,
-  finalScore: true,
-  rank: true,
-  submittedAt: true,
-  createdAt: true,
-  updatedAt: true,
-  class: {
-    select: {
-      id: true,
-      code: true,
-      name: true,
-    },
-  },
-  semester: {
-    select: {
-      id: true,
-      year: true,
-      semester: true,
-      startDate: true,
-      endDate: true,
-      studentDeadline: true,
-      classDeadline: true,
-      facultyDeadline: true,
-      isActive: true,
-    },
-  },
-} satisfies Prisma.EvaluationFormSelect;
-
-type StudentProfileRecord = Prisma.UserGetPayload<{
-  select: typeof studentProfileSelect;
-}>;
-
-type StudentEvaluationRecord = Prisma.EvaluationFormGetPayload<{
-  select: typeof studentEvaluationSelect;
-}>;
+const STUDENT_PROFILE_CACHE_TTL_MS = 30_000;
+const STUDENT_PROFILE_CACHE_MAX_SIZE = 1_000;
 
 @Injectable()
 export class StudentsService {
+  private readonly studentProfileCache = new Map<string, CachedStudentProfile>();
+
   constructor(private readonly prisma: PrismaService) {}
 
-  async getMe(user: AuthenticatedUser) {
+  async getProfileStudent(userId: string): Promise<StudentProfile> {
+    const cachedProfile = this.studentProfileCache.get(userId);
+    const now = Date.now();
+
+    if (cachedProfile && cachedProfile.expiresAt > now) {
+      return cachedProfile.profile;
+    }
+
+    if (cachedProfile) {
+      this.studentProfileCache.delete(userId);
+    }
+
     const student = await this.prisma.user.findUnique({
-      where: { id: user.id },
+      where: { id: userId },
       select: studentProfileSelect,
     });
 
     if (!student) {
-      throw new NotFoundException('Student not found');
+      throw new NotFoundException('Không tìm thấy sinh viên');
     }
 
-    return this.toStudentProfile(student);
+    const profile = mapStudentProfile(student);
+    this.cacheStudentProfile(userId, profile, now);
+
+    return profile;
   }
 
-  async updateMyContact(user: AuthenticatedUser, dto: UpdateStudentContactDto) {
-    if (!Object.prototype.hasOwnProperty.call(dto, 'phone')) {
-      throw new BadRequestException('No contact information provided');
+  async updateProfile(userId: string, dto: UpdateStudentContactDto): Promise<StudentProfile> {
+    const updateData: Prisma.UserUpdateInput = {
+      ...(dto?.email !== undefined ? { email: dto.email } : {}),
+      ...(dto?.phone !== undefined ? { phone: dto.phone || null } : {}),
+    };
+
+    if (Object.keys(updateData).length === 0) {
+      throw new BadRequestException('Chưa cung cấp thông tin cần cập nhật');
     }
 
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        phone: dto.phone ?? null,
-      },
-      select: { id: true },
-    });
+    try {
+      const student: StudentProfileRecord = await this.prisma.user.update({
+        where: { id: userId },
+        data: updateData,
+        select: studentProfileSelect,
+      });
 
-    return this.getMe(user);
+      const profile = mapStudentProfile(student);
+      this.cacheStudentProfile(userId, profile, Date.now());
+
+      return profile;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          throw new ConflictException('Email đã tồn tại');
+        }
+
+        if (error.code === 'P2025') {
+          throw new NotFoundException('Không tìm thấy sinh viên');
+        }
+      }
+
+      throw error;
+    }
   }
 
-  async getMyEvaluations(
-    user: AuthenticatedUser,
-  ): Promise<StudentEvaluationRecord[]> {
+  async getMyEvaluations(user: AuthenticatedUser): Promise<StudentEvaluationRecord[]> {
     return this.prisma.evaluationForm.findMany({
       where: { studentId: user.id },
       select: studentEvaluationSelect,
@@ -133,46 +104,17 @@ export class StudentsService {
     });
   }
 
-  private toStudentProfile(student: StudentProfileRecord) {
-    const currentEnrollment = student.classStudents[0] ?? null;
-    const currentClass = currentEnrollment?.class ?? null;
-    const currentMajor = currentClass?.major ?? null;
-    const currentFaculty = currentMajor?.faculty ?? null;
+  private cacheStudentProfile(id: string, profile: StudentProfile, now: number): void {
+    if (this.studentProfileCache.size >= STUDENT_PROFILE_CACHE_MAX_SIZE) {
+      const oldestKey = this.studentProfileCache.keys().next().value;
+      if (oldestKey) {
+        this.studentProfileCache.delete(oldestKey);
+      }
+    }
 
-    return {
-      id: student.id,
-      email: student.email,
-      fullName: student.fullName,
-      role: student.role,
-      phone: student.phone,
-      dateOfBirth: student.dateOfBirth,
-      isActive: student.isActive,
-      createdAt: student.createdAt,
-      updatedAt: student.updatedAt,
-      studentCode: currentEnrollment?.studentCode ?? null,
-      enrolledAt: currentEnrollment?.enrolledAt ?? null,
-      class: currentClass
-        ? {
-            id: currentClass.id,
-            code: currentClass.code,
-            name: currentClass.name,
-            enrollmentYear: currentClass.enrollmentYear,
-          }
-        : null,
-      major: currentMajor
-        ? {
-            id: currentMajor.id,
-            code: currentMajor.code,
-            name: currentMajor.name,
-          }
-        : null,
-      faculty: currentFaculty
-        ? {
-            id: currentFaculty.id,
-            code: currentFaculty.code,
-            name: currentFaculty.name,
-          }
-        : null,
-    };
+    this.studentProfileCache.set(id, {
+      profile,
+      expiresAt: now + STUDENT_PROFILE_CACHE_TTL_MS,
+    });
   }
 }

@@ -1,12 +1,33 @@
-import { ValidationPipe } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { HttpExceptionFilter } from './common/filters/http-exception.filter';
-import { ResponseInterceptor } from './common/interceptors/response.interceptor';
-
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const debugStartup = process.env.DEBUG_STARTUP === 'true';
+
+  if (debugStartup) console.time('startup');
+  if (debugStartup) console.time('load-nest');
+  const [{ ValidationPipe }, { ConfigService }, { NestFactory }] =
+    await Promise.all([
+      import('@nestjs/common'),
+      import('@nestjs/config'),
+      import('@nestjs/core'),
+    ]);
+  if (debugStartup) console.timeEnd('load-nest');
+
+  if (debugStartup) console.time('load-app-support');
+  const [{ HttpExceptionFilter }, { ResponseInterceptor }] = await Promise.all([
+    import('./common/filters/http-exception.filter'),
+    import('./common/interceptors/response.interceptor'),
+  ]);
+  if (debugStartup) console.timeEnd('load-app-support');
+
+  if (debugStartup) console.time('load-app-module');
+  const { AppModule } = await import('./app.module');
+  if (debugStartup) console.timeEnd('load-app-module');
+
+  if (debugStartup) console.time('create-nest-app');
+  const app = await NestFactory.create(AppModule, {
+    abortOnError: false,
+  });
+  if (debugStartup) console.timeEnd('create-nest-app');
+
   const configService = app.get(ConfigService);
 
   app.setGlobalPrefix('api/v1');
@@ -28,6 +49,7 @@ async function bootstrap() {
   const host = configService.get<string>('app.host') ?? '127.0.0.1';
 
   await app.listen(port, host);
+  if (debugStartup) console.timeEnd('startup');
 }
 
 void bootstrap();

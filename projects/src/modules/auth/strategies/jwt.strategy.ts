@@ -22,22 +22,14 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  async validate(payload: JwtPayload): Promise<AuthenticatedUser> {
+  async validate(payload: JwtPayload): Promise<any> {
     if (!payload.jti || this.tokenStore.isTokenRevoked(payload)) {
       throw new UnauthorizedException('Invalid access token');
     }
-
-    const user = await this.usersService.findById(payload.sub);
-    if (!user.isActive) {
-      throw new UnauthorizedException('User account is inactive');
-    }
-
     return {
-      id: user.id,
-      email: user.email,
-      fullName: user.fullName,
-      role: user.role as UserRole,
-      isActive: user.isActive,
+      id: payload.sub,
+      email: payload.email,
+      role: payload.role,
       accessTokenId: payload.jti,
       tokenIssuedAt: payload.iat,
       tokenExpiresAt: payload.exp,
