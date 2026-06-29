@@ -44,21 +44,20 @@ export class TrainingEvaluationsController {
     return this.trainingEvaluationsService.findMine(request.user);
   }
 
-  @Get(':id')
-  findOne(
+  @Get(':id/summary')
+  getSummary(
     @Req() request: RequestWithUser,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    return this.trainingEvaluationsService.findOne(request.user, id);
+    return this.trainingEvaluationsService.getSummary(request.user, id);
   }
 
-  @Patch(':id')
-  updateDraft(
+  @Get(':id/status')
+  getStatus(
     @Req() request: RequestWithUser,
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateTrainingEvaluationDraftDto,
   ) {
-    return this.trainingEvaluationsService.updateDraft(request.user, id, dto);
+    return this.trainingEvaluationsService.getStatus(request.user, id);
   }
 
   @Get(':id/study-score')
@@ -164,5 +163,30 @@ export class TrainingEvaluationsController {
       id,
       dto,
     );
+  }
+
+  @Post(':id/submit')
+  submit(
+    @Req() request: RequestWithUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.trainingEvaluationsService.submit(request.user, id);
+  }
+
+  @Get(':id')
+  findOne(
+    @Req() request: RequestWithUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.trainingEvaluationsService.findOne(request.user, id);
+  }
+
+  @Patch(':id')
+  updateDraft(
+    @Req() request: RequestWithUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateTrainingEvaluationDraftDto,
+  ) {
+    return this.trainingEvaluationsService.updateDraft(request.user, id, dto);
   }
 }
