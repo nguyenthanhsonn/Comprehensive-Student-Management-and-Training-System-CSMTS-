@@ -1,6 +1,4 @@
-packages:
-  - apps/*
-  - packages/*
-
-onlyBuiltDependencies:
-  - bcrypt
+allowBuilds:
+  '@prisma/engines': true
+  bcrypt: true
+  prisma: true

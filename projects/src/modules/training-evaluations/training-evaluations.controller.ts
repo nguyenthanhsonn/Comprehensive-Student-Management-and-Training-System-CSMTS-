@@ -29,7 +29,7 @@ import { TrainingEvaluationsService } from './training-evaluations.service';
 export class TrainingEvaluationsController {
   constructor(
     private readonly trainingEvaluationsService: TrainingEvaluationsService,
-  ) {}
+  ) { }
 
   @Post()
   create(

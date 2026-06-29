@@ -1,0 +1,55 @@
+async function bootstrap() {
+  const debugStartup = process.env.DEBUG_STARTUP === 'true';
+
+  if (debugStartup) console.time('startup');
+  if (debugStartup) console.time('load-nest');
+  const [{ ValidationPipe }, { ConfigService }, { NestFactory }] =
+    await Promise.all([
+      import('@nestjs/common'),
+      import('@nestjs/config'),
+      import('@nestjs/core'),
+    ]);
+  if (debugStartup) console.timeEnd('load-nest');
+
+  if (debugStartup) console.time('load-app-support');
+  const [{ HttpExceptionFilter }, { ResponseInterceptor }] = await Promise.all([
+    import('./common/filters/http-exception.filter'),
+    import('./common/interceptors/response.interceptor'),
+  ]);
+  if (debugStartup) console.timeEnd('load-app-support');
+
+  if (debugStartup) console.time('load-app-module');
+  const { AppModule } = await import('./app.module');
+  if (debugStartup) console.timeEnd('load-app-module');
+
+  if (debugStartup) console.time('create-nest-app');
+  const app = await NestFactory.create(AppModule, {
+    abortOnError: false,
+  });
+  if (debugStartup) console.timeEnd('create-nest-app');
+
+  const configService = app.get(ConfigService);
+
+  app.setGlobalPrefix('api/v1');
+  app.enableCors({
+    origin: configService.get<string>('app.frontendUrl'),
+    credentials: true,
+  });
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    }),
+  );
+  app.useGlobalFilters(new HttpExceptionFilter());
+  app.useGlobalInterceptors(new ResponseInterceptor());
+
+  const port = configService.get<number>('app.port') ?? 5050;
+  const host = configService.get<string>('app.host') ?? '127.0.0.1';
+
+  await app.listen(port, host);
+  if (debugStartup) console.timeEnd('startup');
+}
+
+void bootstrap();

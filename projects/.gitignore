@@ -4,6 +4,7 @@ node_modules/
 .next/
 dist/
 coverage/
+src/generated/
 
 .env
 .env.*.local
@@ -11,6 +12,7 @@ coverage/
 
 *.log
 .DS_Store
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 =======
 
@@ -18,3 +20,7 @@ coverage/
 prisma/migrations/
 postman/
 >>>>>>> Stashed changes
+=======
+
+.agents/
+>>>>>>> develop

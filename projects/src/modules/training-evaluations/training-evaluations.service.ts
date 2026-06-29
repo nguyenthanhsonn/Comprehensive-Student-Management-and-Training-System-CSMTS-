@@ -428,7 +428,7 @@ const CLASSIFICATION_LABELS: Record<EvalRank, string> = {
 
 @Injectable()
 export class TrainingEvaluationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(
     user: AuthenticatedUser,
@@ -760,10 +760,10 @@ export class TrainingEvaluationsService {
     const score = Math.min(
       20,
       POLITICAL_ACTIVITY_POINTS[dto.politicalActivityLevel] +
-        CULTURE_SPORT_POINTS[dto.cultureSportLevel] +
-        CLUB_ACTIVITY_POINTS[dto.clubActivityLevel] +
-        SOCIAL_PREVENTION_POINTS[dto.socialPreventionLevel] +
-        dto.rewardScore,
+      CULTURE_SPORT_POINTS[dto.cultureSportLevel] +
+      CLUB_ACTIVITY_POINTS[dto.clubActivityLevel] +
+      SOCIAL_PREVENTION_POINTS[dto.socialPreventionLevel] +
+      dto.rewardScore,
     );
     const activityData = {
       politicalActivityLevel: dto.politicalActivityLevel,
@@ -818,8 +818,8 @@ export class TrainingEvaluationsService {
     const score = Math.min(
       25,
       LAW_COMPLIANCE_POINTS[dto.lawComplianceLevel] +
-        VOLUNTEER_ACTIVITY_POINTS[dto.volunteerActivityLevel] +
-        COMMUNITY_RELATIONSHIP_POINTS[dto.communityRelationshipLevel],
+      VOLUNTEER_ACTIVITY_POINTS[dto.volunteerActivityLevel] +
+      COMMUNITY_RELATIONSHIP_POINTS[dto.communityRelationshipLevel],
     );
     const communityData = {
       lawComplianceLevel: dto.lawComplianceLevel,
@@ -1044,10 +1044,10 @@ export class TrainingEvaluationsService {
     const totalScore = Math.min(
       100,
       (scores.studyScore ?? 0) +
-        (scores.disciplineScore ?? 0) +
-        (scores.activityScore ?? 0) +
-        (scores.communityScore ?? 0) +
-        (scores.roleScore ?? 0),
+      (scores.disciplineScore ?? 0) +
+      (scores.activityScore ?? 0) +
+      (scores.communityScore ?? 0) +
+      (scores.roleScore ?? 0),
     );
 
     return {
