@@ -5,7 +5,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
-  EvalRank,
   FormStatus,
   Prisma,
   SemesterNo,
@@ -16,435 +15,92 @@ import {
   CreateTrainingEvaluationDto,
   type TrainingEvaluationSemester,
 } from './dto/create-training-evaluation.dto';
-import {
-  type ClubActivityLevel,
-  type CultureSportLevel,
-  type PoliticalActivityLevel,
-  type SocialPreventionLevel,
-  UpdateActivityScoreDto,
-} from './dto/update-activity-score.dto';
-import {
-  type CommunityRelationshipLevel,
-  type LawComplianceLevel,
-  UpdateCommunityScoreDto,
-  type VolunteerActivityLevel,
-} from './dto/update-community-score.dto';
+import { UpdateActivityScoreDto } from './dto/update-activity-score.dto';
+import { UpdateCommunityScoreDto } from './dto/update-community-score.dto';
 import { UpdateDisciplineScoreDto } from './dto/update-discipline-score.dto';
-import {
-  type ManagementSkillLevel,
-  type PositionGroup,
-  type SpecialAchievementLevel,
-  type TaskCompletionLevel,
-  UpdateRoleScoreDto,
-} from './dto/update-role-score.dto';
-import {
-  type AcademicRank,
-  type RegularScoreLevel,
-  type StudyActivityCode,
-  UpdateStudyScoreDto,
-} from './dto/update-study-score.dto';
+import { UpdateRoleScoreDto } from './dto/update-role-score.dto';
+import { UpdateStudyScoreDto } from './dto/update-study-score.dto';
 import { UpdateTrainingEvaluationDraftDto } from './dto/update-training-evaluation-draft.dto';
-
-const trainingEvaluationSummarySelect = {
-  id: true,
-  studentId: true,
-  status: true,
-  studentScore: true,
-  rank: true,
-  semester: {
-    select: {
-      year: true,
-      semester: true,
-    },
-  },
-} satisfies Prisma.EvaluationFormSelect;
-
-const trainingEvaluationDetailSelect = {
-  ...trainingEvaluationSummarySelect,
-  note: true,
-  studyScore: true,
-  disciplineScore: true,
-  activityScore: true,
-  communityScore: true,
-  roleScore: true,
-  student: {
-    select: {
-      phone: true,
-    },
-  },
-} satisfies Prisma.EvaluationFormSelect;
-const trainingEvaluationStatusSelect = {
-  id: true,
-  status: true,
-  submittedAt: true,
-  classReviewedAt: true,
-  facultyReviewedAt: true,
-  adminFinalizedAt: true,
-} satisfies Prisma.EvaluationFormSelect;
-
-const trainingEvaluationScoreSummarySelect = {
-  ...trainingEvaluationStatusSelect,
-  studentId: true,
-  studentScore: true,
-  classScore: true,
-  finalScore: true,
-  rank: true,
-  studyScore: true,
-  disciplineScore: true,
-  activityScore: true,
-  communityScore: true,
-  roleScore: true,
-  semester: {
-    select: {
-      year: true,
-      semester: true,
-    },
-  },
-} satisfies Prisma.EvaluationFormSelect;
-
-const studyScoreSelect = {
-  id: true,
-  status: true,
-  studentScore: true,
-  rank: true,
-  studyScore: true,
-  studyData: true,
-} satisfies Prisma.EvaluationFormSelect;
-
-const disciplineScoreSelect = {
-  id: true,
-  status: true,
-  studentScore: true,
-  rank: true,
-  disciplineBaseScore: true,
-  disciplineScore: true,
-  disciplineData: true,
-} satisfies Prisma.EvaluationFormSelect;
-
-const activityScoreSelect = {
-  id: true,
-  status: true,
-  studentScore: true,
-  rank: true,
-  activityScore: true,
-  activityData: true,
-} satisfies Prisma.EvaluationFormSelect;
-
-const communityScoreSelect = {
-  id: true,
-  status: true,
-  studentScore: true,
-  rank: true,
-  communityScore: true,
-  communityData: true,
-} satisfies Prisma.EvaluationFormSelect;
-
-const roleScoreSelect = {
-  id: true,
-  status: true,
-  studentScore: true,
-  rank: true,
-  roleScore: true,
-  roleData: true,
-} satisfies Prisma.EvaluationFormSelect;
-
-type TrainingEvaluationSummaryRecord = Prisma.EvaluationFormGetPayload<{
-  select: typeof trainingEvaluationSummarySelect;
-}>;
-
-type TrainingEvaluationDetailRecord = Prisma.EvaluationFormGetPayload<{
-  select: typeof trainingEvaluationDetailSelect;
-}>;
-type TrainingEvaluationStatusRecord = Prisma.EvaluationFormGetPayload<{
-  select: typeof trainingEvaluationStatusSelect;
-}>;
-
-type TrainingEvaluationScoreSummaryRecord = Prisma.EvaluationFormGetPayload<{
-  select: typeof trainingEvaluationScoreSummarySelect;
-}>;
-
-type StudyScoreRecord = Prisma.EvaluationFormGetPayload<{
-  select: typeof studyScoreSelect;
-}>;
-
-type DisciplineScoreRecord = Prisma.EvaluationFormGetPayload<{
-  select: typeof disciplineScoreSelect;
-}>;
-
-type ActivityScoreRecord = Prisma.EvaluationFormGetPayload<{
-  select: typeof activityScoreSelect;
-}>;
-
-type CommunityScoreRecord = Prisma.EvaluationFormGetPayload<{
-  select: typeof communityScoreSelect;
-}>;
-
-type RoleScoreRecord = Prisma.EvaluationFormGetPayload<{
-  select: typeof roleScoreSelect;
-}>;
-
-type TrainingEvaluationSummaryResponse = {
-  id: string;
-  studentId: string;
-  semester: TrainingEvaluationSemester;
-  academicYear: string;
-  status: string;
-  totalScore: number;
-  classification: string | null;
-};
-
-type TrainingEvaluationDetailResponse = TrainingEvaluationSummaryResponse & {
-  phone: string | null;
-  note: string | null;
-  studyScore: number;
-  disciplineScore: number;
-  activityScore: number;
-  communityScore: number;
-  roleScore: number;
-};
-type ReviewStepStatus = 'pending' | 'current' | 'completed' | 'rejected';
-
-type ReviewStepResponse = {
-  key: string;
-  label: string;
-  status: ReviewStepStatus;
-  completedAt: Date | null;
-};
-
-type TrainingEvaluationStatusResponse = {
-  evaluationId: string;
-  status: string;
-  statusLabel: string;
-  currentStep: string;
-  submittedAt: Date | null;
-  steps: ReviewStepResponse[];
-};
-
-type TrainingEvaluationScoreSummaryResponse =
-  TrainingEvaluationSummaryResponse & {
-    statusLabel: string;
-    classScore: number | null;
-    finalScore: number | null;
-    sectionScores: {
-      studyScore: number;
-      disciplineScore: number;
-      activityScore: number;
-      communityScore: number;
-      roleScore: number;
-    };
-    review: TrainingEvaluationStatusResponse;
-  };
-
-type StudyActivityResponse = {
-  code: string;
-  checked: boolean;
-  score: number;
-};
-
-type StudyScoreResponse = {
-  evaluationId: string;
-  regularScoreLevel: string | null;
-  academicRank: string | null;
-  activities: StudyActivityResponse[];
-  score: number;
-  maxScore: 20;
-  totalScore: number;
-  classification: string | null;
-};
-
-type DisciplineViolationResponse = {
-  code: string;
-  count: number;
-  deductScore: number;
-};
-
-type DisciplineScoreResponse = {
-  evaluationId: string;
-  baseScore: number;
-  violations: DisciplineViolationResponse[];
-  deductedScore: number;
-  score: number;
-  maxScore: 25;
-  totalScore: number;
-  classification: string | null;
-};
-
-type ActivityScoreResponse = {
-  evaluationId: string;
-  politicalActivityLevel: string | null;
-  cultureSportLevel: string | null;
-  clubActivityLevel: string | null;
-  socialPreventionLevel: string | null;
-  rewardScore: number;
-  score: number;
-  maxScore: 20;
-  totalScore: number;
-  classification: string | null;
-};
-
-type CommunityScoreResponse = {
-  evaluationId: string;
-  lawComplianceLevel: string | null;
-  volunteerActivityLevel: string | null;
-  communityRelationshipLevel: string | null;
-  score: number;
-  maxScore: 25;
-  totalScore: number;
-  classification: string | null;
-};
-
-type RoleScoreResponse = {
-  evaluationId: string;
-  studentRoleType: string | null;
-  positionGroup: string | null;
-  taskCompletionLevel: string | null;
-  managementSkillLevel: string | null;
-  normalStudentActivityScore: number | null;
-  specialAchievementLevel: string | null;
-  score: number;
-  maxScore: 10;
-  totalScore: number;
-  classification: string | null;
-};
-
-type ScoreParts = {
-  studyScore?: number;
-  disciplineScore?: number;
-  activityScore?: number;
-  communityScore?: number;
-  roleScore?: number;
-};
-
-const REGULAR_SCORE_POINTS: Record<RegularScoreLevel, number> = {
-  GTE_9: 6,
-  FROM_7_TO_UNDER_9: 5,
-  FROM_5_TO_UNDER_7: 4,
-  FROM_4_TO_UNDER_5: 2,
-  FROM_1_TO_UNDER_4: 1,
-};
-
-const STUDY_ACTIVITY_POINTS: Record<StudyActivityCode, number> = {
-  ACADEMIC_EVENT_PARTICIPATION: 2,
-  SCIENTIFIC_PUBLICATION_OR_CONTEST: 2,
-  SCIENTIFIC_AWARD: 2,
-};
-
-const ACADEMIC_RANK_POINTS: Record<AcademicRank, number> = {
-  EXCELLENT: 8,
-  GOOD: 7,
-  FAIR: 6,
-  AVERAGE: 4,
-  WEAK_NO_WARNING: 2,
-  WEAK_WARNING_FIRST: 1,
-};
-
-const POLITICAL_ACTIVITY_POINTS: Record<PoliticalActivityLevel, number> = {
-  GOOD_PARTICIPATION: 5,
-  ABSENT_ONCE: 3,
-  ABSENT_TWICE: 2,
-  ABSENT_MORE_THAN_TWICE_OR_NOT_PARTICIPATED: 0,
-};
-
-const CULTURE_SPORT_POINTS: Record<CultureSportLevel, number> = {
-  FULL_EFFECTIVE_PARTICIPATION: 5,
-  EFFECTIVE_PARTICIPATION_FROM_HALF: 3,
-  ENCOURAGED_OTHERS: 2,
-  ABSENT_OVER_HALF: 1,
-  NOT_PARTICIPATED: 0,
-};
-
-const CLUB_ACTIVITY_POINTS: Record<ClubActivityLevel, number> = {
-  FULL_EFFECTIVE_PARTICIPATION: 5,
-  ACTIVE_ONE_OR_MORE: 3,
-  ACTIVE_SUPPORTER: 2,
-  ABSENT_OVER_HALF: 1,
-  NOT_PARTICIPATED: 0,
-};
-
-const SOCIAL_PREVENTION_POINTS: Record<SocialPreventionLevel, number> = {
-  MULTIPLE_ACTIVITIES_OR_REPORTING: 3,
-  ONE_EFFECTIVE_ACTIVITY: 2,
-  AWARENESS_OR_SUPPORT: 1,
-  REMINDED_VIOLATION: 0,
-};
-
-const LAW_COMPLIANCE_POINTS: Record<LawComplianceLevel, number> = {
-  GOOD_WITH_REWARD: 10,
-  GOOD: 8,
-  AVERAGE: 5,
-  VIOLATED: 0,
-};
-
-const VOLUNTEER_ACTIVITY_POINTS: Record<VolunteerActivityLevel, number> = {
-  ACTIVE_WITH_REWARD: 10,
-  ACTIVE: 8,
-  PARTICIPATED: 5,
-  NOT_PARTICIPATED: 0,
-};
-
-const COMMUNITY_RELATIONSHIP_POINTS: Record<
-  CommunityRelationshipLevel,
-  number
-> = {
-  GOOD: 5,
-  AVERAGE: 3,
-  BAD: 0,
-};
-
-const LEADER_TASK_COMPLETION_POINTS: Record<TaskCompletionLevel, number> = {
-  EXCELLENT: 7,
-  GOOD: 6,
-  COMPLETED: 4,
-  POOR: 0,
-};
-
-const MEMBER_TASK_COMPLETION_POINTS: Record<TaskCompletionLevel, number> = {
-  EXCELLENT: 6,
-  GOOD: 5,
-  COMPLETED: 3,
-  POOR: 0,
-};
-
-const MANAGEMENT_SKILL_POINTS: Record<ManagementSkillLevel, number> = {
-  HEAD_POSITION: 3,
-  DEPUTY_POSITION: 2,
-  MEMBER_POSITION: 1,
-};
-
-const SPECIAL_ACHIEVEMENT_POINTS: Record<SpecialAchievementLevel, number> = {
-  SCHOOL_LEVEL_OR_HIGHER: 7,
-  FACULTY_LEVEL: 5,
-  NONE: 0,
-};
-
-const CLASSIFICATION_LABELS: Record<EvalRank, string> = {
-  [EvalRank.excellent]: 'Xuất sắc',
-  [EvalRank.good]: 'Tốt',
-  [EvalRank.fair]: 'Khá',
-  [EvalRank.average]: 'Trung bình',
-  [EvalRank.weak]: 'Yếu',
-  [EvalRank.poor]: 'Kém',
-};
+import {
+  ACADEMIC_RANK_POINTS,
+  CLUB_ACTIVITY_POINTS,
+  COMMUNITY_RELATIONSHIP_POINTS,
+  CULTURE_SPORT_POINTS,
+  LAW_COMPLIANCE_POINTS,
+  POLITICAL_ACTIVITY_POINTS,
+  REGULAR_SCORE_POINTS,
+  SOCIAL_PREVENTION_POINTS,
+  STUDY_ACTIVITY_POINTS,
+  VOLUNTEER_ACTIVITY_POINTS,
+} from './constants/score-points.constant';
+import {
+  mapToActivityScoreResponse,
+  mapToCommunityScoreResponse,
+  mapToDisciplineScoreResponse,
+  mapToListResponse,
+  mapToDetailResponse,
+  mapToRoleScoreResponse,
+  mapToScoreSummaryResponse,
+  mapToStatusResponse,
+  mapToStudyScoreResponse,
+} from './helpers/evaluation.mapper';
+import {
+  assertEditable,
+  calculateRoleScore,
+  calculateScoreResult,
+} from './helpers/score.calculator';
+import {
+  activityScoreSelect,
+  communityScoreSelect,
+  disciplineScoreSelect,
+  evaluationDetailSelect,
+  evaluationListSelect,
+  evaluationScoreSummarySelect,
+  evaluationStatusSelect,
+  roleScoreSelect,
+  studyScoreSelect,
+  type ActivityScoreRecord,
+  type CommunityScoreRecord,
+  type DisciplineScoreRecord,
+  type EvaluationDetailRecord,
+  type EvaluationScoreSummaryRecord,
+  type EvaluationStatusRecord,
+  type RoleScoreRecord,
+  type StudyScoreRecord,
+} from './selects/evaluation-form.select';
+import type {
+  ActivityScoreResponse,
+  CommunityScoreResponse,
+  DisciplineScoreResponse,
+  EvaluationDetailResponse,
+  EvaluationListResponse,
+  EvaluationScoreSummaryResponse,
+  EvaluationStatusResponse,
+  RoleScoreResponse,
+  StudyScoreResponse,
+} from './types/evaluation-form.types';
 
 @Injectable()
 export class TrainingEvaluationsService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
+  // ─── Quản lý phiếu (CRUD + lifecycle) ────────────────────────────────────────
+
+  /**
+   * Tạo phiếu đánh giá mới cho học kỳ/năm học được chỉ định.
+   * Sinh viên phải thuộc ít nhất một lớp học và học kỳ phải tồn tại trong hệ thống.
+   * Mỗi sinh viên chỉ được có tối đa 1 phiếu mỗi học kỳ (unique constraint).
+   */
   async create(
     user: AuthenticatedUser,
     dto: CreateTrainingEvaluationDto,
-  ): Promise<TrainingEvaluationSummaryResponse> {
+  ): Promise<EvaluationListResponse> {
     const academicYearStart = this.parseAcademicYearStart(dto.academicYear);
     const semesterNo = this.toSemesterNo(dto.semester);
 
     const [semester, currentClass] = await Promise.all([
       this.prisma.semester.findUnique({
-        where: {
-          year_semester: {
-            year: academicYearStart,
-            semester: semesterNo,
-          },
-        },
+        where: { year_semester: { year: academicYearStart, semester: semesterNo } },
         select: { id: true },
       }),
       this.prisma.classStudent.findFirst({
@@ -475,10 +131,10 @@ export class TrainingEvaluationsService {
           status: FormStatus.draft,
           studentScore: 0,
         },
-        select: trainingEvaluationSummarySelect,
+        select: evaluationListSelect,
       });
 
-      return this.toSummaryResponse(evaluation);
+      return mapToListResponse(evaluation);
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -493,68 +149,85 @@ export class TrainingEvaluationsService {
     }
   }
 
-  async findMine(
-    user: AuthenticatedUser,
-  ): Promise<TrainingEvaluationSummaryResponse[]> {
+  /**
+   * Lấy danh sách tất cả phiếu của sinh viên đang đăng nhập,
+   * sắp xếp mới nhất lên đầu.
+   */
+  async findMine(user: AuthenticatedUser): Promise<EvaluationListResponse[]> {
     const evaluations = await this.prisma.evaluationForm.findMany({
       where: { studentId: user.id },
-      select: trainingEvaluationSummarySelect,
+      select: evaluationListSelect,
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     });
 
-    return evaluations.map((evaluation) => this.toSummaryResponse(evaluation));
+    return evaluations.map(mapToListResponse);
   }
 
+  /**
+   * Lấy chi tiết một phiếu đánh giá theo ID.
+   * Chỉ trả về phiếu của chính sinh viên đang đăng nhập.
+   */
   async findOne(
     user: AuthenticatedUser,
     id: string,
-  ): Promise<TrainingEvaluationDetailResponse> {
+  ): Promise<EvaluationDetailResponse> {
     const evaluation = await this.prisma.evaluationForm.findFirst({
       where: { id, studentId: user.id },
-      select: trainingEvaluationDetailSelect,
+      select: evaluationDetailSelect,
     });
 
     if (!evaluation) {
       throw new NotFoundException('Training evaluation was not found');
     }
 
-    return this.toDetailResponse(evaluation);
+    return mapToDetailResponse(evaluation);
   }
 
+  /**
+   * Lấy tóm tắt điểm toàn phiếu: điểm SV tự chấm, điểm lớp, điểm cuối,
+   * điểm từng mục và trạng thái trong luồng duyệt.
+   */
   async getSummary(
     user: AuthenticatedUser,
     id: string,
-  ): Promise<TrainingEvaluationScoreSummaryResponse> {
+  ): Promise<EvaluationScoreSummaryResponse> {
     const evaluation = await this.findOwnedScoreSummary(user, id);
-    return this.toScoreSummaryResponse(evaluation);
+    return mapToScoreSummaryResponse(evaluation);
   }
 
+  /**
+   * Lấy trạng thái hiện tại và lịch sử duyệt phiếu (4 bước).
+   */
   async getStatus(
     user: AuthenticatedUser,
     id: string,
-  ): Promise<TrainingEvaluationStatusResponse> {
+  ): Promise<EvaluationStatusResponse> {
     const evaluation = await this.findOwnedStatus(user, id);
-    return this.toStatusResponse(evaluation);
+    return mapToStatusResponse(evaluation);
   }
 
+  /**
+   * Sinh viên nộp phiếu để lớp/CVHT duyệt.
+   * Chỉ nộp được khi phiếu đang là draft hoặc bị trả về (rejected).
+   * Khi nộp, hệ thống tính lại tổng điểm và reset toàn bộ thông tin duyệt cũ.
+   */
   async submit(
     user: AuthenticatedUser,
     id: string,
-  ): Promise<TrainingEvaluationScoreSummaryResponse> {
+  ): Promise<EvaluationScoreSummaryResponse> {
     const current = await this.findOwnedScoreSummary(user, id);
 
-    const submittableStatuses: FormStatus[] = [
-      FormStatus.draft,
-      FormStatus.rejected,
-    ];
-
-    if (!submittableStatuses.includes(current.status)) {
+    if (
+      !([FormStatus.draft, FormStatus.rejected] as FormStatus[]).includes(
+        current.status,
+      )
+    ) {
       throw new ConflictException(
         'Only draft or rejected evaluations can be submitted',
       );
     }
 
-    const scoreResult = this.calculateScoreResult({
+    const scoreResult = calculateScoreResult({
       studyScore: current.studyScore,
       disciplineScore: current.disciplineScore,
       activityScore: current.activityScore,
@@ -578,16 +251,22 @@ export class TrainingEvaluationsService {
         adminFinalizedBy: null,
         adminFinalizedAt: null,
       },
-      select: trainingEvaluationScoreSummarySelect,
+      select: evaluationScoreSummarySelect,
     });
 
-    return this.toScoreSummaryResponse(evaluation);
+    return mapToScoreSummaryResponse(evaluation);
   }
+
+  /**
+   * Cập nhật thông tin nháp của phiếu: số điện thoại và/hoặc ghi chú.
+   * Chỉ cập nhật được khi phiếu đang ở trạng thái có thể chỉnh sửa.
+   * Cập nhật SĐT trực tiếp lên bảng User (dùng chung với profile).
+   */
   async updateDraft(
     user: AuthenticatedUser,
     id: string,
     dto: UpdateTrainingEvaluationDraftDto,
-  ): Promise<TrainingEvaluationDetailResponse> {
+  ): Promise<EvaluationDetailResponse> {
     const hasPhone = Object.prototype.hasOwnProperty.call(dto, 'phone');
     const hasNote = Object.prototype.hasOwnProperty.call(dto, 'note');
 
@@ -595,12 +274,12 @@ export class TrainingEvaluationsService {
       throw new BadRequestException('No draft information provided');
     }
 
-    const evaluation = await this.findOwnedEvaluationForWrite(user, id);
-    this.assertEditable(evaluation.status);
+    const evaluation = await this.findOwnedForWrite(user, id);
+    assertEditable(evaluation.status);
 
-    await this.prisma.$transaction(async (transaction) => {
+    await this.prisma.$transaction(async (tx) => {
       if (hasPhone) {
-        await transaction.user.update({
+        await tx.user.update({
           where: { id: user.id },
           data: { phone: dto.phone ?? null },
           select: { id: true },
@@ -608,7 +287,7 @@ export class TrainingEvaluationsService {
       }
 
       if (hasNote) {
-        await transaction.evaluationForm.update({
+        await tx.evaluationForm.update({
           where: { id },
           data: { note: dto.note ?? null },
           select: { id: true },
@@ -619,47 +298,52 @@ export class TrainingEvaluationsService {
     return this.findOne(user, id);
   }
 
+  // ─── Mục I – Ý thức học tập (max 20đ) ────────────────────────────────────────
+
+  /** Lấy điểm và dữ liệu Mục I (ý thức học tập). */
   async getStudyScore(
     user: AuthenticatedUser,
     id: string,
   ): Promise<StudyScoreResponse> {
-    const evaluation = await this.findOwnedStudyScore(user, id);
-    return this.toStudyScoreResponse(evaluation);
+    const evaluation = await this.findOwned<typeof studyScoreSelect, StudyScoreRecord>(
+      user, id, studyScoreSelect,
+    );
+    return mapToStudyScoreResponse(evaluation);
   }
 
+  /**
+   * Cập nhật điểm Mục I – Ý thức học tập.
+   * Tính điểm theo 3 tiêu chí: điểm TB thường xuyên + hoạt động học thuật + xếp loại TBCHT.
+   * Sau khi cập nhật, tổng điểm phiếu được tính lại ngay lập tức.
+   */
   async updateStudyScore(
     user: AuthenticatedUser,
     id: string,
     dto: UpdateStudyScoreDto,
   ): Promise<StudyScoreResponse> {
-    const current = await this.findOwnedEvaluationForWrite(user, id, {
+    const current = await this.findOwnedForWrite(user, id, {
       disciplineScore: true,
       activityScore: true,
       communityScore: true,
       roleScore: true,
     });
-    this.assertEditable(current.status);
+    assertEditable(current.status);
 
-    const activities = dto.activities.map((activity) => ({
-      code: activity.code,
-      checked: activity.checked,
-      score: STUDY_ACTIVITY_POINTS[activity.code],
+    const activities = dto.activities.map((a) => ({
+      code: a.code,
+      checked: a.checked,
+      score: STUDY_ACTIVITY_POINTS[a.code],
     }));
-    const activityScore = activities.reduce(
-      (total, activity) => total + (activity.checked ? activity.score : 0),
+    const activityTotal = activities.reduce(
+      (sum, a) => sum + (a.checked ? a.score : 0),
       0,
     );
     const score =
       REGULAR_SCORE_POINTS[dto.regularScoreLevel] +
-      activityScore +
+      activityTotal +
       ACADEMIC_RANK_POINTS[dto.academicRank];
 
-    const studyData = {
-      regularScoreLevel: dto.regularScoreLevel,
-      academicRank: dto.academicRank,
-      activities,
-    };
-    const scoreResult = this.calculateScoreResult({
+    const { totalScore, rank } = calculateScoreResult({
       studyScore: score,
       disciplineScore: current.disciplineScore,
       activityScore: current.activityScore,
@@ -671,49 +355,55 @@ export class TrainingEvaluationsService {
       where: { id },
       data: {
         studyScore: score,
-        studyData,
-        studentScore: scoreResult.totalScore,
-        rank: scoreResult.rank,
+        studyData: { regularScoreLevel: dto.regularScoreLevel, academicRank: dto.academicRank, activities },
+        studentScore: totalScore,
+        rank,
       },
       select: studyScoreSelect,
     });
 
-    return this.toStudyScoreResponse(updated);
+    return mapToStudyScoreResponse(updated);
   }
 
+  // ─── Mục II – Ý thức chấp hành kỷ luật (max 25đ) ────────────────────────────
+
+  /** Lấy điểm và dữ liệu Mục II (kỷ luật). */
   async getDisciplineScore(
     user: AuthenticatedUser,
     id: string,
   ): Promise<DisciplineScoreResponse> {
-    const evaluation = await this.findOwnedDisciplineScore(user, id);
-    return this.toDisciplineScoreResponse(evaluation);
+    const evaluation = await this.findOwned<typeof disciplineScoreSelect, DisciplineScoreRecord>(
+      user, id, disciplineScoreSelect,
+    );
+    return mapToDisciplineScoreResponse(evaluation);
   }
 
+  /**
+   * Cập nhật điểm Mục II – Ý thức chấp hành kỷ luật.
+   * Điểm = baseScore (25) − tổng điểm trừ từ các vi phạm, tối thiểu là 0.
+   */
   async updateDisciplineScore(
     user: AuthenticatedUser,
     id: string,
     dto: UpdateDisciplineScoreDto,
   ): Promise<DisciplineScoreResponse> {
-    const current = await this.findOwnedEvaluationForWrite(user, id, {
+    const current = await this.findOwnedForWrite(user, id, {
       studyScore: true,
       activityScore: true,
       communityScore: true,
       roleScore: true,
     });
-    this.assertEditable(current.status);
+    assertEditable(current.status);
 
-    const violations = dto.violations.map((violation) => ({
-      code: violation.code,
-      count: violation.count,
-      deductScore: violation.deductScore,
+    const violations = dto.violations.map((v) => ({
+      code: v.code,
+      count: v.count,
+      deductScore: v.deductScore,
     }));
-    const deductedScore = violations.reduce(
-      (total, violation) => total + violation.count * violation.deductScore,
-      0,
-    );
-    const score = Math.max(0, dto.baseScore - deductedScore);
-    const disciplineData = { baseScore: dto.baseScore, violations };
-    const scoreResult = this.calculateScoreResult({
+    const deducted = violations.reduce((sum, v) => sum + v.count * v.deductScore, 0);
+    const score = Math.max(0, dto.baseScore - deducted);
+
+    const { totalScore, rank } = calculateScoreResult({
       studyScore: current.studyScore,
       disciplineScore: score,
       activityScore: current.activityScore,
@@ -726,53 +416,56 @@ export class TrainingEvaluationsService {
       data: {
         disciplineBaseScore: dto.baseScore,
         disciplineScore: score,
-        disciplineData,
-        studentScore: scoreResult.totalScore,
-        rank: scoreResult.rank,
+        disciplineData: { baseScore: dto.baseScore, violations },
+        studentScore: totalScore,
+        rank,
       },
       select: disciplineScoreSelect,
     });
 
-    return this.toDisciplineScoreResponse(updated);
+    return mapToDisciplineScoreResponse(updated);
   }
 
+  // ─── Mục III – Hoạt động chính trị, VH, thể thao (max 20đ) ──────────────────
+
+  /** Lấy điểm và dữ liệu Mục III (hoạt động). */
   async getActivityScore(
     user: AuthenticatedUser,
     id: string,
   ): Promise<ActivityScoreResponse> {
-    const evaluation = await this.findOwnedActivityScore(user, id);
-    return this.toActivityScoreResponse(evaluation);
+    const evaluation = await this.findOwned<typeof activityScoreSelect, ActivityScoreRecord>(
+      user, id, activityScoreSelect,
+    );
+    return mapToActivityScoreResponse(evaluation);
   }
 
+  /**
+   * Cập nhật điểm Mục III – Hoạt động chính trị, VH, thể thao.
+   * Tổng điểm = tổng 4 tiêu chí + điểm khen thưởng, tối đa 20.
+   */
   async updateActivityScore(
     user: AuthenticatedUser,
     id: string,
     dto: UpdateActivityScoreDto,
   ): Promise<ActivityScoreResponse> {
-    const current = await this.findOwnedEvaluationForWrite(user, id, {
+    const current = await this.findOwnedForWrite(user, id, {
       studyScore: true,
       disciplineScore: true,
       communityScore: true,
       roleScore: true,
     });
-    this.assertEditable(current.status);
+    assertEditable(current.status);
 
     const score = Math.min(
       20,
       POLITICAL_ACTIVITY_POINTS[dto.politicalActivityLevel] +
-      CULTURE_SPORT_POINTS[dto.cultureSportLevel] +
-      CLUB_ACTIVITY_POINTS[dto.clubActivityLevel] +
-      SOCIAL_PREVENTION_POINTS[dto.socialPreventionLevel] +
-      dto.rewardScore,
+        CULTURE_SPORT_POINTS[dto.cultureSportLevel] +
+        CLUB_ACTIVITY_POINTS[dto.clubActivityLevel] +
+        SOCIAL_PREVENTION_POINTS[dto.socialPreventionLevel] +
+        dto.rewardScore,
     );
-    const activityData = {
-      politicalActivityLevel: dto.politicalActivityLevel,
-      cultureSportLevel: dto.cultureSportLevel,
-      clubActivityLevel: dto.clubActivityLevel,
-      socialPreventionLevel: dto.socialPreventionLevel,
-      rewardScore: dto.rewardScore,
-    };
-    const scoreResult = this.calculateScoreResult({
+
+    const { totalScore, rank } = calculateScoreResult({
       studyScore: current.studyScore,
       disciplineScore: current.disciplineScore,
       activityScore: score,
@@ -784,49 +477,60 @@ export class TrainingEvaluationsService {
       where: { id },
       data: {
         activityScore: score,
-        activityData,
-        studentScore: scoreResult.totalScore,
-        rank: scoreResult.rank,
+        activityData: {
+          politicalActivityLevel: dto.politicalActivityLevel,
+          cultureSportLevel: dto.cultureSportLevel,
+          clubActivityLevel: dto.clubActivityLevel,
+          socialPreventionLevel: dto.socialPreventionLevel,
+          rewardScore: dto.rewardScore,
+        },
+        studentScore: totalScore,
+        rank,
       },
       select: activityScoreSelect,
     });
 
-    return this.toActivityScoreResponse(updated);
+    return mapToActivityScoreResponse(updated);
   }
 
+  // ─── Mục IV – Ý thức công dân trong cộng đồng (max 25đ) ──────────────────────
+
+  /** Lấy điểm và dữ liệu Mục IV (cộng đồng). */
   async getCommunityScore(
     user: AuthenticatedUser,
     id: string,
   ): Promise<CommunityScoreResponse> {
-    const evaluation = await this.findOwnedCommunityScore(user, id);
-    return this.toCommunityScoreResponse(evaluation);
+    const evaluation = await this.findOwned<typeof communityScoreSelect, CommunityScoreRecord>(
+      user, id, communityScoreSelect,
+    );
+    return mapToCommunityScoreResponse(evaluation);
   }
 
+  /**
+   * Cập nhật điểm Mục IV – Ý thức công dân trong cộng đồng.
+   * Tổng điểm = chấp hành pháp luật + tình nguyện + quan hệ cộng đồng, tối đa 25.
+   */
   async updateCommunityScore(
     user: AuthenticatedUser,
     id: string,
     dto: UpdateCommunityScoreDto,
   ): Promise<CommunityScoreResponse> {
-    const current = await this.findOwnedEvaluationForWrite(user, id, {
+    const current = await this.findOwnedForWrite(user, id, {
       studyScore: true,
       disciplineScore: true,
       activityScore: true,
       roleScore: true,
     });
-    this.assertEditable(current.status);
+    assertEditable(current.status);
 
     const score = Math.min(
       25,
       LAW_COMPLIANCE_POINTS[dto.lawComplianceLevel] +
-      VOLUNTEER_ACTIVITY_POINTS[dto.volunteerActivityLevel] +
-      COMMUNITY_RELATIONSHIP_POINTS[dto.communityRelationshipLevel],
+        VOLUNTEER_ACTIVITY_POINTS[dto.volunteerActivityLevel] +
+        COMMUNITY_RELATIONSHIP_POINTS[dto.communityRelationshipLevel],
     );
-    const communityData = {
-      lawComplianceLevel: dto.lawComplianceLevel,
-      volunteerActivityLevel: dto.volunteerActivityLevel,
-      communityRelationshipLevel: dto.communityRelationshipLevel,
-    };
-    const scoreResult = this.calculateScoreResult({
+
+    const { totalScore, rank } = calculateScoreResult({
       studyScore: current.studyScore,
       disciplineScore: current.disciplineScore,
       activityScore: current.activityScore,
@@ -838,47 +542,52 @@ export class TrainingEvaluationsService {
       where: { id },
       data: {
         communityScore: score,
-        communityData,
-        studentScore: scoreResult.totalScore,
-        rank: scoreResult.rank,
+        communityData: {
+          lawComplianceLevel: dto.lawComplianceLevel,
+          volunteerActivityLevel: dto.volunteerActivityLevel,
+          communityRelationshipLevel: dto.communityRelationshipLevel,
+        },
+        studentScore: totalScore,
+        rank,
       },
       select: communityScoreSelect,
     });
 
-    return this.toCommunityScoreResponse(updated);
+    return mapToCommunityScoreResponse(updated);
   }
 
+  // ─── Mục V – Vai trò BCS lớp / BCH tổ chức (max 10đ) ────────────────────────
+
+  /** Lấy điểm và dữ liệu Mục V (vai trò BCS/BCH). */
   async getRoleScore(
     user: AuthenticatedUser,
     id: string,
   ): Promise<RoleScoreResponse> {
-    const evaluation = await this.findOwnedRoleScore(user, id);
-    return this.toRoleScoreResponse(evaluation);
+    const evaluation = await this.findOwned<typeof roleScoreSelect, RoleScoreRecord>(
+      user, id, roleScoreSelect,
+    );
+    return mapToRoleScoreResponse(evaluation);
   }
 
+  /**
+   * Cập nhật điểm Mục V – Vai trò BCS lớp / BCH tổ chức.
+   * Logic tính điểm phụ thuộc vào loại sinh viên (NORMAL_STUDENT hay cán bộ).
+   */
   async updateRoleScore(
     user: AuthenticatedUser,
     id: string,
     dto: UpdateRoleScoreDto,
   ): Promise<RoleScoreResponse> {
-    const current = await this.findOwnedEvaluationForWrite(user, id, {
+    const current = await this.findOwnedForWrite(user, id, {
       studyScore: true,
       disciplineScore: true,
       activityScore: true,
       communityScore: true,
     });
-    this.assertEditable(current.status);
+    assertEditable(current.status);
 
-    const score = this.calculateRoleScore(dto);
-    const roleData = {
-      studentRoleType: dto.studentRoleType,
-      positionGroup: dto.positionGroup ?? null,
-      taskCompletionLevel: dto.taskCompletionLevel ?? null,
-      managementSkillLevel: dto.managementSkillLevel ?? null,
-      normalStudentActivityScore: dto.normalStudentActivityScore ?? null,
-      specialAchievementLevel: dto.specialAchievementLevel ?? null,
-    };
-    const scoreResult = this.calculateScoreResult({
+    const score = calculateRoleScore(dto);
+    const { totalScore, rank } = calculateScoreResult({
       studyScore: current.studyScore,
       disciplineScore: current.disciplineScore,
       activityScore: current.activityScore,
@@ -890,17 +599,55 @@ export class TrainingEvaluationsService {
       where: { id },
       data: {
         roleScore: score,
-        roleData,
-        studentScore: scoreResult.totalScore,
-        rank: scoreResult.rank,
+        roleData: {
+          studentRoleType: dto.studentRoleType,
+          positionGroup: dto.positionGroup ?? null,
+          taskCompletionLevel: dto.taskCompletionLevel ?? null,
+          managementSkillLevel: dto.managementSkillLevel ?? null,
+          normalStudentActivityScore: dto.normalStudentActivityScore ?? null,
+          specialAchievementLevel: dto.specialAchievementLevel ?? null,
+        },
+        studentScore: totalScore,
+        rank,
       },
       select: roleScoreSelect,
     });
 
-    return this.toRoleScoreResponse(updated);
+    return mapToRoleScoreResponse(updated);
   }
 
-  private async findOwnedEvaluationForWrite<
+  // ─── Private: DB queries ────────────────────────────────────────────────────
+
+  /**
+   * Query phiếu để đọc, với select type-safe bất kỳ.
+   * Dùng cho các GET endpoint cần select cụ thể theo từng mục.
+   */
+  private async findOwned<
+    TSelect extends Prisma.EvaluationFormSelect,
+    TResult,
+  >(
+    user: AuthenticatedUser,
+    id: string,
+    select: TSelect,
+  ): Promise<TResult> {
+    const evaluation = await this.prisma.evaluationForm.findFirst({
+      where: { id, studentId: user.id },
+      select,
+    });
+
+    if (!evaluation) {
+      throw new NotFoundException('Training evaluation was not found');
+    }
+
+    return evaluation as TResult;
+  }
+
+  /**
+   * Query phiếu để ghi (write), với select mở rộng bất kỳ.
+   * Luôn bao gồm `id` và `status` để kiểm tra quyền chỉnh sửa.
+   * Select thêm các điểm mục còn lại để tính lại tổng điểm.
+   */
+  private async findOwnedForWrite<
     TSelect extends Prisma.EvaluationFormSelect = Record<never, never>,
   >(user: AuthenticatedUser, id: string, select?: TSelect) {
     const evaluation = await this.prisma.evaluationForm.findFirst({
@@ -915,13 +662,17 @@ export class TrainingEvaluationsService {
     return evaluation;
   }
 
+  /**
+   * Query phiếu với toàn bộ thông tin tóm tắt điểm và trạng thái duyệt.
+   * Dùng cho getSummary() và submit().
+   */
   private async findOwnedScoreSummary(
     user: AuthenticatedUser,
     id: string,
-  ): Promise<TrainingEvaluationScoreSummaryRecord> {
+  ): Promise<EvaluationScoreSummaryRecord> {
     const evaluation = await this.prisma.evaluationForm.findFirst({
       where: { id, studentId: user.id },
-      select: trainingEvaluationScoreSummarySelect,
+      select: evaluationScoreSummarySelect,
     });
 
     if (!evaluation) {
@@ -931,28 +682,17 @@ export class TrainingEvaluationsService {
     return evaluation;
   }
 
+  /**
+   * Query phiếu với thông tin trạng thái duyệt (timestamps của từng bước).
+   * Dùng cho getStatus().
+   */
   private async findOwnedStatus(
     user: AuthenticatedUser,
     id: string,
-  ): Promise<TrainingEvaluationStatusRecord> {
+  ): Promise<EvaluationStatusRecord> {
     const evaluation = await this.prisma.evaluationForm.findFirst({
       where: { id, studentId: user.id },
-      select: trainingEvaluationStatusSelect,
-    });
-
-    if (!evaluation) {
-      throw new NotFoundException('Training evaluation was not found');
-    }
-
-    return evaluation;
-  }
-  private async findOwnedStudyScore(
-    user: AuthenticatedUser,
-    id: string,
-  ): Promise<StudyScoreRecord> {
-    const evaluation = await this.prisma.evaluationForm.findFirst({
-      where: { id, studentId: user.id },
-      select: studyScoreSelect,
+      select: evaluationStatusSelect,
     });
 
     if (!evaluation) {
@@ -962,149 +702,12 @@ export class TrainingEvaluationsService {
     return evaluation;
   }
 
-  private async findOwnedDisciplineScore(
-    user: AuthenticatedUser,
-    id: string,
-  ): Promise<DisciplineScoreRecord> {
-    const evaluation = await this.prisma.evaluationForm.findFirst({
-      where: { id, studentId: user.id },
-      select: disciplineScoreSelect,
-    });
+  // ─── Private: Input helpers ─────────────────────────────────────────────────
 
-    if (!evaluation) {
-      throw new NotFoundException('Training evaluation was not found');
-    }
-
-    return evaluation;
-  }
-
-  private async findOwnedActivityScore(
-    user: AuthenticatedUser,
-    id: string,
-  ): Promise<ActivityScoreRecord> {
-    const evaluation = await this.prisma.evaluationForm.findFirst({
-      where: { id, studentId: user.id },
-      select: activityScoreSelect,
-    });
-
-    if (!evaluation) {
-      throw new NotFoundException('Training evaluation was not found');
-    }
-
-    return evaluation;
-  }
-
-  private async findOwnedCommunityScore(
-    user: AuthenticatedUser,
-    id: string,
-  ): Promise<CommunityScoreRecord> {
-    const evaluation = await this.prisma.evaluationForm.findFirst({
-      where: { id, studentId: user.id },
-      select: communityScoreSelect,
-    });
-
-    if (!evaluation) {
-      throw new NotFoundException('Training evaluation was not found');
-    }
-
-    return evaluation;
-  }
-
-  private async findOwnedRoleScore(
-    user: AuthenticatedUser,
-    id: string,
-  ): Promise<RoleScoreRecord> {
-    const evaluation = await this.prisma.evaluationForm.findFirst({
-      where: { id, studentId: user.id },
-      select: roleScoreSelect,
-    });
-
-    if (!evaluation) {
-      throw new NotFoundException('Training evaluation was not found');
-    }
-
-    return evaluation;
-  }
-
-  private assertEditable(status: FormStatus) {
-    const editableStatuses: FormStatus[] = [
-      FormStatus.draft,
-      FormStatus.rejected,
-    ];
-
-    if (!editableStatuses.includes(status)) {
-      throw new ConflictException('Only draft evaluations can be updated');
-    }
-  }
-
-  private calculateScoreResult(scores: ScoreParts): {
-    totalScore: number;
-    rank: EvalRank;
-  } {
-    const totalScore = Math.min(
-      100,
-      (scores.studyScore ?? 0) +
-      (scores.disciplineScore ?? 0) +
-      (scores.activityScore ?? 0) +
-      (scores.communityScore ?? 0) +
-      (scores.roleScore ?? 0),
-    );
-
-    return {
-      totalScore,
-      rank: this.calculateClassification(totalScore),
-    };
-  }
-
-  private calculateClassification(totalScore: number): EvalRank {
-    if (totalScore >= 90) return EvalRank.excellent;
-    if (totalScore >= 80) return EvalRank.good;
-    if (totalScore >= 65) return EvalRank.fair;
-    if (totalScore >= 50) return EvalRank.average;
-    if (totalScore >= 35) return EvalRank.weak;
-
-    return EvalRank.poor;
-  }
-
-  private calculateRoleScore(dto: UpdateRoleScoreDto): number {
-    const specialScore = dto.specialAchievementLevel
-      ? SPECIAL_ACHIEVEMENT_POINTS[dto.specialAchievementLevel]
-      : 0;
-
-    if (dto.studentRoleType === 'NORMAL_STUDENT') {
-      return Math.min(10, (dto.normalStudentActivityScore ?? 0) + specialScore);
-    }
-
-    const { positionGroup, taskCompletionLevel, managementSkillLevel } = dto;
-
-    if (!positionGroup || !taskCompletionLevel || !managementSkillLevel) {
-      throw new BadRequestException(
-        'positionGroup, taskCompletionLevel and managementSkillLevel are required for officer roles',
-      );
-    }
-
-    const taskScore = this.getOfficerTaskScore(
-      positionGroup,
-      taskCompletionLevel,
-    );
-
-    return Math.min(
-      10,
-      taskScore + MANAGEMENT_SKILL_POINTS[managementSkillLevel],
-    );
-  }
-
-  private getOfficerTaskScore(
-    positionGroup: PositionGroup,
-    taskCompletionLevel: TaskCompletionLevel,
-  ): number {
-    if (positionGroup === 'LEADER_GROUP') {
-      return LEADER_TASK_COMPLETION_POINTS[taskCompletionLevel];
-    }
-
-    return MEMBER_TASK_COMPLETION_POINTS[taskCompletionLevel];
-  }
-
+  /**
+   * Parse và validate chuỗi năm học "YYYY-YYYY", trả về năm bắt đầu.
+   * Ví dụ: "2024-2025" → 2024. Kiểm tra đây là dãy năm liên tiếp.
+   */
   private parseAcademicYearStart(academicYear: string): number {
     const [startYearText, endYearText] = academicYear.split('-');
     const startYear = Number(startYearText);
@@ -1119,355 +722,16 @@ export class TrainingEvaluationsService {
     return startYear;
   }
 
+  /**
+   * Chuyển chuỗi học kỳ API (HK1/HK2/SUMMER) sang enum SemesterNo của DB.
+   */
   private toSemesterNo(semester: TrainingEvaluationSemester): SemesterNo {
-    const semesterMap: Record<TrainingEvaluationSemester, SemesterNo> = {
+    const map: Record<TrainingEvaluationSemester, SemesterNo> = {
       HK1: SemesterNo.SEMESTER_1,
       HK2: SemesterNo.SEMESTER_2,
       SUMMER: SemesterNo.summer,
     };
 
-    return semesterMap[semester];
-  }
-
-  private toScoreSummaryResponse(
-    evaluation: TrainingEvaluationScoreSummaryRecord,
-  ): TrainingEvaluationScoreSummaryResponse {
-    return {
-      ...this.toSummaryResponse(evaluation),
-      statusLabel: this.toStatusLabel(evaluation.status),
-      classScore: evaluation.classScore,
-      finalScore: evaluation.finalScore,
-      sectionScores: {
-        studyScore: evaluation.studyScore,
-        disciplineScore: evaluation.disciplineScore,
-        activityScore: evaluation.activityScore,
-        communityScore: evaluation.communityScore,
-        roleScore: evaluation.roleScore,
-      },
-      review: this.toStatusResponse(evaluation),
-    };
-  }
-
-  private toStatusResponse(
-    evaluation: TrainingEvaluationStatusRecord,
-  ): TrainingEvaluationStatusResponse {
-    const status = evaluation.status;
-
-    return {
-      evaluationId: evaluation.id,
-      status: status.toUpperCase(),
-      statusLabel: this.toStatusLabel(status),
-      currentStep: this.toCurrentReviewStep(status),
-      submittedAt: evaluation.submittedAt,
-      steps: [
-        {
-          key: 'student_submit',
-          label: 'Sinh viên nộp phiếu',
-          status: evaluation.submittedAt ? 'completed' : 'current',
-          completedAt: evaluation.submittedAt,
-        },
-        {
-          key: 'class_review',
-          label: 'Lớp/CVHT duyệt',
-          status: this.toReviewStepStatus(
-            status,
-            FormStatus.submitted,
-            Boolean(evaluation.classReviewedAt),
-          ),
-          completedAt: evaluation.classReviewedAt,
-        },
-        {
-          key: 'faculty_review',
-          label: 'Khoa duyệt',
-          status: this.toReviewStepStatus(
-            status,
-            FormStatus.class_approved,
-            Boolean(evaluation.facultyReviewedAt),
-          ),
-          completedAt: evaluation.facultyReviewedAt,
-        },
-        {
-          key: 'admin_finalization',
-          label: 'Học viện phê duyệt',
-          status: this.toReviewStepStatus(
-            status,
-            FormStatus.faculty_approved,
-            Boolean(evaluation.adminFinalizedAt),
-          ),
-          completedAt: evaluation.adminFinalizedAt,
-        },
-      ],
-    };
-  }
-
-  private toReviewStepStatus(
-    currentStatus: FormStatus,
-    activeStatus: FormStatus,
-    isCompleted: boolean,
-  ): ReviewStepStatus {
-    if (isCompleted) return 'completed';
-    if (currentStatus === FormStatus.finalized) return 'completed';
-    if (currentStatus === FormStatus.rejected) return 'rejected';
-    if (currentStatus === activeStatus) return 'current';
-
-    return 'pending';
-  }
-
-  private toCurrentReviewStep(status: FormStatus): string {
-    const currentStepMap: Record<FormStatus, string> = {
-      [FormStatus.draft]: 'student_draft',
-      [FormStatus.submitted]: 'class_review',
-      [FormStatus.class_approved]: 'faculty_review',
-      [FormStatus.faculty_approved]: 'admin_finalization',
-      [FormStatus.finalized]: 'completed',
-      [FormStatus.rejected]: 'student_revision',
-    };
-
-    return currentStepMap[status];
-  }
-
-  private toStatusLabel(status: FormStatus): string {
-    const statusLabels: Record<FormStatus, string> = {
-      [FormStatus.draft]: 'Nháp',
-      [FormStatus.submitted]: 'Đã nộp',
-      [FormStatus.class_approved]: 'Lớp/CVHT đã duyệt',
-      [FormStatus.faculty_approved]: 'Khoa đã duyệt',
-      [FormStatus.finalized]: 'Đã phê duyệt',
-      [FormStatus.rejected]: 'Bị trả về',
-    };
-
-    return statusLabels[status];
-  }
-  private toSummaryResponse(
-    evaluation: TrainingEvaluationSummaryRecord,
-  ): TrainingEvaluationSummaryResponse {
-    return {
-      id: evaluation.id,
-      studentId: evaluation.studentId,
-      semester: this.toApiSemester(evaluation.semester.semester),
-      academicYear: this.toAcademicYear(evaluation.semester.year),
-      status: evaluation.status.toUpperCase(),
-      totalScore: evaluation.studentScore ?? 0,
-      classification: this.toClassificationLabel(evaluation.rank),
-    };
-  }
-
-  private toDetailResponse(
-    evaluation: TrainingEvaluationDetailRecord,
-  ): TrainingEvaluationDetailResponse {
-    return {
-      ...this.toSummaryResponse(evaluation),
-      phone: evaluation.student.phone,
-      note: evaluation.note,
-      studyScore: evaluation.studyScore,
-      disciplineScore: evaluation.disciplineScore,
-      activityScore: evaluation.activityScore,
-      communityScore: evaluation.communityScore,
-      roleScore: evaluation.roleScore,
-    };
-  }
-
-  private toStudyScoreResponse(
-    evaluation: StudyScoreRecord,
-  ): StudyScoreResponse {
-    const data = this.readJsonObject(evaluation.studyData);
-    const activities = this.readStudyActivities(data.activities);
-
-    return {
-      evaluationId: evaluation.id,
-      regularScoreLevel: this.readNullableString(data.regularScoreLevel),
-      academicRank: this.readNullableString(data.academicRank),
-      activities,
-      score: evaluation.studyScore,
-      maxScore: 20,
-      totalScore: evaluation.studentScore ?? 0,
-      classification: this.toClassificationLabel(evaluation.rank),
-    };
-  }
-
-  private toDisciplineScoreResponse(
-    evaluation: DisciplineScoreRecord,
-  ): DisciplineScoreResponse {
-    const data = this.readJsonObject(evaluation.disciplineData);
-    const violations = this.readDisciplineViolations(data.violations);
-    const deductedScore = violations.reduce(
-      (total, violation) => total + violation.count * violation.deductScore,
-      0,
-    );
-
-    return {
-      evaluationId: evaluation.id,
-      baseScore: evaluation.disciplineBaseScore,
-      violations,
-      deductedScore,
-      score: evaluation.disciplineScore,
-      maxScore: 25,
-      totalScore: evaluation.studentScore ?? 0,
-      classification: this.toClassificationLabel(evaluation.rank),
-    };
-  }
-
-  private toActivityScoreResponse(
-    evaluation: ActivityScoreRecord,
-  ): ActivityScoreResponse {
-    const data = this.readJsonObject(evaluation.activityData);
-
-    return {
-      evaluationId: evaluation.id,
-      politicalActivityLevel: this.readNullableString(
-        data.politicalActivityLevel,
-      ),
-      cultureSportLevel: this.readNullableString(data.cultureSportLevel),
-      clubActivityLevel: this.readNullableString(data.clubActivityLevel),
-      socialPreventionLevel: this.readNullableString(
-        data.socialPreventionLevel,
-      ),
-      rewardScore: this.readNumber(data.rewardScore) ?? 0,
-      score: evaluation.activityScore,
-      maxScore: 20,
-      totalScore: evaluation.studentScore ?? 0,
-      classification: this.toClassificationLabel(evaluation.rank),
-    };
-  }
-
-  private toCommunityScoreResponse(
-    evaluation: CommunityScoreRecord,
-  ): CommunityScoreResponse {
-    const data = this.readJsonObject(evaluation.communityData);
-
-    return {
-      evaluationId: evaluation.id,
-      lawComplianceLevel: this.readNullableString(data.lawComplianceLevel),
-      volunteerActivityLevel: this.readNullableString(
-        data.volunteerActivityLevel,
-      ),
-      communityRelationshipLevel: this.readNullableString(
-        data.communityRelationshipLevel,
-      ),
-      score: evaluation.communityScore,
-      maxScore: 25,
-      totalScore: evaluation.studentScore ?? 0,
-      classification: this.toClassificationLabel(evaluation.rank),
-    };
-  }
-
-  private toRoleScoreResponse(evaluation: RoleScoreRecord): RoleScoreResponse {
-    const data = this.readJsonObject(evaluation.roleData);
-
-    return {
-      evaluationId: evaluation.id,
-      studentRoleType: this.readNullableString(data.studentRoleType),
-      positionGroup: this.readNullableString(data.positionGroup),
-      taskCompletionLevel: this.readNullableString(data.taskCompletionLevel),
-      managementSkillLevel: this.readNullableString(data.managementSkillLevel),
-      normalStudentActivityScore: this.readNumber(
-        data.normalStudentActivityScore,
-      ),
-      specialAchievementLevel: this.readNullableString(
-        data.specialAchievementLevel,
-      ),
-      score: evaluation.roleScore,
-      maxScore: 10,
-      totalScore: evaluation.studentScore ?? 0,
-      classification: this.toClassificationLabel(evaluation.rank),
-    };
-  }
-
-  private readJsonObject(value: Prisma.JsonValue): Prisma.JsonObject {
-    if (!value || typeof value !== 'object' || Array.isArray(value)) {
-      return {};
-    }
-
-    return value;
-  }
-
-  private readNullableString(
-    value: Prisma.JsonValue | undefined,
-  ): string | null {
-    return typeof value === 'string' ? value : null;
-  }
-
-  private readNumber(value: Prisma.JsonValue | undefined): number | null {
-    return typeof value === 'number' ? value : null;
-  }
-
-  private readStudyActivities(
-    value: Prisma.JsonValue | undefined,
-  ): StudyActivityResponse[] {
-    if (!Array.isArray(value)) {
-      return [];
-    }
-
-    return value.flatMap((item) => {
-      if (!item || typeof item !== 'object' || Array.isArray(item)) {
-        return [];
-      }
-
-      const record = item as Record<string, Prisma.JsonValue>;
-      if (
-        typeof record.code !== 'string' ||
-        typeof record.checked !== 'boolean' ||
-        typeof record.score !== 'number'
-      ) {
-        return [];
-      }
-
-      return [
-        {
-          code: record.code,
-          checked: record.checked,
-          score: record.score,
-        },
-      ];
-    });
-  }
-
-  private readDisciplineViolations(
-    value: Prisma.JsonValue | undefined,
-  ): DisciplineViolationResponse[] {
-    if (!Array.isArray(value)) {
-      return [];
-    }
-
-    return value.flatMap((item) => {
-      if (!item || typeof item !== 'object' || Array.isArray(item)) {
-        return [];
-      }
-
-      const record = item as Record<string, Prisma.JsonValue>;
-      if (
-        typeof record.code !== 'string' ||
-        typeof record.count !== 'number' ||
-        typeof record.deductScore !== 'number'
-      ) {
-        return [];
-      }
-
-      return [
-        {
-          code: record.code,
-          count: record.count,
-          deductScore: record.deductScore,
-        },
-      ];
-    });
-  }
-
-  private toClassificationLabel(rank: EvalRank | null): string | null {
-    return rank ? CLASSIFICATION_LABELS[rank] : null;
-  }
-
-  private toApiSemester(semester: SemesterNo): TrainingEvaluationSemester {
-    const semesterMap: Record<SemesterNo, TrainingEvaluationSemester> = {
-      [SemesterNo.SEMESTER_1]: 'HK1',
-      [SemesterNo.SEMESTER_2]: 'HK2',
-      [SemesterNo.summer]: 'SUMMER',
-    };
-
-    return semesterMap[semester];
-  }
-
-  private toAcademicYear(startYear: number): string {
-    return `${startYear}-${startYear + 1}`;
+    return map[semester];
   }
 }

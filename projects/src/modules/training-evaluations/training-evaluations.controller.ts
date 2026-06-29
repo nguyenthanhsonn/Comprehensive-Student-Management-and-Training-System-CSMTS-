@@ -29,7 +29,7 @@ import { TrainingEvaluationsService } from './training-evaluations.service';
 export class TrainingEvaluationsController {
   constructor(
     private readonly trainingEvaluationsService: TrainingEvaluationsService,
-  ) { }
+  ) {}
 
   @Post()
   create(
@@ -58,30 +58,6 @@ export class TrainingEvaluationsController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.trainingEvaluationsService.getStatus(request.user, id);
-  }
-
-  @Post(':id/submit')
-  submit(
-    @Req() request: RequestWithUser,
-    @Param('id', ParseUUIDPipe) id: string,
-  ) {
-    return this.trainingEvaluationsService.submit(request.user, id);
-  }
-  @Get(':id')
-  findOne(
-    @Req() request: RequestWithUser,
-    @Param('id', ParseUUIDPipe) id: string,
-  ) {
-    return this.trainingEvaluationsService.findOne(request.user, id);
-  }
-
-  @Patch(':id')
-  updateDraft(
-    @Req() request: RequestWithUser,
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateTrainingEvaluationDraftDto,
-  ) {
-    return this.trainingEvaluationsService.updateDraft(request.user, id, dto);
   }
 
   @Get(':id/study-score')
@@ -187,5 +163,30 @@ export class TrainingEvaluationsController {
       id,
       dto,
     );
+  }
+
+  @Post(':id/submit')
+  submit(
+    @Req() request: RequestWithUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.trainingEvaluationsService.submit(request.user, id);
+  }
+
+  @Get(':id')
+  findOne(
+    @Req() request: RequestWithUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.trainingEvaluationsService.findOne(request.user, id);
+  }
+
+  @Patch(':id')
+  updateDraft(
+    @Req() request: RequestWithUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateTrainingEvaluationDraftDto,
+  ) {
+    return this.trainingEvaluationsService.updateDraft(request.user, id, dto);
   }
 }

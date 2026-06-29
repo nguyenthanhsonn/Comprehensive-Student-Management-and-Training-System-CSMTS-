@@ -12,15 +12,7 @@ src/generated/
 
 *.log
 .DS_Store
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-=======
 
 .agents/
 prisma/migrations/
 postman/
->>>>>>> Stashed changes
-=======
-
-.agents/
->>>>>>> develop

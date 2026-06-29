@@ -18,8 +18,8 @@ export type VolunteerActivityLevel = (typeof VOLUNTEER_ACTIVITY_LEVELS)[number];
 
 export const COMMUNITY_RELATIONSHIP_LEVELS = [
   'GOOD',
-  'AVERAGE',
-  'BAD',
+  'ONE_WARNING',
+  'TWO_WARNINGS',
 ] as const;
 export type CommunityRelationshipLevel =
   (typeof COMMUNITY_RELATIONSHIP_LEVELS)[number];
