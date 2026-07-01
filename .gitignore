@@ -1,0 +1,13 @@
+# Agent / Assistant folders
+.claude/
+.agents/
+.codex/
+.gemini/
+
+# IDE settings
+.idea/
+.vscode/
+
+# Local OS files
+.DS_Store
+Thumbs.db
