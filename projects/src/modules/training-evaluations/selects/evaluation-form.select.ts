@@ -3,7 +3,6 @@ import { Prisma } from '../../../generated/prisma/client';
 // ─── Shared base cho section scores ──────────────────────────────────────────
 const sectionBase = {
   id: true,
-  status: true,
   studentScore: true,
   rank: true,
 } satisfies Prisma.EvaluationFormSelect;

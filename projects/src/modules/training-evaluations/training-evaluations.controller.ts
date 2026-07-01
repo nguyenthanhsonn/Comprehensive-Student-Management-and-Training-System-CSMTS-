@@ -6,14 +6,13 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
-  Req,
   UseGuards,
 } from '@nestjs/common';
 import { UserRole } from 'src/common/shared';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import type { RequestWithUser } from '../auth/types/authenticated-user.type';
 import { CreateTrainingEvaluationDto } from './dto/create-training-evaluation.dto';
 import { UpdateActivityScoreDto } from './dto/update-activity-score.dto';
 import { UpdateCommunityScoreDto } from './dto/update-community-score.dto';
@@ -23,170 +22,181 @@ import { UpdateStudyScoreDto } from './dto/update-study-score.dto';
 import { UpdateTrainingEvaluationDraftDto } from './dto/update-training-evaluation-draft.dto';
 import { TrainingEvaluationsService } from './training-evaluations.service';
 
+const ALL_ROLES = [
+  UserRole.Student,
+  UserRole.ClassCouncil,
+  UserRole.FacultyCouncil,
+  UserRole.Admin,
+];
+
 @Controller('training-evaluations')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.Student)
 export class TrainingEvaluationsController {
   constructor(
     private readonly trainingEvaluationsService: TrainingEvaluationsService,
   ) {}
 
   @Post()
+  @Roles(UserRole.Student)
   create(
-    @Req() request: RequestWithUser,
+    @CurrentUser('id') userId: string,
     @Body() dto: CreateTrainingEvaluationDto,
   ) {
-    return this.trainingEvaluationsService.create(request.user, dto);
+    return this.trainingEvaluationsService.create(userId, dto);
   }
 
   @Get('me')
-  findMine(@Req() request: RequestWithUser) {
-    return this.trainingEvaluationsService.findMine(request.user);
+  @Roles(UserRole.Student)
+  findMine(@CurrentUser('id') userId: string) {
+    return this.trainingEvaluationsService.findMine(userId);
   }
 
   @Get(':id/summary')
+  @Roles(...ALL_ROLES)
   getSummary(
-    @Req() request: RequestWithUser,
+    @CurrentUser('id') userId: string,
+    @CurrentUser('role') role: UserRole,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    return this.trainingEvaluationsService.getSummary(request.user, id);
+    return this.trainingEvaluationsService.getSummary(userId, role, id);
   }
 
   @Get(':id/status')
+  @Roles(...ALL_ROLES)
   getStatus(
-    @Req() request: RequestWithUser,
+    @CurrentUser('id') userId: string,
+    @CurrentUser('role') role: UserRole,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    return this.trainingEvaluationsService.getStatus(request.user, id);
+    return this.trainingEvaluationsService.getStatus(userId, role, id);
   }
 
   @Get(':id/study-score')
+  @Roles(...ALL_ROLES)
   getStudyScore(
-    @Req() request: RequestWithUser,
+    @CurrentUser('id') userId: string,
+    @CurrentUser('role') role: UserRole,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    return this.trainingEvaluationsService.getStudyScore(request.user, id);
+    return this.trainingEvaluationsService.getStudyScore(userId, role, id);
   }
 
   @Patch(':id/study-score')
+  @Roles(UserRole.Student)
   updateStudyScore(
-    @Req() request: RequestWithUser,
+    @CurrentUser('id') userId: string,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateStudyScoreDto,
   ) {
-    return this.trainingEvaluationsService.updateStudyScore(
-      request.user,
-      id,
-      dto,
-    );
+    return this.trainingEvaluationsService.updateStudyScore(userId, id, dto);
   }
 
   @Get(':id/discipline-score')
+  @Roles(...ALL_ROLES)
   getDisciplineScore(
-    @Req() request: RequestWithUser,
+    @CurrentUser('id') userId: string,
+    @CurrentUser('role') role: UserRole,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    return this.trainingEvaluationsService.getDisciplineScore(request.user, id);
+    return this.trainingEvaluationsService.getDisciplineScore(userId, role, id);
   }
 
   @Patch(':id/discipline-score')
+  @Roles(UserRole.Student)
   updateDisciplineScore(
-    @Req() request: RequestWithUser,
+    @CurrentUser('id') userId: string,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateDisciplineScoreDto,
   ) {
-    return this.trainingEvaluationsService.updateDisciplineScore(
-      request.user,
-      id,
-      dto,
-    );
+    return this.trainingEvaluationsService.updateDisciplineScore(userId, id, dto);
   }
 
   @Get(':id/activity-score')
+  @Roles(...ALL_ROLES)
   getActivityScore(
-    @Req() request: RequestWithUser,
+    @CurrentUser('id') userId: string,
+    @CurrentUser('role') role: UserRole,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    return this.trainingEvaluationsService.getActivityScore(request.user, id);
+    return this.trainingEvaluationsService.getActivityScore(userId, role, id);
   }
 
   @Patch(':id/activity-score')
+  @Roles(UserRole.Student)
   updateActivityScore(
-    @Req() request: RequestWithUser,
+    @CurrentUser('id') userId: string,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateActivityScoreDto,
   ) {
-    return this.trainingEvaluationsService.updateActivityScore(
-      request.user,
-      id,
-      dto,
-    );
+    return this.trainingEvaluationsService.updateActivityScore(userId, id, dto);
   }
 
   @Get(':id/community-score')
+  @Roles(...ALL_ROLES)
   getCommunityScore(
-    @Req() request: RequestWithUser,
+    @CurrentUser('id') userId: string,
+    @CurrentUser('role') role: UserRole,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    return this.trainingEvaluationsService.getCommunityScore(request.user, id);
+    return this.trainingEvaluationsService.getCommunityScore(userId, role, id);
   }
 
   @Patch(':id/community-score')
+  @Roles(UserRole.Student)
   updateCommunityScore(
-    @Req() request: RequestWithUser,
+    @CurrentUser('id') userId: string,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateCommunityScoreDto,
   ) {
-    return this.trainingEvaluationsService.updateCommunityScore(
-      request.user,
-      id,
-      dto,
-    );
+    return this.trainingEvaluationsService.updateCommunityScore(userId, id, dto);
   }
 
   @Get(':id/role-score')
+  @Roles(...ALL_ROLES)
   getRoleScore(
-    @Req() request: RequestWithUser,
+    @CurrentUser('id') userId: string,
+    @CurrentUser('role') role: UserRole,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    return this.trainingEvaluationsService.getRoleScore(request.user, id);
+    return this.trainingEvaluationsService.getRoleScore(userId, role, id);
   }
 
   @Patch(':id/role-score')
+  @Roles(UserRole.Student)
   updateRoleScore(
-    @Req() request: RequestWithUser,
+    @CurrentUser('id') userId: string,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateRoleScoreDto,
   ) {
-    return this.trainingEvaluationsService.updateRoleScore(
-      request.user,
-      id,
-      dto,
-    );
+    return this.trainingEvaluationsService.updateRoleScore(userId, id, dto);
   }
 
   @Post(':id/submit')
+  @Roles(UserRole.Student)
   submit(
-    @Req() request: RequestWithUser,
+    @CurrentUser('id') userId: string,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    return this.trainingEvaluationsService.submit(request.user, id);
+    return this.trainingEvaluationsService.submit(userId, id);
   }
 
   @Get(':id')
+  @Roles(...ALL_ROLES)
   findOne(
-    @Req() request: RequestWithUser,
+    @CurrentUser('id') userId: string,
+    @CurrentUser('role') role: UserRole,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    return this.trainingEvaluationsService.findOne(request.user, id);
+    return this.trainingEvaluationsService.findOne(userId, role, id);
   }
 
   @Patch(':id')
+  @Roles(UserRole.Student)
   updateDraft(
-    @Req() request: RequestWithUser,
+    @CurrentUser('id') userId: string,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateTrainingEvaluationDraftDto,
   ) {
-    return this.trainingEvaluationsService.updateDraft(request.user, id, dto);
+    return this.trainingEvaluationsService.updateDraft(userId, id, dto);
   }
 }
