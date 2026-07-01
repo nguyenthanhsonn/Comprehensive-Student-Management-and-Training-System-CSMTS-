@@ -9,8 +9,8 @@ import {
   Prisma,
   SemesterNo,
 } from '../../generated/prisma/client';
+import { UserRole } from 'src/common/shared';
 import { PrismaService } from '../../database/prisma.service';
-import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import {
   CreateTrainingEvaluationDto,
   type TrainingEvaluationSemester,
@@ -92,7 +92,7 @@ export class TrainingEvaluationsService {
    * Mỗi sinh viên chỉ được có tối đa 1 phiếu mỗi học kỳ (unique constraint).
    */
   async create(
-    user: AuthenticatedUser,
+    userId: string,
     dto: CreateTrainingEvaluationDto,
   ): Promise<EvaluationListResponse> {
     const academicYearStart = this.parseAcademicYearStart(dto.academicYear);
@@ -104,7 +104,7 @@ export class TrainingEvaluationsService {
         select: { id: true },
       }),
       this.prisma.classStudent.findFirst({
-        where: { studentId: user.id },
+        where: { studentId: userId },
         orderBy: { enrolledAt: 'desc' },
         select: { classId: true },
       }),
@@ -125,7 +125,7 @@ export class TrainingEvaluationsService {
     try {
       const evaluation = await this.prisma.evaluationForm.create({
         data: {
-          studentId: user.id,
+          studentId: userId,
           classId: currentClass.classId,
           semesterId: semester.id,
           status: FormStatus.draft,
@@ -153,9 +153,9 @@ export class TrainingEvaluationsService {
    * Lấy danh sách tất cả phiếu của sinh viên đang đăng nhập,
    * sắp xếp mới nhất lên đầu.
    */
-  async findMine(user: AuthenticatedUser): Promise<EvaluationListResponse[]> {
+  async findMine(userId: string): Promise<EvaluationListResponse[]> {
     const evaluations = await this.prisma.evaluationForm.findMany({
-      where: { studentId: user.id },
+      where: { studentId: userId },
       select: evaluationListSelect,
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     });
@@ -165,44 +165,50 @@ export class TrainingEvaluationsService {
 
   /**
    * Lấy chi tiết một phiếu đánh giá theo ID.
-   * Chỉ trả về phiếu của chính sinh viên đang đăng nhập.
+   * Sinh viên chỉ xem được phiếu của mình; ban cán sự và admin xem được mọi phiếu.
    */
   async findOne(
-    user: AuthenticatedUser,
+    userId: string,
+    role: UserRole,
     id: string,
   ): Promise<EvaluationDetailResponse> {
-    const evaluation = await this.prisma.evaluationForm.findFirst({
-      where: { id, studentId: user.id },
-      select: evaluationDetailSelect,
-    });
-
-    if (!evaluation) {
-      throw new NotFoundException('Training evaluation was not found');
-    }
-
+    const evaluation = await this.findOwned<
+      typeof evaluationDetailSelect,
+      EvaluationDetailRecord
+    >(userId, role, id, evaluationDetailSelect);
     return mapToDetailResponse(evaluation);
   }
 
   /**
    * Lấy tóm tắt điểm toàn phiếu: điểm SV tự chấm, điểm lớp, điểm cuối,
    * điểm từng mục và trạng thái trong luồng duyệt.
+   * Sinh viên chỉ xem được phiếu của mình; ban cán sự và admin xem được mọi phiếu.
    */
   async getSummary(
-    user: AuthenticatedUser,
+    userId: string,
+    role: UserRole,
     id: string,
   ): Promise<EvaluationScoreSummaryResponse> {
-    const evaluation = await this.findOwnedScoreSummary(user, id);
+    const evaluation = await this.findOwned<
+      typeof evaluationScoreSummarySelect,
+      EvaluationScoreSummaryRecord
+    >(userId, role, id, evaluationScoreSummarySelect);
     return mapToScoreSummaryResponse(evaluation);
   }
 
   /**
    * Lấy trạng thái hiện tại và lịch sử duyệt phiếu (4 bước).
+   * Sinh viên chỉ xem được phiếu của mình; ban cán sự và admin xem được mọi phiếu.
    */
   async getStatus(
-    user: AuthenticatedUser,
+    userId: string,
+    role: UserRole,
     id: string,
   ): Promise<EvaluationStatusResponse> {
-    const evaluation = await this.findOwnedStatus(user, id);
+    const evaluation = await this.findOwned<
+      typeof evaluationStatusSelect,
+      EvaluationStatusRecord
+    >(userId, role, id, evaluationStatusSelect);
     return mapToStatusResponse(evaluation);
   }
 
@@ -212,10 +218,17 @@ export class TrainingEvaluationsService {
    * Khi nộp, hệ thống tính lại tổng điểm và reset toàn bộ thông tin duyệt cũ.
    */
   async submit(
-    user: AuthenticatedUser,
+    userId: string,
     id: string,
   ): Promise<EvaluationScoreSummaryResponse> {
-    const current = await this.findOwnedScoreSummary(user, id);
+    const current = await this.prisma.evaluationForm.findFirst({
+      where: { id, studentId: userId },
+      select: evaluationScoreSummarySelect,
+    });
+
+    if (!current) {
+      throw new NotFoundException('Training evaluation was not found');
+    }
 
     if (
       !([FormStatus.draft, FormStatus.rejected] as FormStatus[]).includes(
@@ -263,7 +276,7 @@ export class TrainingEvaluationsService {
    * Cập nhật SĐT trực tiếp lên bảng User (dùng chung với profile).
    */
   async updateDraft(
-    user: AuthenticatedUser,
+    userId: string,
     id: string,
     dto: UpdateTrainingEvaluationDraftDto,
   ): Promise<EvaluationDetailResponse> {
@@ -274,13 +287,13 @@ export class TrainingEvaluationsService {
       throw new BadRequestException('No draft information provided');
     }
 
-    const evaluation = await this.findOwnedForWrite(user, id);
-    assertEditable(evaluation.status);
+    const form = await this.findOwnedForWrite(userId, id);
+    assertEditable(form.status);
 
     await this.prisma.$transaction(async (tx) => {
       if (hasPhone) {
         await tx.user.update({
-          where: { id: user.id },
+          where: { id: userId },
           data: { phone: dto.phone ?? null },
           select: { id: true },
         });
@@ -295,19 +308,27 @@ export class TrainingEvaluationsService {
       }
     });
 
-    return this.findOne(user, id);
+    // Đọc lại sau khi cập nhật, tránh gọi findOne() thừa một vòng
+    const updated = await this.prisma.evaluationForm.findFirst({
+      where: { id, studentId: userId },
+      select: evaluationDetailSelect,
+    });
+
+    return mapToDetailResponse(updated!);
   }
 
   // ─── Mục I – Ý thức học tập (max 20đ) ────────────────────────────────────────
 
   /** Lấy điểm và dữ liệu Mục I (ý thức học tập). */
   async getStudyScore(
-    user: AuthenticatedUser,
+    userId: string,
+    role: UserRole,
     id: string,
   ): Promise<StudyScoreResponse> {
-    const evaluation = await this.findOwned<typeof studyScoreSelect, StudyScoreRecord>(
-      user, id, studyScoreSelect,
-    );
+    const evaluation = await this.findOwned<
+      typeof studyScoreSelect,
+      StudyScoreRecord
+    >(userId, role, id, studyScoreSelect);
     return mapToStudyScoreResponse(evaluation);
   }
 
@@ -317,11 +338,11 @@ export class TrainingEvaluationsService {
    * Sau khi cập nhật, tổng điểm phiếu được tính lại ngay lập tức.
    */
   async updateStudyScore(
-    user: AuthenticatedUser,
+    userId: string,
     id: string,
     dto: UpdateStudyScoreDto,
   ): Promise<StudyScoreResponse> {
-    const current = await this.findOwnedForWrite(user, id, {
+    const current = await this.findOwnedForWrite(userId, id, {
       disciplineScore: true,
       activityScore: true,
       communityScore: true,
@@ -369,12 +390,14 @@ export class TrainingEvaluationsService {
 
   /** Lấy điểm và dữ liệu Mục II (kỷ luật). */
   async getDisciplineScore(
-    user: AuthenticatedUser,
+    userId: string,
+    role: UserRole,
     id: string,
   ): Promise<DisciplineScoreResponse> {
-    const evaluation = await this.findOwned<typeof disciplineScoreSelect, DisciplineScoreRecord>(
-      user, id, disciplineScoreSelect,
-    );
+    const evaluation = await this.findOwned<
+      typeof disciplineScoreSelect,
+      DisciplineScoreRecord
+    >(userId, role, id, disciplineScoreSelect);
     return mapToDisciplineScoreResponse(evaluation);
   }
 
@@ -383,11 +406,11 @@ export class TrainingEvaluationsService {
    * Điểm = baseScore (25) − tổng điểm trừ từ các vi phạm, tối thiểu là 0.
    */
   async updateDisciplineScore(
-    user: AuthenticatedUser,
+    userId: string,
     id: string,
     dto: UpdateDisciplineScoreDto,
   ): Promise<DisciplineScoreResponse> {
-    const current = await this.findOwnedForWrite(user, id, {
+    const current = await this.findOwnedForWrite(userId, id, {
       studyScore: true,
       activityScore: true,
       communityScore: true,
@@ -400,7 +423,10 @@ export class TrainingEvaluationsService {
       count: v.count,
       deductScore: v.deductScore,
     }));
-    const deducted = violations.reduce((sum, v) => sum + v.count * v.deductScore, 0);
+    const deducted = violations.reduce(
+      (sum, v) => sum + v.count * v.deductScore,
+      0,
+    );
     const score = Math.max(0, dto.baseScore - deducted);
 
     const { totalScore, rank } = calculateScoreResult({
@@ -430,12 +456,14 @@ export class TrainingEvaluationsService {
 
   /** Lấy điểm và dữ liệu Mục III (hoạt động). */
   async getActivityScore(
-    user: AuthenticatedUser,
+    userId: string,
+    role: UserRole,
     id: string,
   ): Promise<ActivityScoreResponse> {
-    const evaluation = await this.findOwned<typeof activityScoreSelect, ActivityScoreRecord>(
-      user, id, activityScoreSelect,
-    );
+    const evaluation = await this.findOwned<
+      typeof activityScoreSelect,
+      ActivityScoreRecord
+    >(userId, role, id, activityScoreSelect);
     return mapToActivityScoreResponse(evaluation);
   }
 
@@ -444,11 +472,11 @@ export class TrainingEvaluationsService {
    * Tổng điểm = tổng 4 tiêu chí + điểm khen thưởng, tối đa 20.
    */
   async updateActivityScore(
-    user: AuthenticatedUser,
+    userId: string,
     id: string,
     dto: UpdateActivityScoreDto,
   ): Promise<ActivityScoreResponse> {
-    const current = await this.findOwnedForWrite(user, id, {
+    const current = await this.findOwnedForWrite(userId, id, {
       studyScore: true,
       disciplineScore: true,
       communityScore: true,
@@ -497,12 +525,14 @@ export class TrainingEvaluationsService {
 
   /** Lấy điểm và dữ liệu Mục IV (cộng đồng). */
   async getCommunityScore(
-    user: AuthenticatedUser,
+    userId: string,
+    role: UserRole,
     id: string,
   ): Promise<CommunityScoreResponse> {
-    const evaluation = await this.findOwned<typeof communityScoreSelect, CommunityScoreRecord>(
-      user, id, communityScoreSelect,
-    );
+    const evaluation = await this.findOwned<
+      typeof communityScoreSelect,
+      CommunityScoreRecord
+    >(userId, role, id, communityScoreSelect);
     return mapToCommunityScoreResponse(evaluation);
   }
 
@@ -511,11 +541,11 @@ export class TrainingEvaluationsService {
    * Tổng điểm = chấp hành pháp luật + tình nguyện + quan hệ cộng đồng, tối đa 25.
    */
   async updateCommunityScore(
-    user: AuthenticatedUser,
+    userId: string,
     id: string,
     dto: UpdateCommunityScoreDto,
   ): Promise<CommunityScoreResponse> {
-    const current = await this.findOwnedForWrite(user, id, {
+    const current = await this.findOwnedForWrite(userId, id, {
       studyScore: true,
       disciplineScore: true,
       activityScore: true,
@@ -560,12 +590,14 @@ export class TrainingEvaluationsService {
 
   /** Lấy điểm và dữ liệu Mục V (vai trò BCS/BCH). */
   async getRoleScore(
-    user: AuthenticatedUser,
+    userId: string,
+    role: UserRole,
     id: string,
   ): Promise<RoleScoreResponse> {
-    const evaluation = await this.findOwned<typeof roleScoreSelect, RoleScoreRecord>(
-      user, id, roleScoreSelect,
-    );
+    const evaluation = await this.findOwned<
+      typeof roleScoreSelect,
+      RoleScoreRecord
+    >(userId, role, id, roleScoreSelect);
     return mapToRoleScoreResponse(evaluation);
   }
 
@@ -574,11 +606,11 @@ export class TrainingEvaluationsService {
    * Logic tính điểm phụ thuộc vào loại sinh viên (NORMAL_STUDENT hay cán bộ).
    */
   async updateRoleScore(
-    user: AuthenticatedUser,
+    userId: string,
     id: string,
     dto: UpdateRoleScoreDto,
   ): Promise<RoleScoreResponse> {
-    const current = await this.findOwnedForWrite(user, id, {
+    const current = await this.findOwnedForWrite(userId, id, {
       studyScore: true,
       disciplineScore: true,
       activityScore: true,
@@ -619,19 +651,25 @@ export class TrainingEvaluationsService {
   // ─── Private: DB queries ────────────────────────────────────────────────────
 
   /**
-   * Query phiếu để đọc, với select type-safe bất kỳ.
-   * Dùng cho các GET endpoint cần select cụ thể theo từng mục.
+   * Query phiếu để đọc với phân quyền theo role.
+   * Student chỉ xem phiếu của mình; ClassCouncil/FacultyCouncil/Admin xem bất kỳ phiếu nào.
    */
   private async findOwned<
     TSelect extends Prisma.EvaluationFormSelect,
     TResult,
   >(
-    user: AuthenticatedUser,
+    userId: string,
+    role: UserRole,
     id: string,
     select: TSelect,
   ): Promise<TResult> {
+    const where =
+      role === UserRole.Student
+        ? { id, studentId: userId }
+        : { id };
+
     const evaluation = await this.prisma.evaluationForm.findFirst({
-      where: { id, studentId: user.id },
+      where,
       select,
     });
 
@@ -643,56 +681,16 @@ export class TrainingEvaluationsService {
   }
 
   /**
-   * Query phiếu để ghi (write), với select mở rộng bất kỳ.
-   * Luôn bao gồm `id` và `status` để kiểm tra quyền chỉnh sửa.
-   * Select thêm các điểm mục còn lại để tính lại tổng điểm.
+   * Query phiếu để ghi (write), luôn lọc theo studentId.
+   * Tự động include `id` và `status` để kiểm tra quyền chỉnh sửa.
+   * Select thêm các điểm mục còn lại nếu cần tính lại tổng điểm.
    */
   private async findOwnedForWrite<
     TSelect extends Prisma.EvaluationFormSelect = Record<never, never>,
-  >(user: AuthenticatedUser, id: string, select?: TSelect) {
+  >(userId: string, id: string, select?: TSelect) {
     const evaluation = await this.prisma.evaluationForm.findFirst({
-      where: { id, studentId: user.id },
+      where: { id, studentId: userId },
       select: { id: true, status: true, ...select },
-    });
-
-    if (!evaluation) {
-      throw new NotFoundException('Training evaluation was not found');
-    }
-
-    return evaluation;
-  }
-
-  /**
-   * Query phiếu với toàn bộ thông tin tóm tắt điểm và trạng thái duyệt.
-   * Dùng cho getSummary() và submit().
-   */
-  private async findOwnedScoreSummary(
-    user: AuthenticatedUser,
-    id: string,
-  ): Promise<EvaluationScoreSummaryRecord> {
-    const evaluation = await this.prisma.evaluationForm.findFirst({
-      where: { id, studentId: user.id },
-      select: evaluationScoreSummarySelect,
-    });
-
-    if (!evaluation) {
-      throw new NotFoundException('Training evaluation was not found');
-    }
-
-    return evaluation;
-  }
-
-  /**
-   * Query phiếu với thông tin trạng thái duyệt (timestamps của từng bước).
-   * Dùng cho getStatus().
-   */
-  private async findOwnedStatus(
-    user: AuthenticatedUser,
-    id: string,
-  ): Promise<EvaluationStatusRecord> {
-    const evaluation = await this.prisma.evaluationForm.findFirst({
-      where: { id, studentId: user.id },
-      select: evaluationStatusSelect,
     });
 
     if (!evaluation) {

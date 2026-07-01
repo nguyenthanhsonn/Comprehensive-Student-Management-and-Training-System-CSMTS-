@@ -45,10 +45,15 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalInterceptors(new ResponseInterceptor());
 
-  const port = configService.get<number>('app.port') ?? 5050;
-  const host = configService.get<string>('app.host') ?? '127.0.0.1';
+  const port = Number(configService.get('app.port') ?? 5050);
 
-  await app.listen(port, host);
+  console.log('Đang chạy backend...');
+  console.log('PORT:', port);
+
+  await app.listen(port, '0.0.0.0');
+
+  console.log(`Backend local: http://localhost:${port}/api/v1`);
+  console.log(`Backend ZeroTier: http://10.36.120.48:${port}`);
   if (debugStartup) console.timeEnd('startup');
 }
 
