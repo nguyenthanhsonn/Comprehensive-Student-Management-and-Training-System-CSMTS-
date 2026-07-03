@@ -396,7 +396,9 @@ export const ModelName = {
   EvaluationCriteria: 'EvaluationCriteria',
   EvaluationForm: 'EvaluationForm',
   FormCriteriaScore: 'FormCriteriaScore',
-  FormAttachment: 'FormAttachment'
+  FormAttachment: 'FormAttachment',
+  Evidence: 'Evidence',
+  Notification: 'Notification'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -412,7 +414,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "post" | "faculty" | "major" | "class" | "classStudent" | "classCouncilAssignment" | "facultyCouncilAssignment" | "semester" | "evaluationCriteria" | "evaluationForm" | "formCriteriaScore" | "formAttachment"
+    modelProps: "user" | "post" | "faculty" | "major" | "class" | "classStudent" | "classCouncilAssignment" | "facultyCouncilAssignment" | "semester" | "evaluationCriteria" | "evaluationForm" | "formCriteriaScore" | "formAttachment" | "evidence" | "notification"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1378,6 +1380,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Evidence: {
+      payload: Prisma.$EvidencePayload<ExtArgs>
+      fields: Prisma.EvidenceFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.EvidenceFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EvidencePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.EvidenceFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EvidencePayload>
+        }
+        findFirst: {
+          args: Prisma.EvidenceFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EvidencePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.EvidenceFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EvidencePayload>
+        }
+        findMany: {
+          args: Prisma.EvidenceFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EvidencePayload>[]
+        }
+        create: {
+          args: Prisma.EvidenceCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EvidencePayload>
+        }
+        createMany: {
+          args: Prisma.EvidenceCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.EvidenceCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EvidencePayload>[]
+        }
+        delete: {
+          args: Prisma.EvidenceDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EvidencePayload>
+        }
+        update: {
+          args: Prisma.EvidenceUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EvidencePayload>
+        }
+        deleteMany: {
+          args: Prisma.EvidenceDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.EvidenceUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.EvidenceUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EvidencePayload>[]
+        }
+        upsert: {
+          args: Prisma.EvidenceUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$EvidencePayload>
+        }
+        aggregate: {
+          args: Prisma.EvidenceAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateEvidence>
+        }
+        groupBy: {
+          args: Prisma.EvidenceGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EvidenceGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.EvidenceCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.EvidenceCountAggregateOutputType> | number
+        }
+      }
+    }
+    Notification: {
+      payload: Prisma.$NotificationPayload<ExtArgs>
+      fields: Prisma.NotificationFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.NotificationFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.NotificationFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPayload>
+        }
+        findFirst: {
+          args: Prisma.NotificationFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.NotificationFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPayload>
+        }
+        findMany: {
+          args: Prisma.NotificationFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPayload>[]
+        }
+        create: {
+          args: Prisma.NotificationCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPayload>
+        }
+        createMany: {
+          args: Prisma.NotificationCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.NotificationCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPayload>[]
+        }
+        delete: {
+          args: Prisma.NotificationDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPayload>
+        }
+        update: {
+          args: Prisma.NotificationUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPayload>
+        }
+        deleteMany: {
+          args: Prisma.NotificationDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.NotificationUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.NotificationUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPayload>[]
+        }
+        upsert: {
+          args: Prisma.NotificationUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationPayload>
+        }
+        aggregate: {
+          args: Prisma.NotificationAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateNotification>
+        }
+        groupBy: {
+          args: Prisma.NotificationGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.NotificationGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.NotificationCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.NotificationCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1573,6 +1723,9 @@ export const EvaluationFormScalarFieldEnum = {
   facultyReviewedAt: 'facultyReviewedAt',
   adminFinalizedAt: 'adminFinalizedAt',
   submittedAt: 'submittedAt',
+  isLocked: 'isLocked',
+  lockedAt: 'lockedAt',
+  lockedBy: 'lockedBy',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1608,6 +1761,32 @@ export const FormAttachmentScalarFieldEnum = {
 } as const
 
 export type FormAttachmentScalarFieldEnum = (typeof FormAttachmentScalarFieldEnum)[keyof typeof FormAttachmentScalarFieldEnum]
+
+
+export const EvidenceScalarFieldEnum = {
+  id: 'id',
+  studentId: 'studentId',
+  evaluationFormId: 'evaluationFormId',
+  criterionId: 'criterionId',
+  imageUrl: 'imageUrl',
+  publicId: 'publicId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type EvidenceScalarFieldEnum = (typeof EvidenceScalarFieldEnum)[keyof typeof EvidenceScalarFieldEnum]
+
+
+export const NotificationScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  title: 'title',
+  content: 'content',
+  isRead: 'isRead',
+  createdAt: 'createdAt'
+} as const
+
+export type NotificationScalarFieldEnum = (typeof NotificationScalarFieldEnum)[keyof typeof NotificationScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1925,6 +2104,8 @@ export type GlobalOmitConfig = {
   evaluationForm?: Prisma.EvaluationFormOmit
   formCriteriaScore?: Prisma.FormCriteriaScoreOmit
   formAttachment?: Prisma.FormAttachmentOmit
+  evidence?: Prisma.EvidenceOmit
+  notification?: Prisma.NotificationOmit
 }
 
 /* Types for Logging */

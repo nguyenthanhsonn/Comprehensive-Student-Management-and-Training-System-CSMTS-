@@ -27,6 +27,16 @@ export type ScoreResult = {
   rank: EvalRank;
 };
 
+export type LockableForm = {
+  isLocked: boolean;
+};
+
+export function assertNotLocked(form: LockableForm): void {
+  if (form.isLocked) {
+    throw new ConflictException('Biểu mẫu rèn luyện đã bị khóa vĩnh viễn!');
+  }
+}
+
 /**
  * Kiểm tra phiếu có đang ở trạng thái có thể chỉnh sửa không.
  * Chỉ cho phép sửa khi phiếu ở trạng thái draft hoặc bị trả về (rejected).
@@ -40,7 +50,9 @@ export function assertEditable(status: FormStatus): void {
   ];
 
   if (!editableStatuses.includes(status)) {
-    throw new ConflictException('Only draft evaluations can be updated');
+    throw new ConflictException(
+      'Chỉ phiếu nháp hoặc phiếu bị trả về mới được cập nhật',
+    );
   }
 }
 
@@ -108,7 +120,7 @@ export function calculateRoleScore(dto: UpdateRoleScoreDto): number {
 
   if (!positionGroup || !taskCompletionLevel || !managementSkillLevel) {
     throw new BadRequestException(
-      'positionGroup, taskCompletionLevel and managementSkillLevel are required for officer roles',
+      'positionGroup, taskCompletionLevel và managementSkillLevel là bắt buộc đối với vai trò cán bộ',
     );
   }
 

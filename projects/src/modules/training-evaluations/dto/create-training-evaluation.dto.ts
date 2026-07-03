@@ -9,7 +9,7 @@ export class CreateTrainingEvaluationDto {
   semester: TrainingEvaluationSemester;
 
   @Matches(/^\d{4}-\d{4}$/, {
-    message: 'academicYear must use format YYYY-YYYY',
+    message: 'Năm học phải có định dạng YYYY-YYYY',
   })
   academicYear: string;
 }

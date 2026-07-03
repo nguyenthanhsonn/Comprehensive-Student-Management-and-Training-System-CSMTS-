@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { CaptchaService } from './captcha.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { LogoutDto } from './dto/logout.dto';
@@ -9,7 +10,15 @@ import type { RequestWithUser } from './types/authenticated-user.type';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly captchaService: CaptchaService,
+  ) {}
+
+  @Get('captcha')
+  createCaptcha() {
+    return this.captchaService.create();
+  }
 
   @Post('login')
   login(@Body() dto: LoginDto) {

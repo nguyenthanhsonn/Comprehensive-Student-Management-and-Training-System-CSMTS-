@@ -44,6 +44,7 @@ export const evaluationDetailSelect = {
 export const evaluationStatusSelect = {
   id: true,
   status: true,
+  isLocked: true,
   submittedAt: true,
   classReviewedAt: true,
   facultyReviewedAt: true,

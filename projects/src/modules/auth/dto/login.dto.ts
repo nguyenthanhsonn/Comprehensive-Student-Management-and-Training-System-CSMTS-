@@ -1,6 +1,4 @@
-import { Numeric } from 'zod/v4/core/util.cjs';
-import { IsEmail, IsString, MinLength } from 'class-validator';
-import { MaxLength } from 'class-validator';
+import { IsEmail, IsString, IsUUID, Length, MinLength } from 'class-validator';
 
 export class LoginDto {
   @IsEmail()
@@ -9,4 +7,11 @@ export class LoginDto {
   @IsString()
   @MinLength(6)
   password: string;
+
+  @IsUUID()
+  captchaId: string;
+
+  @IsString()
+  @Length(5, 5)
+  captchaCode: string;
 }

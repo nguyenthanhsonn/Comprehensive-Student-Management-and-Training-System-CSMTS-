@@ -11,6 +11,7 @@ import * as bcrypt from 'bcrypt';
 import { createHash, randomUUID } from 'node:crypto';
 import { UsersService } from '../users/users.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { CaptchaService } from './captcha.service';
 import { LoginDto } from './dto/login.dto';
 import { LogoutDto } from './dto/logout.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
@@ -50,18 +51,21 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly tokenStore: AuthTokenStoreService,
+    private readonly captchaService: CaptchaService,
   ) {}
 
   // đăng nhập
   async login(dto: LoginDto): Promise<AuthTokens> {
+    this.captchaService.verify(dto.captchaId, dto.captchaCode);
+
     const user = await this.usersService.findByEmailWithPassword(dto.email);
 
     if (!user || !(await bcrypt.compare(dto.password, user.passwordHash))) {
-      throw new UnauthorizedException('Invalid email or password');
+      throw new UnauthorizedException('Email hoặc mật khẩu không đúng');
     }
 
     if (!user.isActive) {
-      throw new UnauthorizedException('User account is inactive');
+      throw new UnauthorizedException('Tài khoản người dùng không hoạt động');
     }
 
     return this.createSession({
@@ -104,16 +108,16 @@ export class AuthService {
     const user = await this.usersService.findByIdWithRefreshToken(payload.sub);
 
     if (!user || !user.isActive) {
-      throw new UnauthorizedException('Invalid refresh token');
+      throw new UnauthorizedException('Mã làm mới không hợp lệ');
     }
 
     if (!user.refreshTokenHash || !user.refreshTokenExpiresAt) {
-      throw new UnauthorizedException('Refresh token has been revoked');
+      throw new UnauthorizedException('Mã làm mới đã bị thu hồi');
     }
 
     if (user.refreshTokenExpiresAt.getTime() <= Date.now()) {
       await this.usersService.clearRefreshToken(user.id);
-      throw new UnauthorizedException('Refresh token has expired');
+      throw new UnauthorizedException('Mã làm mới đã hết hạn');
     }
 
     const isRefreshTokenValid = await this.isRefreshTokenHashValid(
@@ -122,7 +126,7 @@ export class AuthService {
     );
 
     if (!isRefreshTokenValid) {
-      throw new UnauthorizedException('Invalid refresh token');
+      throw new UnauthorizedException('Mã làm mới không hợp lệ');
     }
 
     return this.createSession({
@@ -141,7 +145,7 @@ export class AuthService {
     if (dto.refreshToken) {
       const payload = await this.verifyRefreshToken(dto.refreshToken);
       if (payload.sub !== user.id) {
-        throw new UnauthorizedException('Invalid refresh token');
+        throw new UnauthorizedException('Mã làm mới không hợp lệ');
       }
     }
 
@@ -166,12 +170,12 @@ export class AuthService {
         userWithPassword.passwordHash,
       ))
     ) {
-      throw new UnauthorizedException('Current password is incorrect');
+      throw new UnauthorizedException('Mật khẩu hiện tại không đúng');
     }
 
     if (await bcrypt.compare(dto.newPassword, userWithPassword.passwordHash)) {
       throw new BadRequestException(
-        'New password must be different from current password',
+        'Mật khẩu mới phải khác mật khẩu hiện tại',
       );
     }
 
@@ -247,13 +251,13 @@ export class AuthService {
         secret: this.configService.getOrThrow<string>('app.jwtRefreshSecret'),
       });
     } catch {
-      throw new UnauthorizedException('Invalid refresh token');
+      throw new UnauthorizedException('Mã làm mới không hợp lệ');
     }
   }
 
   private getTokenExpiresAt(payload: JwtPayload): Date {
     if (!payload.exp) {
-      throw new UnauthorizedException('Invalid refresh token');
+      throw new UnauthorizedException('Mã làm mới không hợp lệ');
     }
 
     return new Date(payload.exp * 1000);
