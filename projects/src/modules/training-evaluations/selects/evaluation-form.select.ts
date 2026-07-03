@@ -40,6 +40,27 @@ export const evaluationDetailSelect = {
   student: { select: { phone: true } },
 } satisfies Prisma.EvaluationFormSelect;
 
+// ─── GET /admin/training-evaluations – danh sách cho admin (đa lớp/khoa) ──────
+export const evaluationAdminListSelect = {
+  id: true,
+  status: true,
+  submittedAt: true,
+  studentScore: true,
+  classScore: true,
+  finalScore: true,
+  rank: true,
+  student: { select: { id: true, fullName: true, email: true } },
+  class: {
+    select: {
+      id: true,
+      code: true,
+      name: true,
+      major: { select: { faculty: { select: { id: true, code: true, name: true } } } },
+    },
+  },
+  semester: { select: { year: true, semester: true } },
+} satisfies Prisma.EvaluationFormSelect;
+
 // ─── GET /:id/status – approval trail ─────────────────────────────────────────
 export const evaluationStatusSelect = {
   id: true,
@@ -114,6 +135,9 @@ export type EvaluationStatusRecord = Prisma.EvaluationFormGetPayload<{
 }>;
 export type EvaluationScoreSummaryRecord = Prisma.EvaluationFormGetPayload<{
   select: typeof evaluationScoreSummarySelect;
+}>;
+export type EvaluationAdminListRecord = Prisma.EvaluationFormGetPayload<{
+  select: typeof evaluationAdminListSelect;
 }>;
 export type StudyScoreRecord = Prisma.EvaluationFormGetPayload<{
   select: typeof studyScoreSelect;

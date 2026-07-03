@@ -13,9 +13,10 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { CreateTrainingEvaluationDto } from './dto/create-training-evaluation.dto';
-import { ReviewEvaluationDto } from './dto/review-evaluation.dto';
 import { ReviewScoresDto } from './dto/review-scores.dto';
+import { ReviewTrainingEvaluationDto } from './dto/review-training-evaluation.dto';
 import { UpdateActivityScoreDto } from './dto/update-activity-score.dto';
 import { UpdateCommunityScoreDto } from './dto/update-community-score.dto';
 import { UpdateDisciplineScoreDto } from './dto/update-discipline-score.dto';
@@ -195,12 +196,11 @@ export class TrainingEvaluationsController {
   @Post(':id/review')
   @Roles(UserRole.ClassCouncil, UserRole.FacultyCouncil, UserRole.Admin)
   review(
-    @CurrentUser('id') userId: string,
-    @CurrentUser('role') role: UserRole,
+    @CurrentUser() reviewer: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: ReviewEvaluationDto,
+    @Body() dto: ReviewTrainingEvaluationDto,
   ) {
-    return this.trainingEvaluationsService.review(userId, role, id, dto);
+    return this.trainingEvaluationsService.review(reviewer, id, dto);
   }
 
   @Get(':id')

@@ -7,9 +7,12 @@ import { validateEnvironment } from './config/env.validation';
 import { PrismaModule } from './database/prisma.module';
 import { AdminClassesModule } from './modules/admin-classes/admin-classes.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { CouncilAssignmentsModule } from './modules/council-assignments/council-assignments.module';
 import { EvidencesModule } from './modules/evidences/evidences.module';
+import { MetadataModule } from './modules/metadata/metadata.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { PostsModule } from './modules/posts/posts.module';
+import { ReportsModule } from './modules/reports/reports.module';
 import { StudentsModule } from './modules/students/students.module';
 import { TrainingEvaluationsModule } from './modules/training-evaluations/training-evaluations.module';
 import { UsersModule } from './modules/users/users.module';
@@ -34,6 +37,9 @@ import { UsersModule } from './modules/users/users.module';
     TrainingEvaluationsModule,
     EvidencesModule,
     NotificationsModule,
+    MetadataModule,
+    CouncilAssignmentsModule,
+    ReportsModule,
     PostsModule,
   ],
   controllers: [AppController],

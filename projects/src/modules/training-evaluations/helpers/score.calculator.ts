@@ -120,7 +120,7 @@ export function calculateRoleScore(dto: UpdateRoleScoreDto): number {
 
   if (!positionGroup || !taskCompletionLevel || !managementSkillLevel) {
     throw new BadRequestException(
-      'positionGroup, taskCompletionLevel và managementSkillLevel là bắt buộc đối với vai trò cán bộ',
+      'positionGroup, taskCompletionLevel và managementSkillLevel là bắt buộc đối với cán bộ',
     );
   }
 

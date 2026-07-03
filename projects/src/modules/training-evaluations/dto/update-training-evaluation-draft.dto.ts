@@ -16,7 +16,7 @@ export class UpdateTrainingEvaluationDraftDto {
   @IsString()
   @MaxLength(20)
   @Matches(/^\+?[0-9]{9,15}$/, {
-    message: 'Số điện thoại phải có 9 đến 15 chữ số và có thể bắt đầu bằng +',
+    message: 'Số điện thoại phải có 9 đến 15 chữ số, có thể bắt đầu bằng dấu +',
   })
   phone?: string | null;
 
