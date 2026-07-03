@@ -128,6 +128,8 @@ model Major {
   faculty Faculty @relation(fields: [facultyId], references: [id], onDelete: Cascade)
   classes Class[]
 
+  // Indexes
+  @@index([facultyId]) // Tối ưu khi lọc phiếu đánh giá theo Khoa (join qua Class → Major → Faculty)
   @@map("majors")
 }
 

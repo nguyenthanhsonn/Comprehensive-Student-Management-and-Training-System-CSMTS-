@@ -40,7 +40,7 @@ export function assertEditable(status: FormStatus): void {
   ];
 
   if (!editableStatuses.includes(status)) {
-    throw new ConflictException('Only draft evaluations can be updated');
+    throw new ConflictException('Chỉ phiếu ở trạng thái nháp mới có thể chỉnh sửa');
   }
 }
 
@@ -108,7 +108,7 @@ export function calculateRoleScore(dto: UpdateRoleScoreDto): number {
 
   if (!positionGroup || !taskCompletionLevel || !managementSkillLevel) {
     throw new BadRequestException(
-      'positionGroup, taskCompletionLevel and managementSkillLevel are required for officer roles',
+      'positionGroup, taskCompletionLevel và managementSkillLevel là bắt buộc đối với cán bộ',
     );
   }
 
