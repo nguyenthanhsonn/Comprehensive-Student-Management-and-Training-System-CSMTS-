@@ -5,6 +5,7 @@ import type {
   ActivityScoreRecord,
   CommunityScoreRecord,
   DisciplineScoreRecord,
+  EvaluationAdminListRecord,
   EvaluationDetailRecord,
   EvaluationListRecord,
   EvaluationScoreSummaryRecord,
@@ -17,6 +18,7 @@ import type {
   CommunityScoreResponse,
   DisciplineScoreResponse,
   DisciplineViolationResponse,
+  EvaluationAdminListItem,
   EvaluationDetailResponse,
   EvaluationListResponse,
   EvaluationScoreSummaryResponse,
@@ -64,6 +66,35 @@ export function mapToDetailResponse(
     activityScore: evaluation.activityScore,
     communityScore: evaluation.communityScore,
     roleScore: evaluation.roleScore,
+  };
+}
+
+/**
+ * Chuyển đổi record phiếu sang 1 dòng trong danh sách admin (GET /admin/training-evaluations).
+ * Khác với mapToListResponse: kèm thông tin sinh viên/lớp/khoa để admin lọc và nhận diện,
+ * không kèm điểm 5 mục chi tiết vì danh sách chỉ cần điểm tổng.
+ */
+export function mapToAdminListItem(
+  evaluation: EvaluationAdminListRecord,
+): EvaluationAdminListItem {
+  return {
+    id: evaluation.id,
+    status: evaluation.status.toUpperCase(),
+    statusLabel: toStatusLabel(evaluation.status),
+    submittedAt: evaluation.submittedAt,
+    student: evaluation.student,
+    class: {
+      id: evaluation.class.id,
+      code: evaluation.class.code,
+      name: evaluation.class.name,
+    },
+    faculty: evaluation.class.major.faculty,
+    semester: toApiSemester(evaluation.semester.semester),
+    academicYear: toAcademicYear(evaluation.semester.year),
+    studentScore: evaluation.studentScore,
+    classScore: evaluation.classScore,
+    finalScore: evaluation.finalScore,
+    classification: toClassificationLabel(evaluation.rank),
   };
 }
 

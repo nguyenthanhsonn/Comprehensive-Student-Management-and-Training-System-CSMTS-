@@ -1,20 +1,16 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import {
-  FormStatus,
-  Prisma,
-  SemesterNo,
-} from '../../generated/prisma/client';
+import { FormStatus, Prisma } from '../../generated/prisma/client';
 import { UserRole } from 'src/common/shared';
 import { PrismaService } from '../../database/prisma.service';
-import {
-  CreateTrainingEvaluationDto,
-  type TrainingEvaluationSemester,
-} from './dto/create-training-evaluation.dto';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
+import { CreateTrainingEvaluationDto } from './dto/create-training-evaluation.dto';
+import { ReviewTrainingEvaluationDto } from './dto/review-training-evaluation.dto';
 import { UpdateActivityScoreDto } from './dto/update-activity-score.dto';
 import { UpdateCommunityScoreDto } from './dto/update-community-score.dto';
 import { UpdateDisciplineScoreDto } from './dto/update-discipline-score.dto';
@@ -46,9 +42,12 @@ import {
 } from './helpers/evaluation.mapper';
 import {
   assertEditable,
+  calculateClassification,
   calculateRoleScore,
   calculateScoreResult,
 } from './helpers/score.calculator';
+import { resolveReviewStage } from './helpers/review-workflow.helper';
+import { parseAcademicYearStart, toSemesterNo } from './helpers/semester.helper';
 import {
   activityScoreSelect,
   communityScoreSelect,
@@ -95,8 +94,8 @@ export class TrainingEvaluationsService {
     userId: string,
     dto: CreateTrainingEvaluationDto,
   ): Promise<EvaluationListResponse> {
-    const academicYearStart = this.parseAcademicYearStart(dto.academicYear);
-    const semesterNo = this.toSemesterNo(dto.semester);
+    const academicYearStart = parseAcademicYearStart(dto.academicYear);
+    const semesterNo = toSemesterNo(dto.semester);
 
     const [semester, currentClass] = await Promise.all([
       this.prisma.semester.findUnique({
@@ -112,13 +111,13 @@ export class TrainingEvaluationsService {
 
     if (!semester) {
       throw new NotFoundException(
-        'Semester metadata was not found for the requested academic year',
+        'Không tìm thấy thông tin học kỳ cho năm học được yêu cầu',
       );
     }
 
     if (!currentClass) {
       throw new BadRequestException(
-        'Student must belong to a class before creating an evaluation form',
+        'Sinh viên phải thuộc một lớp học trước khi tạo phiếu đánh giá',
       );
     }
 
@@ -141,7 +140,7 @@ export class TrainingEvaluationsService {
         error.code === 'P2002'
       ) {
         throw new ConflictException(
-          'Training evaluation already exists for this semester and academic year',
+          'Phiếu đánh giá đã tồn tại cho học kỳ và năm học này',
         );
       }
 
@@ -227,7 +226,7 @@ export class TrainingEvaluationsService {
     });
 
     if (!current) {
-      throw new NotFoundException('Training evaluation was not found');
+      throw new NotFoundException('Không tìm thấy phiếu đánh giá');
     }
 
     if (
@@ -236,7 +235,7 @@ export class TrainingEvaluationsService {
       )
     ) {
       throw new ConflictException(
-        'Only draft or rejected evaluations can be submitted',
+        'Chỉ phiếu ở trạng thái nháp hoặc bị trả về mới có thể nộp',
       );
     }
 
@@ -271,6 +270,97 @@ export class TrainingEvaluationsService {
   }
 
   /**
+   * Duyệt phiếu đánh giá — dùng chung cho cả 3 cấp: lớp/CVHT, khoa, học viện.
+   * Mỗi cấp chỉ xử lý được phiếu đang ở đúng trạng thái chờ duyệt của mình:
+   *   submitted → (lớp/CVHT chấm classScore) → class_approved
+   *   class_approved → (khoa xác nhận, không chấm điểm) → faculty_approved
+   *   faculty_approved → (học viện chốt, finalScore = classScore) → finalized
+   * Ở bất kỳ bước nào, từ chối sẽ đưa phiếu về `rejected` kèm lý do trong `note`.
+   * Lớp/CVHT và khoa chỉ được duyệt phiếu thuộc lớp/khoa mình được phân công.
+   */
+  async review(
+    reviewer: AuthenticatedUser,
+    id: string,
+    dto: ReviewTrainingEvaluationDto,
+  ): Promise<EvaluationScoreSummaryResponse> {
+    const evaluation = await this.prisma.evaluationForm.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        status: true,
+        classId: true,
+        classScore: true,
+        class: { select: { major: { select: { facultyId: true } } } },
+      },
+    });
+
+    if (!evaluation) {
+      throw new NotFoundException('Không tìm thấy phiếu đánh giá');
+    }
+
+    const stage = resolveReviewStage(reviewer.role, evaluation.status);
+    await this.assertReviewerAssigned(
+      reviewer.role,
+      reviewer.id,
+      evaluation.classId,
+      evaluation.class.major.facultyId,
+    );
+
+    if (dto.action === 'reject') {
+      const rejected = await this.prisma.evaluationForm.update({
+        where: { id },
+        data: {
+          status: FormStatus.rejected,
+          note: `${stage.notePrefix} ${dto.comment}`,
+        },
+        select: evaluationScoreSummarySelect,
+      });
+
+      return mapToScoreSummaryResponse(rejected);
+    }
+
+    const data: Prisma.EvaluationFormUncheckedUpdateInput = {
+      status: stage.nextApprovedStatus,
+    };
+
+    if (reviewer.role === UserRole.ClassCouncil) {
+      if (dto.classScore === undefined) {
+        throw new BadRequestException(
+          'classScore là bắt buộc khi lớp/CVHT duyệt phiếu',
+        );
+      }
+
+      data.classScore = dto.classScore;
+      data.rank = calculateClassification(dto.classScore);
+      data.classReviewedBy = reviewer.id;
+      data.classReviewedAt = new Date();
+    } else if (reviewer.role === UserRole.FacultyCouncil) {
+      data.facultyReviewedBy = reviewer.id;
+      data.facultyReviewedAt = new Date();
+    } else {
+      // UserRole.Admin — phê duyệt cuối, chốt finalScore từ classScore đã qua 2 cấp trước
+      if (evaluation.classScore === null) {
+        throw new ConflictException(
+          'Phiếu chưa có điểm lớp chấm, không thể phê duyệt cuối',
+        );
+      }
+
+      data.finalScore = evaluation.classScore;
+      data.rank = calculateClassification(evaluation.classScore);
+      data.adminFinalizedBy = reviewer.id;
+      data.adminFinalizedAt = new Date();
+    }
+
+    const approved = await this.prisma.evaluationForm.update({
+      where: { id },
+      data,
+      select: evaluationScoreSummarySelect,
+    });
+
+    return mapToScoreSummaryResponse(approved);
+  }
+
+  /**
    * Cập nhật thông tin nháp của phiếu: số điện thoại và/hoặc ghi chú.
    * Chỉ cập nhật được khi phiếu đang ở trạng thái có thể chỉnh sửa.
    * Cập nhật SĐT trực tiếp lên bảng User (dùng chung với profile).
@@ -284,7 +374,7 @@ export class TrainingEvaluationsService {
     const hasNote = Object.prototype.hasOwnProperty.call(dto, 'note');
 
     if (!hasPhone && !hasNote) {
-      throw new BadRequestException('No draft information provided');
+      throw new BadRequestException('Chưa cung cấp thông tin nháp nào để cập nhật');
     }
 
     const form = await this.findOwnedForWrite(userId, id);
@@ -674,7 +764,7 @@ export class TrainingEvaluationsService {
     });
 
     if (!evaluation) {
-      throw new NotFoundException('Training evaluation was not found');
+      throw new NotFoundException('Không tìm thấy phiếu đánh giá');
     }
 
     return evaluation as TResult;
@@ -694,42 +784,49 @@ export class TrainingEvaluationsService {
     });
 
     if (!evaluation) {
-      throw new NotFoundException('Training evaluation was not found');
+      throw new NotFoundException('Không tìm thấy phiếu đánh giá');
     }
 
     return evaluation;
   }
 
-  // ─── Private: Input helpers ─────────────────────────────────────────────────
-
   /**
-   * Parse và validate chuỗi năm học "YYYY-YYYY", trả về năm bắt đầu.
-   * Ví dụ: "2024-2025" → 2024. Kiểm tra đây là dãy năm liên tiếp.
+   * Kiểm tra người duyệt có được phân công phụ trách lớp/khoa của phiếu này không.
+   * Admin có toàn quyền, không cần kiểm tra. Lớp/CVHT kiểm tra theo `ClassCouncilAssignment`,
+   * khoa kiểm tra theo `FacultyCouncilAssignment`.
+   *
+   * @throws ForbiddenException nếu người duyệt chưa được phân công phụ trách lớp/khoa này
    */
-  private parseAcademicYearStart(academicYear: string): number {
-    const [startYearText, endYearText] = academicYear.split('-');
-    const startYear = Number(startYearText);
-    const endYear = Number(endYearText);
-
-    if (!Number.isInteger(startYear) || endYear !== startYear + 1) {
-      throw new BadRequestException(
-        'academicYear must be a continuous range, for example 2025-2026',
-      );
+  private async assertReviewerAssigned(
+    role: UserRole,
+    reviewerId: string,
+    classId: string,
+    facultyId: string,
+  ): Promise<void> {
+    if (role === UserRole.Admin) {
+      return;
     }
 
-    return startYear;
-  }
+    if (role === UserRole.ClassCouncil) {
+      const assignment = await this.prisma.classCouncilAssignment.findUnique({
+        where: { userId_classId: { userId: reviewerId, classId } },
+        select: { id: true },
+      });
 
-  /**
-   * Chuyển chuỗi học kỳ API (HK1/HK2/SUMMER) sang enum SemesterNo của DB.
-   */
-  private toSemesterNo(semester: TrainingEvaluationSemester): SemesterNo {
-    const map: Record<TrainingEvaluationSemester, SemesterNo> = {
-      HK1: SemesterNo.SEMESTER_1,
-      HK2: SemesterNo.SEMESTER_2,
-      SUMMER: SemesterNo.summer,
-    };
+      if (!assignment) {
+        throw new ForbiddenException('Bạn không được phân công phụ trách lớp này');
+      }
 
-    return map[semester];
+      return;
+    }
+
+    const assignment = await this.prisma.facultyCouncilAssignment.findUnique({
+      where: { userId_facultyId: { userId: reviewerId, facultyId } },
+      select: { id: true },
+    });
+
+    if (!assignment) {
+      throw new ForbiddenException('Bạn không được phân công phụ trách khoa này');
+    }
   }
 }

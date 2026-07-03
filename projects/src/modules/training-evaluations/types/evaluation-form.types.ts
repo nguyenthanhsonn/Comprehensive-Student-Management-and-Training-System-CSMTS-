@@ -31,6 +31,23 @@ export type EvaluationDetailResponse = EvaluationListResponse & {
   roleScore: number;
 };
 
+// ─── Admin: danh sách toàn hệ thống ───────────────────────────────────────────
+export type EvaluationAdminListItem = {
+  id: string;
+  status: string;
+  statusLabel: string;
+  submittedAt: Date | null;
+  student: { id: string; fullName: string; email: string };
+  class: { id: string; code: string; name: string };
+  faculty: { id: string; code: string; name: string };
+  semester: ApiSemester;
+  academicYear: string;
+  studentScore: number | null;
+  classScore: number | null;
+  finalScore: number | null;
+  classification: string | null;
+};
+
 // ─── Status / review steps ────────────────────────────────────────────────────
 export type ReviewStepStatus = 'pending' | 'current' | 'completed' | 'rejected';
 
