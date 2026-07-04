@@ -927,7 +927,7 @@ export class TrainingEvaluationsService {
     facultyId: string,
   ): Promise<void> {
     if (role === UserRole.Admin) {
-      return;>>>>>>> develop
+      return;
     }
 
     if (role === UserRole.ClassCouncil) {
