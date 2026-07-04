@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { createHash, randomInt, randomUUID } from 'node:crypto';
 
 type CaptchaEntry = {
@@ -14,12 +14,26 @@ export type CaptchaResponse = {
 };
 
 const CAPTCHA_TTL_MS = 2 * 60 * 1000;
+const CAPTCHA_CLEANUP_INTERVAL_MS = 60 * 1000;
 const CAPTCHA_LENGTH = 5;
 const CAPTCHA_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
 @Injectable()
-export class CaptchaService {
+export class CaptchaService implements OnModuleDestroy {
   private readonly store = new Map<string, CaptchaEntry>();
+  private readonly cleanupTimer: NodeJS.Timeout;
+
+  constructor() {
+    this.cleanupTimer = setInterval(
+      () => this.cleanupExpired(),
+      CAPTCHA_CLEANUP_INTERVAL_MS,
+    );
+    this.cleanupTimer.unref();
+  }
+
+  onModuleDestroy() {
+    clearInterval(this.cleanupTimer);
+  }
 
   create(): CaptchaResponse {
     this.cleanupExpired();
@@ -42,6 +56,7 @@ export class CaptchaService {
 
   verify(captchaId: string, captchaCode: string) {
     const entry = this.store.get(captchaId);
+    // Captcha chỉ được thử một lần. Đúng, sai, hoặc hết hạn đều phải lấy mã mới.
     this.store.delete(captchaId);
 
     if (!entry) {

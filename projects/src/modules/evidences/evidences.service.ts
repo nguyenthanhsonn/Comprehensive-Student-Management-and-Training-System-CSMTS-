@@ -17,10 +17,7 @@ import type { EvidenceResponse } from './types/evidence.types';
 export class EvidencesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async linkUrl(
-    userId: string,
-    dto: LinkEvidenceUrlDto,
-  ): Promise<EvidenceResponse> {
+  async linkUrl(userId: string, dto: LinkEvidenceUrlDto): Promise<EvidenceResponse> {
     const form = await this.findLatestWritableForm(userId);
     const criterion = await this.findActiveCriterionByCode(dto.criteriaCode);
 
@@ -61,9 +58,7 @@ export class EvidencesService {
     return mapToEvidenceResponse(deleted);
   }
 
-  private async findLatestWritableForm(
-    userId: string,
-  ): Promise<{ id: string; status: FormStatus; isLocked: boolean }> {
+  private async findLatestWritableForm(userId: string): Promise<{ id: string; status: FormStatus; isLocked: boolean }> {
     const form = await this.prisma.evaluationForm.findFirst({
       where: { studentId: userId },
       select: { id: true, status: true, isLocked: true },
