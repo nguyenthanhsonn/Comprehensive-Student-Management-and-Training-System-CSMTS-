@@ -324,6 +324,107 @@ async function main() {
       },
     });
 
+    console.log('Đang seed tiêu chí đánh giá...');
+    const criteriaData = [
+      { code: 'TC1', title: 'Ý thức tham gia học tập', maxScore: 20 },
+      { code: 'TC2', title: 'Ý thức chấp hành điều lệ, quy chế', maxScore: 25 },
+      { code: 'TC3', title: 'Ý thức tham gia hoạt động chính trị, xã hội, văn hóa, văn nghệ, thể thao', maxScore: 20 },
+      { code: 'TC4', title: 'Ý thức công dân và quan hệ cộng đồng', maxScore: 25 },
+      { code: 'TC5', title: 'Ý thức và kết quả tham gia công tác lớp, đoàn thể', maxScore: 10 },
+    ];
+    const criteria = [];
+    for (const item of criteriaData) {
+      const c = await prisma.evaluationCriteria.upsert({
+        where: { code: item.code },
+        update: { title: item.title, maxScore: item.maxScore },
+        create: { code: item.code, title: item.title, maxScore: item.maxScore },
+      });
+      criteria.push(c);
+    }
+
+    console.log('Đang seed phiếu đánh giá...');
+    const semesterForEvaluation = await prisma.semester.findFirst({
+      where: { year: 2025, semester: SemesterNo.SEMESTER_2 }
+    });
+    
+    const students = [studentTest, studentSon, studentDuc];
+    const forms = [];
+    if (semesterForEvaluation) {
+      for (const student of students) {
+        const form = await prisma.evaluationForm.upsert({
+          where: {
+            studentId_semesterId: {
+              studentId: student.id,
+              semesterId: semesterForEvaluation.id,
+            }
+          },
+          update: {},
+          create: {
+            studentId: student.id,
+            classId: studentClass.id,
+            semesterId: semesterForEvaluation.id,
+            status: 'draft',
+            studentScore: 0,
+          }
+        });
+        forms.push(form);
+      }
+    }
+
+    console.log('Đang seed 10 minh chứng (Evidence)...');
+    const evidenceIds = [
+      'e1111111-1111-4111-a111-111111111111',
+      'e2222222-2222-4222-a222-222222222222',
+      'e3333333-3333-4333-a333-333333333333',
+      'e4444444-4444-4444-a444-444444444444',
+      'e5555555-5555-4555-a555-555555555555',
+      'e6666666-6666-4666-a666-666666666666',
+      'e7777777-7777-4777-a777-777777777777',
+      'e8888888-8888-4888-a888-888888888888',
+      'e9999999-9999-4999-a999-999999999999',
+      'e0000000-0000-4000-a000-000000000000',
+    ];
+
+    const evidenceImages = [
+      'https://res.cloudinary.com/demo/image/upload/v1631234567/evidence1.jpg',
+      'https://res.cloudinary.com/demo/image/upload/v1631234568/evidence2.jpg',
+      'https://res.cloudinary.com/demo/image/upload/v1631234569/evidence3.jpg',
+      'https://res.cloudinary.com/demo/image/upload/v1631234570/evidence4.jpg',
+      'https://res.cloudinary.com/demo/image/upload/v1631234571/evidence5.jpg',
+      'https://res.cloudinary.com/demo/image/upload/v1631234572/evidence6.jpg',
+      'https://res.cloudinary.com/demo/image/upload/v1631234573/evidence7.jpg',
+      'https://res.cloudinary.com/demo/image/upload/v1631234574/evidence8.jpg',
+      'https://res.cloudinary.com/demo/image/upload/v1631234575/evidence9.jpg',
+      'https://res.cloudinary.com/demo/image/upload/v1631234576/evidence10.jpg',
+    ];
+
+    if (forms.length > 0 && criteria.length > 0) {
+      for (let i = 0; i < 10; i++) {
+        const student = students[i % students.length];
+        const form = forms[i % forms.length];
+        const criterion = criteria[i % criteria.length];
+
+        await prisma.evidence.upsert({
+          where: { id: evidenceIds[i] },
+          update: {
+            studentId: student.id,
+            evaluationFormId: form.id,
+            criterionId: criterion.id,
+            imageUrl: evidenceImages[i],
+            publicId: `evidence_public_${i + 1}`,
+          },
+          create: {
+            id: evidenceIds[i],
+            studentId: student.id,
+            evaluationFormId: form.id,
+            criterionId: criterion.id,
+            imageUrl: evidenceImages[i],
+            publicId: `evidence_public_${i + 1}`,
+          },
+        });
+      }
+    }
+
     console.log('Seed hoàn tất. Mật khẩu mặc định cho tài khoản test:', DEFAULT_PASSWORD);
     console.log('Tài khoản Postman:', studentTest.email);
     console.log('Tài khoản admin:', admin.email);

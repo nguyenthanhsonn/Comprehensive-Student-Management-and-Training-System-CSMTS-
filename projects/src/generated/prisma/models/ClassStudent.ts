@@ -198,17 +198,17 @@ export type ClassStudentOrderByWithRelationInput = {
 
 export type ClassStudentWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  studentId?: string
   studentCode?: string
   classId_studentId?: Prisma.ClassStudentClassIdStudentIdCompoundUniqueInput
   AND?: Prisma.ClassStudentWhereInput | Prisma.ClassStudentWhereInput[]
   OR?: Prisma.ClassStudentWhereInput[]
   NOT?: Prisma.ClassStudentWhereInput | Prisma.ClassStudentWhereInput[]
   classId?: Prisma.UuidFilter<"ClassStudent"> | string
-  studentId?: Prisma.UuidFilter<"ClassStudent"> | string
   enrolledAt?: Prisma.DateTimeFilter<"ClassStudent"> | Date | string
   class?: Prisma.XOR<Prisma.ClassScalarRelationFilter, Prisma.ClassWhereInput>
   student?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-}, "id" | "studentCode" | "classId_studentId">
+}, "id" | "studentId" | "studentCode" | "classId_studentId">
 
 export type ClassStudentOrderByWithAggregationInput = {
   id?: Prisma.SortOrder

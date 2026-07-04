@@ -256,6 +256,7 @@ export type EvaluationCriteriaWhereInput = {
   children?: Prisma.EvaluationCriteriaListRelationFilter
   formCriteriaScores?: Prisma.FormCriteriaScoreListRelationFilter
   formAttachments?: Prisma.FormAttachmentListRelationFilter
+  evidences?: Prisma.EvidenceListRelationFilter
 }
 
 export type EvaluationCriteriaOrderByWithRelationInput = {
@@ -272,6 +273,7 @@ export type EvaluationCriteriaOrderByWithRelationInput = {
   children?: Prisma.EvaluationCriteriaOrderByRelationAggregateInput
   formCriteriaScores?: Prisma.FormCriteriaScoreOrderByRelationAggregateInput
   formAttachments?: Prisma.FormAttachmentOrderByRelationAggregateInput
+  evidences?: Prisma.EvidenceOrderByRelationAggregateInput
 }
 
 export type EvaluationCriteriaWhereUniqueInput = Prisma.AtLeast<{
@@ -291,6 +293,7 @@ export type EvaluationCriteriaWhereUniqueInput = Prisma.AtLeast<{
   children?: Prisma.EvaluationCriteriaListRelationFilter
   formCriteriaScores?: Prisma.FormCriteriaScoreListRelationFilter
   formAttachments?: Prisma.FormAttachmentListRelationFilter
+  evidences?: Prisma.EvidenceListRelationFilter
 }, "id" | "code">
 
 export type EvaluationCriteriaOrderByWithAggregationInput = {
@@ -338,6 +341,7 @@ export type EvaluationCriteriaCreateInput = {
   children?: Prisma.EvaluationCriteriaCreateNestedManyWithoutParentInput
   formCriteriaScores?: Prisma.FormCriteriaScoreCreateNestedManyWithoutCriteriaInput
   formAttachments?: Prisma.FormAttachmentCreateNestedManyWithoutCriteriaInput
+  evidences?: Prisma.EvidenceCreateNestedManyWithoutCriterionInput
 }
 
 export type EvaluationCriteriaUncheckedCreateInput = {
@@ -353,6 +357,7 @@ export type EvaluationCriteriaUncheckedCreateInput = {
   children?: Prisma.EvaluationCriteriaUncheckedCreateNestedManyWithoutParentInput
   formCriteriaScores?: Prisma.FormCriteriaScoreUncheckedCreateNestedManyWithoutCriteriaInput
   formAttachments?: Prisma.FormAttachmentUncheckedCreateNestedManyWithoutCriteriaInput
+  evidences?: Prisma.EvidenceUncheckedCreateNestedManyWithoutCriterionInput
 }
 
 export type EvaluationCriteriaUpdateInput = {
@@ -368,6 +373,7 @@ export type EvaluationCriteriaUpdateInput = {
   children?: Prisma.EvaluationCriteriaUpdateManyWithoutParentNestedInput
   formCriteriaScores?: Prisma.FormCriteriaScoreUpdateManyWithoutCriteriaNestedInput
   formAttachments?: Prisma.FormAttachmentUpdateManyWithoutCriteriaNestedInput
+  evidences?: Prisma.EvidenceUpdateManyWithoutCriterionNestedInput
 }
 
 export type EvaluationCriteriaUncheckedUpdateInput = {
@@ -383,6 +389,7 @@ export type EvaluationCriteriaUncheckedUpdateInput = {
   children?: Prisma.EvaluationCriteriaUncheckedUpdateManyWithoutParentNestedInput
   formCriteriaScores?: Prisma.FormCriteriaScoreUncheckedUpdateManyWithoutCriteriaNestedInput
   formAttachments?: Prisma.FormAttachmentUncheckedUpdateManyWithoutCriteriaNestedInput
+  evidences?: Prisma.EvidenceUncheckedUpdateManyWithoutCriterionNestedInput
 }
 
 export type EvaluationCriteriaCreateManyInput = {
@@ -576,6 +583,20 @@ export type EvaluationCriteriaUpdateOneRequiredWithoutFormAttachmentsNestedInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.EvaluationCriteriaUpdateToOneWithWhereWithoutFormAttachmentsInput, Prisma.EvaluationCriteriaUpdateWithoutFormAttachmentsInput>, Prisma.EvaluationCriteriaUncheckedUpdateWithoutFormAttachmentsInput>
 }
 
+export type EvaluationCriteriaCreateNestedOneWithoutEvidencesInput = {
+  create?: Prisma.XOR<Prisma.EvaluationCriteriaCreateWithoutEvidencesInput, Prisma.EvaluationCriteriaUncheckedCreateWithoutEvidencesInput>
+  connectOrCreate?: Prisma.EvaluationCriteriaCreateOrConnectWithoutEvidencesInput
+  connect?: Prisma.EvaluationCriteriaWhereUniqueInput
+}
+
+export type EvaluationCriteriaUpdateOneRequiredWithoutEvidencesNestedInput = {
+  create?: Prisma.XOR<Prisma.EvaluationCriteriaCreateWithoutEvidencesInput, Prisma.EvaluationCriteriaUncheckedCreateWithoutEvidencesInput>
+  connectOrCreate?: Prisma.EvaluationCriteriaCreateOrConnectWithoutEvidencesInput
+  upsert?: Prisma.EvaluationCriteriaUpsertWithoutEvidencesInput
+  connect?: Prisma.EvaluationCriteriaWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.EvaluationCriteriaUpdateToOneWithWhereWithoutEvidencesInput, Prisma.EvaluationCriteriaUpdateWithoutEvidencesInput>, Prisma.EvaluationCriteriaUncheckedUpdateWithoutEvidencesInput>
+}
+
 export type EvaluationCriteriaCreateWithoutChildrenInput = {
   id?: string
   code: string
@@ -588,6 +609,7 @@ export type EvaluationCriteriaCreateWithoutChildrenInput = {
   parent?: Prisma.EvaluationCriteriaCreateNestedOneWithoutChildrenInput
   formCriteriaScores?: Prisma.FormCriteriaScoreCreateNestedManyWithoutCriteriaInput
   formAttachments?: Prisma.FormAttachmentCreateNestedManyWithoutCriteriaInput
+  evidences?: Prisma.EvidenceCreateNestedManyWithoutCriterionInput
 }
 
 export type EvaluationCriteriaUncheckedCreateWithoutChildrenInput = {
@@ -602,6 +624,7 @@ export type EvaluationCriteriaUncheckedCreateWithoutChildrenInput = {
   isActive?: boolean
   formCriteriaScores?: Prisma.FormCriteriaScoreUncheckedCreateNestedManyWithoutCriteriaInput
   formAttachments?: Prisma.FormAttachmentUncheckedCreateNestedManyWithoutCriteriaInput
+  evidences?: Prisma.EvidenceUncheckedCreateNestedManyWithoutCriterionInput
 }
 
 export type EvaluationCriteriaCreateOrConnectWithoutChildrenInput = {
@@ -621,6 +644,7 @@ export type EvaluationCriteriaCreateWithoutParentInput = {
   children?: Prisma.EvaluationCriteriaCreateNestedManyWithoutParentInput
   formCriteriaScores?: Prisma.FormCriteriaScoreCreateNestedManyWithoutCriteriaInput
   formAttachments?: Prisma.FormAttachmentCreateNestedManyWithoutCriteriaInput
+  evidences?: Prisma.EvidenceCreateNestedManyWithoutCriterionInput
 }
 
 export type EvaluationCriteriaUncheckedCreateWithoutParentInput = {
@@ -635,6 +659,7 @@ export type EvaluationCriteriaUncheckedCreateWithoutParentInput = {
   children?: Prisma.EvaluationCriteriaUncheckedCreateNestedManyWithoutParentInput
   formCriteriaScores?: Prisma.FormCriteriaScoreUncheckedCreateNestedManyWithoutCriteriaInput
   formAttachments?: Prisma.FormAttachmentUncheckedCreateNestedManyWithoutCriteriaInput
+  evidences?: Prisma.EvidenceUncheckedCreateNestedManyWithoutCriterionInput
 }
 
 export type EvaluationCriteriaCreateOrConnectWithoutParentInput = {
@@ -670,6 +695,7 @@ export type EvaluationCriteriaUpdateWithoutChildrenInput = {
   parent?: Prisma.EvaluationCriteriaUpdateOneWithoutChildrenNestedInput
   formCriteriaScores?: Prisma.FormCriteriaScoreUpdateManyWithoutCriteriaNestedInput
   formAttachments?: Prisma.FormAttachmentUpdateManyWithoutCriteriaNestedInput
+  evidences?: Prisma.EvidenceUpdateManyWithoutCriterionNestedInput
 }
 
 export type EvaluationCriteriaUncheckedUpdateWithoutChildrenInput = {
@@ -684,6 +710,7 @@ export type EvaluationCriteriaUncheckedUpdateWithoutChildrenInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   formCriteriaScores?: Prisma.FormCriteriaScoreUncheckedUpdateManyWithoutCriteriaNestedInput
   formAttachments?: Prisma.FormAttachmentUncheckedUpdateManyWithoutCriteriaNestedInput
+  evidences?: Prisma.EvidenceUncheckedUpdateManyWithoutCriterionNestedInput
 }
 
 export type EvaluationCriteriaUpsertWithWhereUniqueWithoutParentInput = {
@@ -729,6 +756,7 @@ export type EvaluationCriteriaCreateWithoutFormCriteriaScoresInput = {
   parent?: Prisma.EvaluationCriteriaCreateNestedOneWithoutChildrenInput
   children?: Prisma.EvaluationCriteriaCreateNestedManyWithoutParentInput
   formAttachments?: Prisma.FormAttachmentCreateNestedManyWithoutCriteriaInput
+  evidences?: Prisma.EvidenceCreateNestedManyWithoutCriterionInput
 }
 
 export type EvaluationCriteriaUncheckedCreateWithoutFormCriteriaScoresInput = {
@@ -743,6 +771,7 @@ export type EvaluationCriteriaUncheckedCreateWithoutFormCriteriaScoresInput = {
   isActive?: boolean
   children?: Prisma.EvaluationCriteriaUncheckedCreateNestedManyWithoutParentInput
   formAttachments?: Prisma.FormAttachmentUncheckedCreateNestedManyWithoutCriteriaInput
+  evidences?: Prisma.EvidenceUncheckedCreateNestedManyWithoutCriterionInput
 }
 
 export type EvaluationCriteriaCreateOrConnectWithoutFormCriteriaScoresInput = {
@@ -773,6 +802,7 @@ export type EvaluationCriteriaUpdateWithoutFormCriteriaScoresInput = {
   parent?: Prisma.EvaluationCriteriaUpdateOneWithoutChildrenNestedInput
   children?: Prisma.EvaluationCriteriaUpdateManyWithoutParentNestedInput
   formAttachments?: Prisma.FormAttachmentUpdateManyWithoutCriteriaNestedInput
+  evidences?: Prisma.EvidenceUpdateManyWithoutCriterionNestedInput
 }
 
 export type EvaluationCriteriaUncheckedUpdateWithoutFormCriteriaScoresInput = {
@@ -787,6 +817,7 @@ export type EvaluationCriteriaUncheckedUpdateWithoutFormCriteriaScoresInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   children?: Prisma.EvaluationCriteriaUncheckedUpdateManyWithoutParentNestedInput
   formAttachments?: Prisma.FormAttachmentUncheckedUpdateManyWithoutCriteriaNestedInput
+  evidences?: Prisma.EvidenceUncheckedUpdateManyWithoutCriterionNestedInput
 }
 
 export type EvaluationCriteriaCreateWithoutFormAttachmentsInput = {
@@ -801,6 +832,7 @@ export type EvaluationCriteriaCreateWithoutFormAttachmentsInput = {
   parent?: Prisma.EvaluationCriteriaCreateNestedOneWithoutChildrenInput
   children?: Prisma.EvaluationCriteriaCreateNestedManyWithoutParentInput
   formCriteriaScores?: Prisma.FormCriteriaScoreCreateNestedManyWithoutCriteriaInput
+  evidences?: Prisma.EvidenceCreateNestedManyWithoutCriterionInput
 }
 
 export type EvaluationCriteriaUncheckedCreateWithoutFormAttachmentsInput = {
@@ -815,6 +847,7 @@ export type EvaluationCriteriaUncheckedCreateWithoutFormAttachmentsInput = {
   isActive?: boolean
   children?: Prisma.EvaluationCriteriaUncheckedCreateNestedManyWithoutParentInput
   formCriteriaScores?: Prisma.FormCriteriaScoreUncheckedCreateNestedManyWithoutCriteriaInput
+  evidences?: Prisma.EvidenceUncheckedCreateNestedManyWithoutCriterionInput
 }
 
 export type EvaluationCriteriaCreateOrConnectWithoutFormAttachmentsInput = {
@@ -845,6 +878,7 @@ export type EvaluationCriteriaUpdateWithoutFormAttachmentsInput = {
   parent?: Prisma.EvaluationCriteriaUpdateOneWithoutChildrenNestedInput
   children?: Prisma.EvaluationCriteriaUpdateManyWithoutParentNestedInput
   formCriteriaScores?: Prisma.FormCriteriaScoreUpdateManyWithoutCriteriaNestedInput
+  evidences?: Prisma.EvidenceUpdateManyWithoutCriterionNestedInput
 }
 
 export type EvaluationCriteriaUncheckedUpdateWithoutFormAttachmentsInput = {
@@ -859,6 +893,83 @@ export type EvaluationCriteriaUncheckedUpdateWithoutFormAttachmentsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   children?: Prisma.EvaluationCriteriaUncheckedUpdateManyWithoutParentNestedInput
   formCriteriaScores?: Prisma.FormCriteriaScoreUncheckedUpdateManyWithoutCriteriaNestedInput
+  evidences?: Prisma.EvidenceUncheckedUpdateManyWithoutCriterionNestedInput
+}
+
+export type EvaluationCriteriaCreateWithoutEvidencesInput = {
+  id?: string
+  code: string
+  title: string
+  description?: string | null
+  maxScore: number
+  sortOrder?: number
+  inputType?: $Enums.CriteriaInputType
+  isActive?: boolean
+  parent?: Prisma.EvaluationCriteriaCreateNestedOneWithoutChildrenInput
+  children?: Prisma.EvaluationCriteriaCreateNestedManyWithoutParentInput
+  formCriteriaScores?: Prisma.FormCriteriaScoreCreateNestedManyWithoutCriteriaInput
+  formAttachments?: Prisma.FormAttachmentCreateNestedManyWithoutCriteriaInput
+}
+
+export type EvaluationCriteriaUncheckedCreateWithoutEvidencesInput = {
+  id?: string
+  code: string
+  title: string
+  description?: string | null
+  maxScore: number
+  sortOrder?: number
+  parentId?: string | null
+  inputType?: $Enums.CriteriaInputType
+  isActive?: boolean
+  children?: Prisma.EvaluationCriteriaUncheckedCreateNestedManyWithoutParentInput
+  formCriteriaScores?: Prisma.FormCriteriaScoreUncheckedCreateNestedManyWithoutCriteriaInput
+  formAttachments?: Prisma.FormAttachmentUncheckedCreateNestedManyWithoutCriteriaInput
+}
+
+export type EvaluationCriteriaCreateOrConnectWithoutEvidencesInput = {
+  where: Prisma.EvaluationCriteriaWhereUniqueInput
+  create: Prisma.XOR<Prisma.EvaluationCriteriaCreateWithoutEvidencesInput, Prisma.EvaluationCriteriaUncheckedCreateWithoutEvidencesInput>
+}
+
+export type EvaluationCriteriaUpsertWithoutEvidencesInput = {
+  update: Prisma.XOR<Prisma.EvaluationCriteriaUpdateWithoutEvidencesInput, Prisma.EvaluationCriteriaUncheckedUpdateWithoutEvidencesInput>
+  create: Prisma.XOR<Prisma.EvaluationCriteriaCreateWithoutEvidencesInput, Prisma.EvaluationCriteriaUncheckedCreateWithoutEvidencesInput>
+  where?: Prisma.EvaluationCriteriaWhereInput
+}
+
+export type EvaluationCriteriaUpdateToOneWithWhereWithoutEvidencesInput = {
+  where?: Prisma.EvaluationCriteriaWhereInput
+  data: Prisma.XOR<Prisma.EvaluationCriteriaUpdateWithoutEvidencesInput, Prisma.EvaluationCriteriaUncheckedUpdateWithoutEvidencesInput>
+}
+
+export type EvaluationCriteriaUpdateWithoutEvidencesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maxScore?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  inputType?: Prisma.EnumCriteriaInputTypeFieldUpdateOperationsInput | $Enums.CriteriaInputType
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  parent?: Prisma.EvaluationCriteriaUpdateOneWithoutChildrenNestedInput
+  children?: Prisma.EvaluationCriteriaUpdateManyWithoutParentNestedInput
+  formCriteriaScores?: Prisma.FormCriteriaScoreUpdateManyWithoutCriteriaNestedInput
+  formAttachments?: Prisma.FormAttachmentUpdateManyWithoutCriteriaNestedInput
+}
+
+export type EvaluationCriteriaUncheckedUpdateWithoutEvidencesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  maxScore?: Prisma.IntFieldUpdateOperationsInput | number
+  sortOrder?: Prisma.IntFieldUpdateOperationsInput | number
+  parentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  inputType?: Prisma.EnumCriteriaInputTypeFieldUpdateOperationsInput | $Enums.CriteriaInputType
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  children?: Prisma.EvaluationCriteriaUncheckedUpdateManyWithoutParentNestedInput
+  formCriteriaScores?: Prisma.FormCriteriaScoreUncheckedUpdateManyWithoutCriteriaNestedInput
+  formAttachments?: Prisma.FormAttachmentUncheckedUpdateManyWithoutCriteriaNestedInput
 }
 
 export type EvaluationCriteriaCreateManyParentInput = {
@@ -884,6 +995,7 @@ export type EvaluationCriteriaUpdateWithoutParentInput = {
   children?: Prisma.EvaluationCriteriaUpdateManyWithoutParentNestedInput
   formCriteriaScores?: Prisma.FormCriteriaScoreUpdateManyWithoutCriteriaNestedInput
   formAttachments?: Prisma.FormAttachmentUpdateManyWithoutCriteriaNestedInput
+  evidences?: Prisma.EvidenceUpdateManyWithoutCriterionNestedInput
 }
 
 export type EvaluationCriteriaUncheckedUpdateWithoutParentInput = {
@@ -898,6 +1010,7 @@ export type EvaluationCriteriaUncheckedUpdateWithoutParentInput = {
   children?: Prisma.EvaluationCriteriaUncheckedUpdateManyWithoutParentNestedInput
   formCriteriaScores?: Prisma.FormCriteriaScoreUncheckedUpdateManyWithoutCriteriaNestedInput
   formAttachments?: Prisma.FormAttachmentUncheckedUpdateManyWithoutCriteriaNestedInput
+  evidences?: Prisma.EvidenceUncheckedUpdateManyWithoutCriterionNestedInput
 }
 
 export type EvaluationCriteriaUncheckedUpdateManyWithoutParentInput = {
@@ -920,12 +1033,14 @@ export type EvaluationCriteriaCountOutputType = {
   children: number
   formCriteriaScores: number
   formAttachments: number
+  evidences: number
 }
 
 export type EvaluationCriteriaCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   children?: boolean | EvaluationCriteriaCountOutputTypeCountChildrenArgs
   formCriteriaScores?: boolean | EvaluationCriteriaCountOutputTypeCountFormCriteriaScoresArgs
   formAttachments?: boolean | EvaluationCriteriaCountOutputTypeCountFormAttachmentsArgs
+  evidences?: boolean | EvaluationCriteriaCountOutputTypeCountEvidencesArgs
 }
 
 /**
@@ -959,6 +1074,13 @@ export type EvaluationCriteriaCountOutputTypeCountFormAttachmentsArgs<ExtArgs ex
   where?: Prisma.FormAttachmentWhereInput
 }
 
+/**
+ * EvaluationCriteriaCountOutputType without action
+ */
+export type EvaluationCriteriaCountOutputTypeCountEvidencesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.EvidenceWhereInput
+}
+
 
 export type EvaluationCriteriaSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -974,6 +1096,7 @@ export type EvaluationCriteriaSelect<ExtArgs extends runtime.Types.Extensions.In
   children?: boolean | Prisma.EvaluationCriteria$childrenArgs<ExtArgs>
   formCriteriaScores?: boolean | Prisma.EvaluationCriteria$formCriteriaScoresArgs<ExtArgs>
   formAttachments?: boolean | Prisma.EvaluationCriteria$formAttachmentsArgs<ExtArgs>
+  evidences?: boolean | Prisma.EvaluationCriteria$evidencesArgs<ExtArgs>
   _count?: boolean | Prisma.EvaluationCriteriaCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["evaluationCriteria"]>
 
@@ -1021,6 +1144,7 @@ export type EvaluationCriteriaInclude<ExtArgs extends runtime.Types.Extensions.I
   children?: boolean | Prisma.EvaluationCriteria$childrenArgs<ExtArgs>
   formCriteriaScores?: boolean | Prisma.EvaluationCriteria$formCriteriaScoresArgs<ExtArgs>
   formAttachments?: boolean | Prisma.EvaluationCriteria$formAttachmentsArgs<ExtArgs>
+  evidences?: boolean | Prisma.EvaluationCriteria$evidencesArgs<ExtArgs>
   _count?: boolean | Prisma.EvaluationCriteriaCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type EvaluationCriteriaIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1037,6 +1161,7 @@ export type $EvaluationCriteriaPayload<ExtArgs extends runtime.Types.Extensions.
     children: Prisma.$EvaluationCriteriaPayload<ExtArgs>[]
     formCriteriaScores: Prisma.$FormCriteriaScorePayload<ExtArgs>[]
     formAttachments: Prisma.$FormAttachmentPayload<ExtArgs>[]
+    evidences: Prisma.$EvidencePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1446,6 +1571,7 @@ export interface Prisma__EvaluationCriteriaClient<T, Null = never, ExtArgs exten
   children<T extends Prisma.EvaluationCriteria$childrenArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.EvaluationCriteria$childrenArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EvaluationCriteriaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   formCriteriaScores<T extends Prisma.EvaluationCriteria$formCriteriaScoresArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.EvaluationCriteria$formCriteriaScoresArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FormCriteriaScorePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   formAttachments<T extends Prisma.EvaluationCriteria$formAttachmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.EvaluationCriteria$formAttachmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FormAttachmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  evidences<T extends Prisma.EvaluationCriteria$evidencesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.EvaluationCriteria$evidencesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EvidencePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1973,6 +2099,30 @@ export type EvaluationCriteria$formAttachmentsArgs<ExtArgs extends runtime.Types
   take?: number
   skip?: number
   distinct?: Prisma.FormAttachmentScalarFieldEnum | Prisma.FormAttachmentScalarFieldEnum[]
+}
+
+/**
+ * EvaluationCriteria.evidences
+ */
+export type EvaluationCriteria$evidencesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Evidence
+   */
+  select?: Prisma.EvidenceSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Evidence
+   */
+  omit?: Prisma.EvidenceOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EvidenceInclude<ExtArgs> | null
+  where?: Prisma.EvidenceWhereInput
+  orderBy?: Prisma.EvidenceOrderByWithRelationInput | Prisma.EvidenceOrderByWithRelationInput[]
+  cursor?: Prisma.EvidenceWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.EvidenceScalarFieldEnum | Prisma.EvidenceScalarFieldEnum[]
 }
 
 /**

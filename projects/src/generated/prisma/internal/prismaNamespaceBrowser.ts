@@ -63,7 +63,9 @@ export const ModelName = {
   EvaluationCriteria: 'EvaluationCriteria',
   EvaluationForm: 'EvaluationForm',
   FormCriteriaScore: 'FormCriteriaScore',
-  FormAttachment: 'FormAttachment'
+  FormAttachment: 'FormAttachment',
+  Evidence: 'Evidence',
+  Notification: 'Notification'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -238,6 +240,9 @@ export const EvaluationFormScalarFieldEnum = {
   facultyReviewedAt: 'facultyReviewedAt',
   adminFinalizedAt: 'adminFinalizedAt',
   submittedAt: 'submittedAt',
+  isLocked: 'isLocked',
+  lockedAt: 'lockedAt',
+  lockedBy: 'lockedBy',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -273,6 +278,32 @@ export const FormAttachmentScalarFieldEnum = {
 } as const
 
 export type FormAttachmentScalarFieldEnum = (typeof FormAttachmentScalarFieldEnum)[keyof typeof FormAttachmentScalarFieldEnum]
+
+
+export const EvidenceScalarFieldEnum = {
+  id: 'id',
+  studentId: 'studentId',
+  evaluationFormId: 'evaluationFormId',
+  criterionId: 'criterionId',
+  imageUrl: 'imageUrl',
+  publicId: 'publicId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type EvidenceScalarFieldEnum = (typeof EvidenceScalarFieldEnum)[keyof typeof EvidenceScalarFieldEnum]
+
+
+export const NotificationScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  title: 'title',
+  content: 'content',
+  isRead: 'isRead',
+  createdAt: 'createdAt'
+} as const
+
+export type NotificationScalarFieldEnum = (typeof NotificationScalarFieldEnum)[keyof typeof NotificationScalarFieldEnum]
 
 
 export const SortOrder = {

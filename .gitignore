@@ -11,3 +11,7 @@
 # Local OS files
 .DS_Store
 Thumbs.db
+
+# Package manager cache
+.pnpm-store/
+

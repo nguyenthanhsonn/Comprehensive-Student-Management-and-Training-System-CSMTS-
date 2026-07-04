@@ -74,6 +74,9 @@ export type EvaluationFormMinAggregateOutputType = {
   facultyReviewedAt: Date | null
   adminFinalizedAt: Date | null
   submittedAt: Date | null
+  isLocked: boolean | null
+  lockedAt: Date | null
+  lockedBy: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -102,6 +105,9 @@ export type EvaluationFormMaxAggregateOutputType = {
   facultyReviewedAt: Date | null
   adminFinalizedAt: Date | null
   submittedAt: Date | null
+  isLocked: boolean | null
+  lockedAt: Date | null
+  lockedBy: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -135,6 +141,9 @@ export type EvaluationFormCountAggregateOutputType = {
   facultyReviewedAt: number
   adminFinalizedAt: number
   submittedAt: number
+  isLocked: number
+  lockedAt: number
+  lockedBy: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -189,6 +198,9 @@ export type EvaluationFormMinAggregateInputType = {
   facultyReviewedAt?: true
   adminFinalizedAt?: true
   submittedAt?: true
+  isLocked?: true
+  lockedAt?: true
+  lockedBy?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -217,6 +229,9 @@ export type EvaluationFormMaxAggregateInputType = {
   facultyReviewedAt?: true
   adminFinalizedAt?: true
   submittedAt?: true
+  isLocked?: true
+  lockedAt?: true
+  lockedBy?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -250,6 +265,9 @@ export type EvaluationFormCountAggregateInputType = {
   facultyReviewedAt?: true
   adminFinalizedAt?: true
   submittedAt?: true
+  isLocked?: true
+  lockedAt?: true
+  lockedBy?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -370,6 +388,9 @@ export type EvaluationFormGroupByOutputType = {
   facultyReviewedAt: Date | null
   adminFinalizedAt: Date | null
   submittedAt: Date | null
+  isLocked: boolean
+  lockedAt: Date | null
+  lockedBy: string | null
   createdAt: Date
   updatedAt: Date
   _count: EvaluationFormCountAggregateOutputType | null
@@ -426,6 +447,9 @@ export type EvaluationFormWhereInput = {
   facultyReviewedAt?: Prisma.DateTimeNullableFilter<"EvaluationForm"> | Date | string | null
   adminFinalizedAt?: Prisma.DateTimeNullableFilter<"EvaluationForm"> | Date | string | null
   submittedAt?: Prisma.DateTimeNullableFilter<"EvaluationForm"> | Date | string | null
+  isLocked?: Prisma.BoolFilter<"EvaluationForm"> | boolean
+  lockedAt?: Prisma.DateTimeNullableFilter<"EvaluationForm"> | Date | string | null
+  lockedBy?: Prisma.UuidNullableFilter<"EvaluationForm"> | string | null
   createdAt?: Prisma.DateTimeFilter<"EvaluationForm"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"EvaluationForm"> | Date | string
   student?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -436,6 +460,7 @@ export type EvaluationFormWhereInput = {
   adminFinalizer?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   criteriaScores?: Prisma.FormCriteriaScoreListRelationFilter
   attachments?: Prisma.FormAttachmentListRelationFilter
+  evidences?: Prisma.EvidenceListRelationFilter
 }
 
 export type EvaluationFormOrderByWithRelationInput = {
@@ -467,6 +492,9 @@ export type EvaluationFormOrderByWithRelationInput = {
   facultyReviewedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   adminFinalizedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   submittedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  isLocked?: Prisma.SortOrder
+  lockedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  lockedBy?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   student?: Prisma.UserOrderByWithRelationInput
@@ -477,6 +505,7 @@ export type EvaluationFormOrderByWithRelationInput = {
   adminFinalizer?: Prisma.UserOrderByWithRelationInput
   criteriaScores?: Prisma.FormCriteriaScoreOrderByRelationAggregateInput
   attachments?: Prisma.FormAttachmentOrderByRelationAggregateInput
+  evidences?: Prisma.EvidenceOrderByRelationAggregateInput
 }
 
 export type EvaluationFormWhereUniqueInput = Prisma.AtLeast<{
@@ -512,6 +541,9 @@ export type EvaluationFormWhereUniqueInput = Prisma.AtLeast<{
   facultyReviewedAt?: Prisma.DateTimeNullableFilter<"EvaluationForm"> | Date | string | null
   adminFinalizedAt?: Prisma.DateTimeNullableFilter<"EvaluationForm"> | Date | string | null
   submittedAt?: Prisma.DateTimeNullableFilter<"EvaluationForm"> | Date | string | null
+  isLocked?: Prisma.BoolFilter<"EvaluationForm"> | boolean
+  lockedAt?: Prisma.DateTimeNullableFilter<"EvaluationForm"> | Date | string | null
+  lockedBy?: Prisma.UuidNullableFilter<"EvaluationForm"> | string | null
   createdAt?: Prisma.DateTimeFilter<"EvaluationForm"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"EvaluationForm"> | Date | string
   student?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -522,6 +554,7 @@ export type EvaluationFormWhereUniqueInput = Prisma.AtLeast<{
   adminFinalizer?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   criteriaScores?: Prisma.FormCriteriaScoreListRelationFilter
   attachments?: Prisma.FormAttachmentListRelationFilter
+  evidences?: Prisma.EvidenceListRelationFilter
 }, "id" | "studentId_semesterId">
 
 export type EvaluationFormOrderByWithAggregationInput = {
@@ -553,6 +586,9 @@ export type EvaluationFormOrderByWithAggregationInput = {
   facultyReviewedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   adminFinalizedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   submittedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  isLocked?: Prisma.SortOrder
+  lockedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  lockedBy?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.EvaluationFormCountOrderByAggregateInput
@@ -594,6 +630,9 @@ export type EvaluationFormScalarWhereWithAggregatesInput = {
   facultyReviewedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"EvaluationForm"> | Date | string | null
   adminFinalizedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"EvaluationForm"> | Date | string | null
   submittedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"EvaluationForm"> | Date | string | null
+  isLocked?: Prisma.BoolWithAggregatesFilter<"EvaluationForm"> | boolean
+  lockedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"EvaluationForm"> | Date | string | null
+  lockedBy?: Prisma.UuidNullableWithAggregatesFilter<"EvaluationForm"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"EvaluationForm"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"EvaluationForm"> | Date | string
 }
@@ -621,6 +660,9 @@ export type EvaluationFormCreateInput = {
   facultyReviewedAt?: Date | string | null
   adminFinalizedAt?: Date | string | null
   submittedAt?: Date | string | null
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  lockedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   student: Prisma.UserCreateNestedOneWithoutEvaluationFormsInput
@@ -631,6 +673,7 @@ export type EvaluationFormCreateInput = {
   adminFinalizer?: Prisma.UserCreateNestedOneWithoutAdminFinalizedFormsInput
   criteriaScores?: Prisma.FormCriteriaScoreCreateNestedManyWithoutFormInput
   attachments?: Prisma.FormAttachmentCreateNestedManyWithoutFormInput
+  evidences?: Prisma.EvidenceCreateNestedManyWithoutEvaluationFormInput
 }
 
 export type EvaluationFormUncheckedCreateInput = {
@@ -662,10 +705,14 @@ export type EvaluationFormUncheckedCreateInput = {
   facultyReviewedAt?: Date | string | null
   adminFinalizedAt?: Date | string | null
   submittedAt?: Date | string | null
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  lockedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   criteriaScores?: Prisma.FormCriteriaScoreUncheckedCreateNestedManyWithoutFormInput
   attachments?: Prisma.FormAttachmentUncheckedCreateNestedManyWithoutFormInput
+  evidences?: Prisma.EvidenceUncheckedCreateNestedManyWithoutEvaluationFormInput
 }
 
 export type EvaluationFormUpdateInput = {
@@ -691,6 +738,9 @@ export type EvaluationFormUpdateInput = {
   facultyReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminFinalizedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   student?: Prisma.UserUpdateOneRequiredWithoutEvaluationFormsNestedInput
@@ -701,6 +751,7 @@ export type EvaluationFormUpdateInput = {
   adminFinalizer?: Prisma.UserUpdateOneWithoutAdminFinalizedFormsNestedInput
   criteriaScores?: Prisma.FormCriteriaScoreUpdateManyWithoutFormNestedInput
   attachments?: Prisma.FormAttachmentUpdateManyWithoutFormNestedInput
+  evidences?: Prisma.EvidenceUpdateManyWithoutEvaluationFormNestedInput
 }
 
 export type EvaluationFormUncheckedUpdateInput = {
@@ -732,10 +783,14 @@ export type EvaluationFormUncheckedUpdateInput = {
   facultyReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminFinalizedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   criteriaScores?: Prisma.FormCriteriaScoreUncheckedUpdateManyWithoutFormNestedInput
   attachments?: Prisma.FormAttachmentUncheckedUpdateManyWithoutFormNestedInput
+  evidences?: Prisma.EvidenceUncheckedUpdateManyWithoutEvaluationFormNestedInput
 }
 
 export type EvaluationFormCreateManyInput = {
@@ -767,6 +822,9 @@ export type EvaluationFormCreateManyInput = {
   facultyReviewedAt?: Date | string | null
   adminFinalizedAt?: Date | string | null
   submittedAt?: Date | string | null
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  lockedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -794,6 +852,9 @@ export type EvaluationFormUpdateManyMutationInput = {
   facultyReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminFinalizedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -827,6 +888,9 @@ export type EvaluationFormUncheckedUpdateManyInput = {
   facultyReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminFinalizedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -875,6 +939,9 @@ export type EvaluationFormCountOrderByAggregateInput = {
   facultyReviewedAt?: Prisma.SortOrder
   adminFinalizedAt?: Prisma.SortOrder
   submittedAt?: Prisma.SortOrder
+  isLocked?: Prisma.SortOrder
+  lockedAt?: Prisma.SortOrder
+  lockedBy?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -915,6 +982,9 @@ export type EvaluationFormMaxOrderByAggregateInput = {
   facultyReviewedAt?: Prisma.SortOrder
   adminFinalizedAt?: Prisma.SortOrder
   submittedAt?: Prisma.SortOrder
+  isLocked?: Prisma.SortOrder
+  lockedAt?: Prisma.SortOrder
+  lockedBy?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -943,6 +1013,9 @@ export type EvaluationFormMinOrderByAggregateInput = {
   facultyReviewedAt?: Prisma.SortOrder
   adminFinalizedAt?: Prisma.SortOrder
   submittedAt?: Prisma.SortOrder
+  isLocked?: Prisma.SortOrder
+  lockedAt?: Prisma.SortOrder
+  lockedBy?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -1260,6 +1333,20 @@ export type EvaluationFormUpdateOneRequiredWithoutAttachmentsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.EvaluationFormUpdateToOneWithWhereWithoutAttachmentsInput, Prisma.EvaluationFormUpdateWithoutAttachmentsInput>, Prisma.EvaluationFormUncheckedUpdateWithoutAttachmentsInput>
 }
 
+export type EvaluationFormCreateNestedOneWithoutEvidencesInput = {
+  create?: Prisma.XOR<Prisma.EvaluationFormCreateWithoutEvidencesInput, Prisma.EvaluationFormUncheckedCreateWithoutEvidencesInput>
+  connectOrCreate?: Prisma.EvaluationFormCreateOrConnectWithoutEvidencesInput
+  connect?: Prisma.EvaluationFormWhereUniqueInput
+}
+
+export type EvaluationFormUpdateOneRequiredWithoutEvidencesNestedInput = {
+  create?: Prisma.XOR<Prisma.EvaluationFormCreateWithoutEvidencesInput, Prisma.EvaluationFormUncheckedCreateWithoutEvidencesInput>
+  connectOrCreate?: Prisma.EvaluationFormCreateOrConnectWithoutEvidencesInput
+  upsert?: Prisma.EvaluationFormUpsertWithoutEvidencesInput
+  connect?: Prisma.EvaluationFormWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.EvaluationFormUpdateToOneWithWhereWithoutEvidencesInput, Prisma.EvaluationFormUpdateWithoutEvidencesInput>, Prisma.EvaluationFormUncheckedUpdateWithoutEvidencesInput>
+}
+
 export type EvaluationFormCreateWithoutStudentInput = {
   id?: string
   status?: $Enums.FormStatus
@@ -1283,6 +1370,9 @@ export type EvaluationFormCreateWithoutStudentInput = {
   facultyReviewedAt?: Date | string | null
   adminFinalizedAt?: Date | string | null
   submittedAt?: Date | string | null
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  lockedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   class: Prisma.ClassCreateNestedOneWithoutEvaluationFormsInput
@@ -1292,6 +1382,7 @@ export type EvaluationFormCreateWithoutStudentInput = {
   adminFinalizer?: Prisma.UserCreateNestedOneWithoutAdminFinalizedFormsInput
   criteriaScores?: Prisma.FormCriteriaScoreCreateNestedManyWithoutFormInput
   attachments?: Prisma.FormAttachmentCreateNestedManyWithoutFormInput
+  evidences?: Prisma.EvidenceCreateNestedManyWithoutEvaluationFormInput
 }
 
 export type EvaluationFormUncheckedCreateWithoutStudentInput = {
@@ -1322,10 +1413,14 @@ export type EvaluationFormUncheckedCreateWithoutStudentInput = {
   facultyReviewedAt?: Date | string | null
   adminFinalizedAt?: Date | string | null
   submittedAt?: Date | string | null
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  lockedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   criteriaScores?: Prisma.FormCriteriaScoreUncheckedCreateNestedManyWithoutFormInput
   attachments?: Prisma.FormAttachmentUncheckedCreateNestedManyWithoutFormInput
+  evidences?: Prisma.EvidenceUncheckedCreateNestedManyWithoutEvaluationFormInput
 }
 
 export type EvaluationFormCreateOrConnectWithoutStudentInput = {
@@ -1361,6 +1456,9 @@ export type EvaluationFormCreateWithoutClassReviewerInput = {
   facultyReviewedAt?: Date | string | null
   adminFinalizedAt?: Date | string | null
   submittedAt?: Date | string | null
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  lockedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   student: Prisma.UserCreateNestedOneWithoutEvaluationFormsInput
@@ -1370,6 +1468,7 @@ export type EvaluationFormCreateWithoutClassReviewerInput = {
   adminFinalizer?: Prisma.UserCreateNestedOneWithoutAdminFinalizedFormsInput
   criteriaScores?: Prisma.FormCriteriaScoreCreateNestedManyWithoutFormInput
   attachments?: Prisma.FormAttachmentCreateNestedManyWithoutFormInput
+  evidences?: Prisma.EvidenceCreateNestedManyWithoutEvaluationFormInput
 }
 
 export type EvaluationFormUncheckedCreateWithoutClassReviewerInput = {
@@ -1400,10 +1499,14 @@ export type EvaluationFormUncheckedCreateWithoutClassReviewerInput = {
   facultyReviewedAt?: Date | string | null
   adminFinalizedAt?: Date | string | null
   submittedAt?: Date | string | null
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  lockedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   criteriaScores?: Prisma.FormCriteriaScoreUncheckedCreateNestedManyWithoutFormInput
   attachments?: Prisma.FormAttachmentUncheckedCreateNestedManyWithoutFormInput
+  evidences?: Prisma.EvidenceUncheckedCreateNestedManyWithoutEvaluationFormInput
 }
 
 export type EvaluationFormCreateOrConnectWithoutClassReviewerInput = {
@@ -1439,6 +1542,9 @@ export type EvaluationFormCreateWithoutFacultyReviewerInput = {
   facultyReviewedAt?: Date | string | null
   adminFinalizedAt?: Date | string | null
   submittedAt?: Date | string | null
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  lockedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   student: Prisma.UserCreateNestedOneWithoutEvaluationFormsInput
@@ -1448,6 +1554,7 @@ export type EvaluationFormCreateWithoutFacultyReviewerInput = {
   adminFinalizer?: Prisma.UserCreateNestedOneWithoutAdminFinalizedFormsInput
   criteriaScores?: Prisma.FormCriteriaScoreCreateNestedManyWithoutFormInput
   attachments?: Prisma.FormAttachmentCreateNestedManyWithoutFormInput
+  evidences?: Prisma.EvidenceCreateNestedManyWithoutEvaluationFormInput
 }
 
 export type EvaluationFormUncheckedCreateWithoutFacultyReviewerInput = {
@@ -1478,10 +1585,14 @@ export type EvaluationFormUncheckedCreateWithoutFacultyReviewerInput = {
   facultyReviewedAt?: Date | string | null
   adminFinalizedAt?: Date | string | null
   submittedAt?: Date | string | null
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  lockedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   criteriaScores?: Prisma.FormCriteriaScoreUncheckedCreateNestedManyWithoutFormInput
   attachments?: Prisma.FormAttachmentUncheckedCreateNestedManyWithoutFormInput
+  evidences?: Prisma.EvidenceUncheckedCreateNestedManyWithoutEvaluationFormInput
 }
 
 export type EvaluationFormCreateOrConnectWithoutFacultyReviewerInput = {
@@ -1517,6 +1628,9 @@ export type EvaluationFormCreateWithoutAdminFinalizerInput = {
   facultyReviewedAt?: Date | string | null
   adminFinalizedAt?: Date | string | null
   submittedAt?: Date | string | null
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  lockedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   student: Prisma.UserCreateNestedOneWithoutEvaluationFormsInput
@@ -1526,6 +1640,7 @@ export type EvaluationFormCreateWithoutAdminFinalizerInput = {
   facultyReviewer?: Prisma.UserCreateNestedOneWithoutFacultyReviewedFormsInput
   criteriaScores?: Prisma.FormCriteriaScoreCreateNestedManyWithoutFormInput
   attachments?: Prisma.FormAttachmentCreateNestedManyWithoutFormInput
+  evidences?: Prisma.EvidenceCreateNestedManyWithoutEvaluationFormInput
 }
 
 export type EvaluationFormUncheckedCreateWithoutAdminFinalizerInput = {
@@ -1556,10 +1671,14 @@ export type EvaluationFormUncheckedCreateWithoutAdminFinalizerInput = {
   facultyReviewedAt?: Date | string | null
   adminFinalizedAt?: Date | string | null
   submittedAt?: Date | string | null
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  lockedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   criteriaScores?: Prisma.FormCriteriaScoreUncheckedCreateNestedManyWithoutFormInput
   attachments?: Prisma.FormAttachmentUncheckedCreateNestedManyWithoutFormInput
+  evidences?: Prisma.EvidenceUncheckedCreateNestedManyWithoutEvaluationFormInput
 }
 
 export type EvaluationFormCreateOrConnectWithoutAdminFinalizerInput = {
@@ -1620,6 +1739,9 @@ export type EvaluationFormScalarWhereInput = {
   facultyReviewedAt?: Prisma.DateTimeNullableFilter<"EvaluationForm"> | Date | string | null
   adminFinalizedAt?: Prisma.DateTimeNullableFilter<"EvaluationForm"> | Date | string | null
   submittedAt?: Prisma.DateTimeNullableFilter<"EvaluationForm"> | Date | string | null
+  isLocked?: Prisma.BoolFilter<"EvaluationForm"> | boolean
+  lockedAt?: Prisma.DateTimeNullableFilter<"EvaluationForm"> | Date | string | null
+  lockedBy?: Prisma.UuidNullableFilter<"EvaluationForm"> | string | null
   createdAt?: Prisma.DateTimeFilter<"EvaluationForm"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"EvaluationForm"> | Date | string
 }
@@ -1695,6 +1817,9 @@ export type EvaluationFormCreateWithoutClassInput = {
   facultyReviewedAt?: Date | string | null
   adminFinalizedAt?: Date | string | null
   submittedAt?: Date | string | null
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  lockedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   student: Prisma.UserCreateNestedOneWithoutEvaluationFormsInput
@@ -1704,6 +1829,7 @@ export type EvaluationFormCreateWithoutClassInput = {
   adminFinalizer?: Prisma.UserCreateNestedOneWithoutAdminFinalizedFormsInput
   criteriaScores?: Prisma.FormCriteriaScoreCreateNestedManyWithoutFormInput
   attachments?: Prisma.FormAttachmentCreateNestedManyWithoutFormInput
+  evidences?: Prisma.EvidenceCreateNestedManyWithoutEvaluationFormInput
 }
 
 export type EvaluationFormUncheckedCreateWithoutClassInput = {
@@ -1734,10 +1860,14 @@ export type EvaluationFormUncheckedCreateWithoutClassInput = {
   facultyReviewedAt?: Date | string | null
   adminFinalizedAt?: Date | string | null
   submittedAt?: Date | string | null
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  lockedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   criteriaScores?: Prisma.FormCriteriaScoreUncheckedCreateNestedManyWithoutFormInput
   attachments?: Prisma.FormAttachmentUncheckedCreateNestedManyWithoutFormInput
+  evidences?: Prisma.EvidenceUncheckedCreateNestedManyWithoutEvaluationFormInput
 }
 
 export type EvaluationFormCreateOrConnectWithoutClassInput = {
@@ -1789,6 +1919,9 @@ export type EvaluationFormCreateWithoutSemesterInput = {
   facultyReviewedAt?: Date | string | null
   adminFinalizedAt?: Date | string | null
   submittedAt?: Date | string | null
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  lockedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   student: Prisma.UserCreateNestedOneWithoutEvaluationFormsInput
@@ -1798,6 +1931,7 @@ export type EvaluationFormCreateWithoutSemesterInput = {
   adminFinalizer?: Prisma.UserCreateNestedOneWithoutAdminFinalizedFormsInput
   criteriaScores?: Prisma.FormCriteriaScoreCreateNestedManyWithoutFormInput
   attachments?: Prisma.FormAttachmentCreateNestedManyWithoutFormInput
+  evidences?: Prisma.EvidenceCreateNestedManyWithoutEvaluationFormInput
 }
 
 export type EvaluationFormUncheckedCreateWithoutSemesterInput = {
@@ -1828,10 +1962,14 @@ export type EvaluationFormUncheckedCreateWithoutSemesterInput = {
   facultyReviewedAt?: Date | string | null
   adminFinalizedAt?: Date | string | null
   submittedAt?: Date | string | null
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  lockedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   criteriaScores?: Prisma.FormCriteriaScoreUncheckedCreateNestedManyWithoutFormInput
   attachments?: Prisma.FormAttachmentUncheckedCreateNestedManyWithoutFormInput
+  evidences?: Prisma.EvidenceUncheckedCreateNestedManyWithoutEvaluationFormInput
 }
 
 export type EvaluationFormCreateOrConnectWithoutSemesterInput = {
@@ -1883,6 +2021,9 @@ export type EvaluationFormCreateWithoutCriteriaScoresInput = {
   facultyReviewedAt?: Date | string | null
   adminFinalizedAt?: Date | string | null
   submittedAt?: Date | string | null
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  lockedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   student: Prisma.UserCreateNestedOneWithoutEvaluationFormsInput
@@ -1892,6 +2033,7 @@ export type EvaluationFormCreateWithoutCriteriaScoresInput = {
   facultyReviewer?: Prisma.UserCreateNestedOneWithoutFacultyReviewedFormsInput
   adminFinalizer?: Prisma.UserCreateNestedOneWithoutAdminFinalizedFormsInput
   attachments?: Prisma.FormAttachmentCreateNestedManyWithoutFormInput
+  evidences?: Prisma.EvidenceCreateNestedManyWithoutEvaluationFormInput
 }
 
 export type EvaluationFormUncheckedCreateWithoutCriteriaScoresInput = {
@@ -1923,9 +2065,13 @@ export type EvaluationFormUncheckedCreateWithoutCriteriaScoresInput = {
   facultyReviewedAt?: Date | string | null
   adminFinalizedAt?: Date | string | null
   submittedAt?: Date | string | null
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  lockedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   attachments?: Prisma.FormAttachmentUncheckedCreateNestedManyWithoutFormInput
+  evidences?: Prisma.EvidenceUncheckedCreateNestedManyWithoutEvaluationFormInput
 }
 
 export type EvaluationFormCreateOrConnectWithoutCriteriaScoresInput = {
@@ -1967,6 +2113,9 @@ export type EvaluationFormUpdateWithoutCriteriaScoresInput = {
   facultyReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminFinalizedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   student?: Prisma.UserUpdateOneRequiredWithoutEvaluationFormsNestedInput
@@ -1976,6 +2125,7 @@ export type EvaluationFormUpdateWithoutCriteriaScoresInput = {
   facultyReviewer?: Prisma.UserUpdateOneWithoutFacultyReviewedFormsNestedInput
   adminFinalizer?: Prisma.UserUpdateOneWithoutAdminFinalizedFormsNestedInput
   attachments?: Prisma.FormAttachmentUpdateManyWithoutFormNestedInput
+  evidences?: Prisma.EvidenceUpdateManyWithoutEvaluationFormNestedInput
 }
 
 export type EvaluationFormUncheckedUpdateWithoutCriteriaScoresInput = {
@@ -2007,9 +2157,13 @@ export type EvaluationFormUncheckedUpdateWithoutCriteriaScoresInput = {
   facultyReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminFinalizedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   attachments?: Prisma.FormAttachmentUncheckedUpdateManyWithoutFormNestedInput
+  evidences?: Prisma.EvidenceUncheckedUpdateManyWithoutEvaluationFormNestedInput
 }
 
 export type EvaluationFormCreateWithoutAttachmentsInput = {
@@ -2035,6 +2189,9 @@ export type EvaluationFormCreateWithoutAttachmentsInput = {
   facultyReviewedAt?: Date | string | null
   adminFinalizedAt?: Date | string | null
   submittedAt?: Date | string | null
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  lockedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   student: Prisma.UserCreateNestedOneWithoutEvaluationFormsInput
@@ -2044,6 +2201,7 @@ export type EvaluationFormCreateWithoutAttachmentsInput = {
   facultyReviewer?: Prisma.UserCreateNestedOneWithoutFacultyReviewedFormsInput
   adminFinalizer?: Prisma.UserCreateNestedOneWithoutAdminFinalizedFormsInput
   criteriaScores?: Prisma.FormCriteriaScoreCreateNestedManyWithoutFormInput
+  evidences?: Prisma.EvidenceCreateNestedManyWithoutEvaluationFormInput
 }
 
 export type EvaluationFormUncheckedCreateWithoutAttachmentsInput = {
@@ -2075,9 +2233,13 @@ export type EvaluationFormUncheckedCreateWithoutAttachmentsInput = {
   facultyReviewedAt?: Date | string | null
   adminFinalizedAt?: Date | string | null
   submittedAt?: Date | string | null
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  lockedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   criteriaScores?: Prisma.FormCriteriaScoreUncheckedCreateNestedManyWithoutFormInput
+  evidences?: Prisma.EvidenceUncheckedCreateNestedManyWithoutEvaluationFormInput
 }
 
 export type EvaluationFormCreateOrConnectWithoutAttachmentsInput = {
@@ -2119,6 +2281,9 @@ export type EvaluationFormUpdateWithoutAttachmentsInput = {
   facultyReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminFinalizedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   student?: Prisma.UserUpdateOneRequiredWithoutEvaluationFormsNestedInput
@@ -2128,6 +2293,7 @@ export type EvaluationFormUpdateWithoutAttachmentsInput = {
   facultyReviewer?: Prisma.UserUpdateOneWithoutFacultyReviewedFormsNestedInput
   adminFinalizer?: Prisma.UserUpdateOneWithoutAdminFinalizedFormsNestedInput
   criteriaScores?: Prisma.FormCriteriaScoreUpdateManyWithoutFormNestedInput
+  evidences?: Prisma.EvidenceUpdateManyWithoutEvaluationFormNestedInput
 }
 
 export type EvaluationFormUncheckedUpdateWithoutAttachmentsInput = {
@@ -2159,9 +2325,181 @@ export type EvaluationFormUncheckedUpdateWithoutAttachmentsInput = {
   facultyReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminFinalizedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   criteriaScores?: Prisma.FormCriteriaScoreUncheckedUpdateManyWithoutFormNestedInput
+  evidences?: Prisma.EvidenceUncheckedUpdateManyWithoutEvaluationFormNestedInput
+}
+
+export type EvaluationFormCreateWithoutEvidencesInput = {
+  id?: string
+  status?: $Enums.FormStatus
+  studentScore?: number | null
+  classScore?: number | null
+  finalScore?: number | null
+  rank?: $Enums.EvalRank | null
+  note?: string | null
+  studyScore?: number
+  studyData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  disciplineBaseScore?: number
+  disciplineScore?: number
+  disciplineData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  activityScore?: number
+  activityData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  communityScore?: number
+  communityData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  roleScore?: number
+  roleData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  classReviewedAt?: Date | string | null
+  facultyReviewedAt?: Date | string | null
+  adminFinalizedAt?: Date | string | null
+  submittedAt?: Date | string | null
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  lockedBy?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  student: Prisma.UserCreateNestedOneWithoutEvaluationFormsInput
+  class: Prisma.ClassCreateNestedOneWithoutEvaluationFormsInput
+  semester: Prisma.SemesterCreateNestedOneWithoutEvaluationFormsInput
+  classReviewer?: Prisma.UserCreateNestedOneWithoutClassReviewedFormsInput
+  facultyReviewer?: Prisma.UserCreateNestedOneWithoutFacultyReviewedFormsInput
+  adminFinalizer?: Prisma.UserCreateNestedOneWithoutAdminFinalizedFormsInput
+  criteriaScores?: Prisma.FormCriteriaScoreCreateNestedManyWithoutFormInput
+  attachments?: Prisma.FormAttachmentCreateNestedManyWithoutFormInput
+}
+
+export type EvaluationFormUncheckedCreateWithoutEvidencesInput = {
+  id?: string
+  studentId: string
+  classId: string
+  semesterId: string
+  status?: $Enums.FormStatus
+  studentScore?: number | null
+  classScore?: number | null
+  finalScore?: number | null
+  rank?: $Enums.EvalRank | null
+  note?: string | null
+  studyScore?: number
+  studyData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  disciplineBaseScore?: number
+  disciplineScore?: number
+  disciplineData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  activityScore?: number
+  activityData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  communityScore?: number
+  communityData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  roleScore?: number
+  roleData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  classReviewedBy?: string | null
+  facultyReviewedBy?: string | null
+  adminFinalizedBy?: string | null
+  classReviewedAt?: Date | string | null
+  facultyReviewedAt?: Date | string | null
+  adminFinalizedAt?: Date | string | null
+  submittedAt?: Date | string | null
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  lockedBy?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  criteriaScores?: Prisma.FormCriteriaScoreUncheckedCreateNestedManyWithoutFormInput
+  attachments?: Prisma.FormAttachmentUncheckedCreateNestedManyWithoutFormInput
+}
+
+export type EvaluationFormCreateOrConnectWithoutEvidencesInput = {
+  where: Prisma.EvaluationFormWhereUniqueInput
+  create: Prisma.XOR<Prisma.EvaluationFormCreateWithoutEvidencesInput, Prisma.EvaluationFormUncheckedCreateWithoutEvidencesInput>
+}
+
+export type EvaluationFormUpsertWithoutEvidencesInput = {
+  update: Prisma.XOR<Prisma.EvaluationFormUpdateWithoutEvidencesInput, Prisma.EvaluationFormUncheckedUpdateWithoutEvidencesInput>
+  create: Prisma.XOR<Prisma.EvaluationFormCreateWithoutEvidencesInput, Prisma.EvaluationFormUncheckedCreateWithoutEvidencesInput>
+  where?: Prisma.EvaluationFormWhereInput
+}
+
+export type EvaluationFormUpdateToOneWithWhereWithoutEvidencesInput = {
+  where?: Prisma.EvaluationFormWhereInput
+  data: Prisma.XOR<Prisma.EvaluationFormUpdateWithoutEvidencesInput, Prisma.EvaluationFormUncheckedUpdateWithoutEvidencesInput>
+}
+
+export type EvaluationFormUpdateWithoutEvidencesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumFormStatusFieldUpdateOperationsInput | $Enums.FormStatus
+  studentScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  classScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  finalScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rank?: Prisma.NullableEnumEvalRankFieldUpdateOperationsInput | $Enums.EvalRank | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studyScore?: Prisma.IntFieldUpdateOperationsInput | number
+  studyData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  disciplineBaseScore?: Prisma.IntFieldUpdateOperationsInput | number
+  disciplineScore?: Prisma.IntFieldUpdateOperationsInput | number
+  disciplineData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  activityScore?: Prisma.IntFieldUpdateOperationsInput | number
+  activityData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  communityScore?: Prisma.IntFieldUpdateOperationsInput | number
+  communityData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  roleScore?: Prisma.IntFieldUpdateOperationsInput | number
+  roleData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  classReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  facultyReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminFinalizedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  student?: Prisma.UserUpdateOneRequiredWithoutEvaluationFormsNestedInput
+  class?: Prisma.ClassUpdateOneRequiredWithoutEvaluationFormsNestedInput
+  semester?: Prisma.SemesterUpdateOneRequiredWithoutEvaluationFormsNestedInput
+  classReviewer?: Prisma.UserUpdateOneWithoutClassReviewedFormsNestedInput
+  facultyReviewer?: Prisma.UserUpdateOneWithoutFacultyReviewedFormsNestedInput
+  adminFinalizer?: Prisma.UserUpdateOneWithoutAdminFinalizedFormsNestedInput
+  criteriaScores?: Prisma.FormCriteriaScoreUpdateManyWithoutFormNestedInput
+  attachments?: Prisma.FormAttachmentUpdateManyWithoutFormNestedInput
+}
+
+export type EvaluationFormUncheckedUpdateWithoutEvidencesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  studentId?: Prisma.StringFieldUpdateOperationsInput | string
+  classId?: Prisma.StringFieldUpdateOperationsInput | string
+  semesterId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumFormStatusFieldUpdateOperationsInput | $Enums.FormStatus
+  studentScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  classScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  finalScore?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  rank?: Prisma.NullableEnumEvalRankFieldUpdateOperationsInput | $Enums.EvalRank | null
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  studyScore?: Prisma.IntFieldUpdateOperationsInput | number
+  studyData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  disciplineBaseScore?: Prisma.IntFieldUpdateOperationsInput | number
+  disciplineScore?: Prisma.IntFieldUpdateOperationsInput | number
+  disciplineData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  activityScore?: Prisma.IntFieldUpdateOperationsInput | number
+  activityData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  communityScore?: Prisma.IntFieldUpdateOperationsInput | number
+  communityData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  roleScore?: Prisma.IntFieldUpdateOperationsInput | number
+  roleData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  classReviewedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  facultyReviewedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  adminFinalizedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  classReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  facultyReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminFinalizedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  criteriaScores?: Prisma.FormCriteriaScoreUncheckedUpdateManyWithoutFormNestedInput
+  attachments?: Prisma.FormAttachmentUncheckedUpdateManyWithoutFormNestedInput
 }
 
 export type EvaluationFormCreateManyStudentInput = {
@@ -2192,6 +2530,9 @@ export type EvaluationFormCreateManyStudentInput = {
   facultyReviewedAt?: Date | string | null
   adminFinalizedAt?: Date | string | null
   submittedAt?: Date | string | null
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  lockedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -2224,6 +2565,9 @@ export type EvaluationFormCreateManyClassReviewerInput = {
   facultyReviewedAt?: Date | string | null
   adminFinalizedAt?: Date | string | null
   submittedAt?: Date | string | null
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  lockedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -2256,6 +2600,9 @@ export type EvaluationFormCreateManyFacultyReviewerInput = {
   facultyReviewedAt?: Date | string | null
   adminFinalizedAt?: Date | string | null
   submittedAt?: Date | string | null
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  lockedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -2288,6 +2635,9 @@ export type EvaluationFormCreateManyAdminFinalizerInput = {
   facultyReviewedAt?: Date | string | null
   adminFinalizedAt?: Date | string | null
   submittedAt?: Date | string | null
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  lockedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -2315,6 +2665,9 @@ export type EvaluationFormUpdateWithoutStudentInput = {
   facultyReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminFinalizedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   class?: Prisma.ClassUpdateOneRequiredWithoutEvaluationFormsNestedInput
@@ -2324,6 +2677,7 @@ export type EvaluationFormUpdateWithoutStudentInput = {
   adminFinalizer?: Prisma.UserUpdateOneWithoutAdminFinalizedFormsNestedInput
   criteriaScores?: Prisma.FormCriteriaScoreUpdateManyWithoutFormNestedInput
   attachments?: Prisma.FormAttachmentUpdateManyWithoutFormNestedInput
+  evidences?: Prisma.EvidenceUpdateManyWithoutEvaluationFormNestedInput
 }
 
 export type EvaluationFormUncheckedUpdateWithoutStudentInput = {
@@ -2354,10 +2708,14 @@ export type EvaluationFormUncheckedUpdateWithoutStudentInput = {
   facultyReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminFinalizedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   criteriaScores?: Prisma.FormCriteriaScoreUncheckedUpdateManyWithoutFormNestedInput
   attachments?: Prisma.FormAttachmentUncheckedUpdateManyWithoutFormNestedInput
+  evidences?: Prisma.EvidenceUncheckedUpdateManyWithoutEvaluationFormNestedInput
 }
 
 export type EvaluationFormUncheckedUpdateManyWithoutStudentInput = {
@@ -2388,6 +2746,9 @@ export type EvaluationFormUncheckedUpdateManyWithoutStudentInput = {
   facultyReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminFinalizedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -2415,6 +2776,9 @@ export type EvaluationFormUpdateWithoutClassReviewerInput = {
   facultyReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminFinalizedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   student?: Prisma.UserUpdateOneRequiredWithoutEvaluationFormsNestedInput
@@ -2424,6 +2788,7 @@ export type EvaluationFormUpdateWithoutClassReviewerInput = {
   adminFinalizer?: Prisma.UserUpdateOneWithoutAdminFinalizedFormsNestedInput
   criteriaScores?: Prisma.FormCriteriaScoreUpdateManyWithoutFormNestedInput
   attachments?: Prisma.FormAttachmentUpdateManyWithoutFormNestedInput
+  evidences?: Prisma.EvidenceUpdateManyWithoutEvaluationFormNestedInput
 }
 
 export type EvaluationFormUncheckedUpdateWithoutClassReviewerInput = {
@@ -2454,10 +2819,14 @@ export type EvaluationFormUncheckedUpdateWithoutClassReviewerInput = {
   facultyReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminFinalizedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   criteriaScores?: Prisma.FormCriteriaScoreUncheckedUpdateManyWithoutFormNestedInput
   attachments?: Prisma.FormAttachmentUncheckedUpdateManyWithoutFormNestedInput
+  evidences?: Prisma.EvidenceUncheckedUpdateManyWithoutEvaluationFormNestedInput
 }
 
 export type EvaluationFormUncheckedUpdateManyWithoutClassReviewerInput = {
@@ -2488,6 +2857,9 @@ export type EvaluationFormUncheckedUpdateManyWithoutClassReviewerInput = {
   facultyReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminFinalizedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -2515,6 +2887,9 @@ export type EvaluationFormUpdateWithoutFacultyReviewerInput = {
   facultyReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminFinalizedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   student?: Prisma.UserUpdateOneRequiredWithoutEvaluationFormsNestedInput
@@ -2524,6 +2899,7 @@ export type EvaluationFormUpdateWithoutFacultyReviewerInput = {
   adminFinalizer?: Prisma.UserUpdateOneWithoutAdminFinalizedFormsNestedInput
   criteriaScores?: Prisma.FormCriteriaScoreUpdateManyWithoutFormNestedInput
   attachments?: Prisma.FormAttachmentUpdateManyWithoutFormNestedInput
+  evidences?: Prisma.EvidenceUpdateManyWithoutEvaluationFormNestedInput
 }
 
 export type EvaluationFormUncheckedUpdateWithoutFacultyReviewerInput = {
@@ -2554,10 +2930,14 @@ export type EvaluationFormUncheckedUpdateWithoutFacultyReviewerInput = {
   facultyReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminFinalizedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   criteriaScores?: Prisma.FormCriteriaScoreUncheckedUpdateManyWithoutFormNestedInput
   attachments?: Prisma.FormAttachmentUncheckedUpdateManyWithoutFormNestedInput
+  evidences?: Prisma.EvidenceUncheckedUpdateManyWithoutEvaluationFormNestedInput
 }
 
 export type EvaluationFormUncheckedUpdateManyWithoutFacultyReviewerInput = {
@@ -2588,6 +2968,9 @@ export type EvaluationFormUncheckedUpdateManyWithoutFacultyReviewerInput = {
   facultyReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminFinalizedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -2615,6 +2998,9 @@ export type EvaluationFormUpdateWithoutAdminFinalizerInput = {
   facultyReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminFinalizedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   student?: Prisma.UserUpdateOneRequiredWithoutEvaluationFormsNestedInput
@@ -2624,6 +3010,7 @@ export type EvaluationFormUpdateWithoutAdminFinalizerInput = {
   facultyReviewer?: Prisma.UserUpdateOneWithoutFacultyReviewedFormsNestedInput
   criteriaScores?: Prisma.FormCriteriaScoreUpdateManyWithoutFormNestedInput
   attachments?: Prisma.FormAttachmentUpdateManyWithoutFormNestedInput
+  evidences?: Prisma.EvidenceUpdateManyWithoutEvaluationFormNestedInput
 }
 
 export type EvaluationFormUncheckedUpdateWithoutAdminFinalizerInput = {
@@ -2654,10 +3041,14 @@ export type EvaluationFormUncheckedUpdateWithoutAdminFinalizerInput = {
   facultyReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminFinalizedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   criteriaScores?: Prisma.FormCriteriaScoreUncheckedUpdateManyWithoutFormNestedInput
   attachments?: Prisma.FormAttachmentUncheckedUpdateManyWithoutFormNestedInput
+  evidences?: Prisma.EvidenceUncheckedUpdateManyWithoutEvaluationFormNestedInput
 }
 
 export type EvaluationFormUncheckedUpdateManyWithoutAdminFinalizerInput = {
@@ -2688,6 +3079,9 @@ export type EvaluationFormUncheckedUpdateManyWithoutAdminFinalizerInput = {
   facultyReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminFinalizedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -2720,6 +3114,9 @@ export type EvaluationFormCreateManyClassInput = {
   facultyReviewedAt?: Date | string | null
   adminFinalizedAt?: Date | string | null
   submittedAt?: Date | string | null
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  lockedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -2747,6 +3144,9 @@ export type EvaluationFormUpdateWithoutClassInput = {
   facultyReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminFinalizedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   student?: Prisma.UserUpdateOneRequiredWithoutEvaluationFormsNestedInput
@@ -2756,6 +3156,7 @@ export type EvaluationFormUpdateWithoutClassInput = {
   adminFinalizer?: Prisma.UserUpdateOneWithoutAdminFinalizedFormsNestedInput
   criteriaScores?: Prisma.FormCriteriaScoreUpdateManyWithoutFormNestedInput
   attachments?: Prisma.FormAttachmentUpdateManyWithoutFormNestedInput
+  evidences?: Prisma.EvidenceUpdateManyWithoutEvaluationFormNestedInput
 }
 
 export type EvaluationFormUncheckedUpdateWithoutClassInput = {
@@ -2786,10 +3187,14 @@ export type EvaluationFormUncheckedUpdateWithoutClassInput = {
   facultyReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminFinalizedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   criteriaScores?: Prisma.FormCriteriaScoreUncheckedUpdateManyWithoutFormNestedInput
   attachments?: Prisma.FormAttachmentUncheckedUpdateManyWithoutFormNestedInput
+  evidences?: Prisma.EvidenceUncheckedUpdateManyWithoutEvaluationFormNestedInput
 }
 
 export type EvaluationFormUncheckedUpdateManyWithoutClassInput = {
@@ -2820,6 +3225,9 @@ export type EvaluationFormUncheckedUpdateManyWithoutClassInput = {
   facultyReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminFinalizedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -2852,6 +3260,9 @@ export type EvaluationFormCreateManySemesterInput = {
   facultyReviewedAt?: Date | string | null
   adminFinalizedAt?: Date | string | null
   submittedAt?: Date | string | null
+  isLocked?: boolean
+  lockedAt?: Date | string | null
+  lockedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -2879,6 +3290,9 @@ export type EvaluationFormUpdateWithoutSemesterInput = {
   facultyReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminFinalizedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   student?: Prisma.UserUpdateOneRequiredWithoutEvaluationFormsNestedInput
@@ -2888,6 +3302,7 @@ export type EvaluationFormUpdateWithoutSemesterInput = {
   adminFinalizer?: Prisma.UserUpdateOneWithoutAdminFinalizedFormsNestedInput
   criteriaScores?: Prisma.FormCriteriaScoreUpdateManyWithoutFormNestedInput
   attachments?: Prisma.FormAttachmentUpdateManyWithoutFormNestedInput
+  evidences?: Prisma.EvidenceUpdateManyWithoutEvaluationFormNestedInput
 }
 
 export type EvaluationFormUncheckedUpdateWithoutSemesterInput = {
@@ -2918,10 +3333,14 @@ export type EvaluationFormUncheckedUpdateWithoutSemesterInput = {
   facultyReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminFinalizedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   criteriaScores?: Prisma.FormCriteriaScoreUncheckedUpdateManyWithoutFormNestedInput
   attachments?: Prisma.FormAttachmentUncheckedUpdateManyWithoutFormNestedInput
+  evidences?: Prisma.EvidenceUncheckedUpdateManyWithoutEvaluationFormNestedInput
 }
 
 export type EvaluationFormUncheckedUpdateManyWithoutSemesterInput = {
@@ -2952,6 +3371,9 @@ export type EvaluationFormUncheckedUpdateManyWithoutSemesterInput = {
   facultyReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   adminFinalizedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   submittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isLocked?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -2964,11 +3386,13 @@ export type EvaluationFormUncheckedUpdateManyWithoutSemesterInput = {
 export type EvaluationFormCountOutputType = {
   criteriaScores: number
   attachments: number
+  evidences: number
 }
 
 export type EvaluationFormCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   criteriaScores?: boolean | EvaluationFormCountOutputTypeCountCriteriaScoresArgs
   attachments?: boolean | EvaluationFormCountOutputTypeCountAttachmentsArgs
+  evidences?: boolean | EvaluationFormCountOutputTypeCountEvidencesArgs
 }
 
 /**
@@ -2993,6 +3417,13 @@ export type EvaluationFormCountOutputTypeCountCriteriaScoresArgs<ExtArgs extends
  */
 export type EvaluationFormCountOutputTypeCountAttachmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.FormAttachmentWhereInput
+}
+
+/**
+ * EvaluationFormCountOutputType without action
+ */
+export type EvaluationFormCountOutputTypeCountEvidencesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.EvidenceWhereInput
 }
 
 
@@ -3025,6 +3456,9 @@ export type EvaluationFormSelect<ExtArgs extends runtime.Types.Extensions.Intern
   facultyReviewedAt?: boolean
   adminFinalizedAt?: boolean
   submittedAt?: boolean
+  isLocked?: boolean
+  lockedAt?: boolean
+  lockedBy?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   student?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -3035,6 +3469,7 @@ export type EvaluationFormSelect<ExtArgs extends runtime.Types.Extensions.Intern
   adminFinalizer?: boolean | Prisma.EvaluationForm$adminFinalizerArgs<ExtArgs>
   criteriaScores?: boolean | Prisma.EvaluationForm$criteriaScoresArgs<ExtArgs>
   attachments?: boolean | Prisma.EvaluationForm$attachmentsArgs<ExtArgs>
+  evidences?: boolean | Prisma.EvaluationForm$evidencesArgs<ExtArgs>
   _count?: boolean | Prisma.EvaluationFormCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["evaluationForm"]>
 
@@ -3067,6 +3502,9 @@ export type EvaluationFormSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   facultyReviewedAt?: boolean
   adminFinalizedAt?: boolean
   submittedAt?: boolean
+  isLocked?: boolean
+  lockedAt?: boolean
+  lockedBy?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   student?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -3106,6 +3544,9 @@ export type EvaluationFormSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   facultyReviewedAt?: boolean
   adminFinalizedAt?: boolean
   submittedAt?: boolean
+  isLocked?: boolean
+  lockedAt?: boolean
+  lockedBy?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   student?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -3145,11 +3586,14 @@ export type EvaluationFormSelectScalar = {
   facultyReviewedAt?: boolean
   adminFinalizedAt?: boolean
   submittedAt?: boolean
+  isLocked?: boolean
+  lockedAt?: boolean
+  lockedBy?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type EvaluationFormOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "studentId" | "classId" | "semesterId" | "status" | "studentScore" | "classScore" | "finalScore" | "rank" | "note" | "studyScore" | "studyData" | "disciplineBaseScore" | "disciplineScore" | "disciplineData" | "activityScore" | "activityData" | "communityScore" | "communityData" | "roleScore" | "roleData" | "classReviewedBy" | "facultyReviewedBy" | "adminFinalizedBy" | "classReviewedAt" | "facultyReviewedAt" | "adminFinalizedAt" | "submittedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["evaluationForm"]>
+export type EvaluationFormOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "studentId" | "classId" | "semesterId" | "status" | "studentScore" | "classScore" | "finalScore" | "rank" | "note" | "studyScore" | "studyData" | "disciplineBaseScore" | "disciplineScore" | "disciplineData" | "activityScore" | "activityData" | "communityScore" | "communityData" | "roleScore" | "roleData" | "classReviewedBy" | "facultyReviewedBy" | "adminFinalizedBy" | "classReviewedAt" | "facultyReviewedAt" | "adminFinalizedAt" | "submittedAt" | "isLocked" | "lockedAt" | "lockedBy" | "createdAt" | "updatedAt", ExtArgs["result"]["evaluationForm"]>
 export type EvaluationFormInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   student?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   class?: boolean | Prisma.ClassDefaultArgs<ExtArgs>
@@ -3159,6 +3603,7 @@ export type EvaluationFormInclude<ExtArgs extends runtime.Types.Extensions.Inter
   adminFinalizer?: boolean | Prisma.EvaluationForm$adminFinalizerArgs<ExtArgs>
   criteriaScores?: boolean | Prisma.EvaluationForm$criteriaScoresArgs<ExtArgs>
   attachments?: boolean | Prisma.EvaluationForm$attachmentsArgs<ExtArgs>
+  evidences?: boolean | Prisma.EvaluationForm$evidencesArgs<ExtArgs>
   _count?: boolean | Prisma.EvaluationFormCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type EvaluationFormIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -3189,6 +3634,7 @@ export type $EvaluationFormPayload<ExtArgs extends runtime.Types.Extensions.Inte
     adminFinalizer: Prisma.$UserPayload<ExtArgs> | null
     criteriaScores: Prisma.$FormCriteriaScorePayload<ExtArgs>[]
     attachments: Prisma.$FormAttachmentPayload<ExtArgs>[]
+    evidences: Prisma.$EvidencePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -3219,6 +3665,9 @@ export type $EvaluationFormPayload<ExtArgs extends runtime.Types.Extensions.Inte
     facultyReviewedAt: Date | null
     adminFinalizedAt: Date | null
     submittedAt: Date | null
+    isLocked: boolean
+    lockedAt: Date | null
+    lockedBy: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["evaluationForm"]>
@@ -3623,6 +4072,7 @@ export interface Prisma__EvaluationFormClient<T, Null = never, ExtArgs extends r
   adminFinalizer<T extends Prisma.EvaluationForm$adminFinalizerArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.EvaluationForm$adminFinalizerArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   criteriaScores<T extends Prisma.EvaluationForm$criteriaScoresArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.EvaluationForm$criteriaScoresArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FormCriteriaScorePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   attachments<T extends Prisma.EvaluationForm$attachmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.EvaluationForm$attachmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FormAttachmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  evidences<T extends Prisma.EvaluationForm$evidencesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.EvaluationForm$evidencesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EvidencePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3680,6 +4130,9 @@ export interface EvaluationFormFieldRefs {
   readonly facultyReviewedAt: Prisma.FieldRef<"EvaluationForm", 'DateTime'>
   readonly adminFinalizedAt: Prisma.FieldRef<"EvaluationForm", 'DateTime'>
   readonly submittedAt: Prisma.FieldRef<"EvaluationForm", 'DateTime'>
+  readonly isLocked: Prisma.FieldRef<"EvaluationForm", 'Boolean'>
+  readonly lockedAt: Prisma.FieldRef<"EvaluationForm", 'DateTime'>
+  readonly lockedBy: Prisma.FieldRef<"EvaluationForm", 'String'>
   readonly createdAt: Prisma.FieldRef<"EvaluationForm", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"EvaluationForm", 'DateTime'>
 }
@@ -4185,6 +4638,30 @@ export type EvaluationForm$attachmentsArgs<ExtArgs extends runtime.Types.Extensi
   take?: number
   skip?: number
   distinct?: Prisma.FormAttachmentScalarFieldEnum | Prisma.FormAttachmentScalarFieldEnum[]
+}
+
+/**
+ * EvaluationForm.evidences
+ */
+export type EvaluationForm$evidencesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Evidence
+   */
+  select?: Prisma.EvidenceSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Evidence
+   */
+  omit?: Prisma.EvidenceOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EvidenceInclude<ExtArgs> | null
+  where?: Prisma.EvidenceWhereInput
+  orderBy?: Prisma.EvidenceOrderByWithRelationInput | Prisma.EvidenceOrderByWithRelationInput[]
+  cursor?: Prisma.EvidenceWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.EvidenceScalarFieldEnum | Prisma.EvidenceScalarFieldEnum[]
 }
 
 /**

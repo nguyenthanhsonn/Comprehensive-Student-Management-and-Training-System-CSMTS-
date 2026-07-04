@@ -2,10 +2,8 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import type { UserRole } from 'src/common/shared';
 import { UsersService } from '../../users/users.service';
 import { AuthTokenStoreService } from '../jwt/auth-token-store';
-import type { AuthenticatedUser } from '../types/authenticated-user.type';
 import type { JwtPayload } from '../types/jwt-payload.type';
 
 @Injectable()
@@ -24,7 +22,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
   async validate(payload: JwtPayload): Promise<any> {
     if (!payload.jti || this.tokenStore.isTokenRevoked(payload)) {
-      throw new UnauthorizedException('Invalid access token');
+      throw new UnauthorizedException('Mã truy cập không hợp lệ');
     }
     return {
       id: payload.sub,

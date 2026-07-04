@@ -246,6 +246,8 @@ export type UserWhereInput = {
   facultyReviewedForms?: Prisma.EvaluationFormListRelationFilter
   adminFinalizedForms?: Prisma.EvaluationFormListRelationFilter
   posts?: Prisma.PostListRelationFilter
+  evidences?: Prisma.EvidenceListRelationFilter
+  notifications?: Prisma.NotificationListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -269,6 +271,8 @@ export type UserOrderByWithRelationInput = {
   facultyReviewedForms?: Prisma.EvaluationFormOrderByRelationAggregateInput
   adminFinalizedForms?: Prisma.EvaluationFormOrderByRelationAggregateInput
   posts?: Prisma.PostOrderByRelationAggregateInput
+  evidences?: Prisma.EvidenceOrderByRelationAggregateInput
+  notifications?: Prisma.NotificationOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -295,6 +299,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   facultyReviewedForms?: Prisma.EvaluationFormListRelationFilter
   adminFinalizedForms?: Prisma.EvaluationFormListRelationFilter
   posts?: Prisma.PostListRelationFilter
+  evidences?: Prisma.EvidenceListRelationFilter
+  notifications?: Prisma.NotificationListRelationFilter
 }, "id" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -354,6 +360,8 @@ export type UserCreateInput = {
   facultyReviewedForms?: Prisma.EvaluationFormCreateNestedManyWithoutFacultyReviewerInput
   adminFinalizedForms?: Prisma.EvaluationFormCreateNestedManyWithoutAdminFinalizerInput
   posts?: Prisma.PostCreateNestedManyWithoutAuthorInput
+  evidences?: Prisma.EvidenceCreateNestedManyWithoutStudentInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -377,6 +385,8 @@ export type UserUncheckedCreateInput = {
   facultyReviewedForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutFacultyReviewerInput
   adminFinalizedForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutAdminFinalizerInput
   posts?: Prisma.PostUncheckedCreateNestedManyWithoutAuthorInput
+  evidences?: Prisma.EvidenceUncheckedCreateNestedManyWithoutStudentInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserUpdateInput = {
@@ -400,6 +410,8 @@ export type UserUpdateInput = {
   facultyReviewedForms?: Prisma.EvaluationFormUpdateManyWithoutFacultyReviewerNestedInput
   adminFinalizedForms?: Prisma.EvaluationFormUpdateManyWithoutAdminFinalizerNestedInput
   posts?: Prisma.PostUpdateManyWithoutAuthorNestedInput
+  evidences?: Prisma.EvidenceUpdateManyWithoutStudentNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -423,6 +435,8 @@ export type UserUncheckedUpdateInput = {
   facultyReviewedForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutFacultyReviewerNestedInput
   adminFinalizedForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutAdminFinalizerNestedInput
   posts?: Prisma.PostUncheckedUpdateManyWithoutAuthorNestedInput
+  evidences?: Prisma.EvidenceUncheckedUpdateManyWithoutStudentNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -667,6 +681,34 @@ export type UserUpdateOneWithoutAdminFinalizedFormsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAdminFinalizedFormsInput, Prisma.UserUpdateWithoutAdminFinalizedFormsInput>, Prisma.UserUncheckedUpdateWithoutAdminFinalizedFormsInput>
 }
 
+export type UserCreateNestedOneWithoutEvidencesInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutEvidencesInput, Prisma.UserUncheckedCreateWithoutEvidencesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutEvidencesInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutEvidencesNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutEvidencesInput, Prisma.UserUncheckedCreateWithoutEvidencesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutEvidencesInput
+  upsert?: Prisma.UserUpsertWithoutEvidencesInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutEvidencesInput, Prisma.UserUpdateWithoutEvidencesInput>, Prisma.UserUncheckedUpdateWithoutEvidencesInput>
+}
+
+export type UserCreateNestedOneWithoutNotificationsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutNotificationsInput, Prisma.UserUncheckedCreateWithoutNotificationsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutNotificationsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutNotificationsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutNotificationsInput, Prisma.UserUncheckedCreateWithoutNotificationsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutNotificationsInput
+  upsert?: Prisma.UserUpsertWithoutNotificationsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutNotificationsInput, Prisma.UserUpdateWithoutNotificationsInput>, Prisma.UserUncheckedUpdateWithoutNotificationsInput>
+}
+
 export type UserCreateWithoutPostsInput = {
   id?: string
   email: string
@@ -687,6 +729,8 @@ export type UserCreateWithoutPostsInput = {
   classReviewedForms?: Prisma.EvaluationFormCreateNestedManyWithoutClassReviewerInput
   facultyReviewedForms?: Prisma.EvaluationFormCreateNestedManyWithoutFacultyReviewerInput
   adminFinalizedForms?: Prisma.EvaluationFormCreateNestedManyWithoutAdminFinalizerInput
+  evidences?: Prisma.EvidenceCreateNestedManyWithoutStudentInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutPostsInput = {
@@ -709,6 +753,8 @@ export type UserUncheckedCreateWithoutPostsInput = {
   classReviewedForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutClassReviewerInput
   facultyReviewedForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutFacultyReviewerInput
   adminFinalizedForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutAdminFinalizerInput
+  evidences?: Prisma.EvidenceUncheckedCreateNestedManyWithoutStudentInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutPostsInput = {
@@ -747,6 +793,8 @@ export type UserUpdateWithoutPostsInput = {
   classReviewedForms?: Prisma.EvaluationFormUpdateManyWithoutClassReviewerNestedInput
   facultyReviewedForms?: Prisma.EvaluationFormUpdateManyWithoutFacultyReviewerNestedInput
   adminFinalizedForms?: Prisma.EvaluationFormUpdateManyWithoutAdminFinalizerNestedInput
+  evidences?: Prisma.EvidenceUpdateManyWithoutStudentNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPostsInput = {
@@ -769,6 +817,8 @@ export type UserUncheckedUpdateWithoutPostsInput = {
   classReviewedForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutClassReviewerNestedInput
   facultyReviewedForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutFacultyReviewerNestedInput
   adminFinalizedForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutAdminFinalizerNestedInput
+  evidences?: Prisma.EvidenceUncheckedUpdateManyWithoutStudentNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutClassStudentsInput = {
@@ -791,6 +841,8 @@ export type UserCreateWithoutClassStudentsInput = {
   facultyReviewedForms?: Prisma.EvaluationFormCreateNestedManyWithoutFacultyReviewerInput
   adminFinalizedForms?: Prisma.EvaluationFormCreateNestedManyWithoutAdminFinalizerInput
   posts?: Prisma.PostCreateNestedManyWithoutAuthorInput
+  evidences?: Prisma.EvidenceCreateNestedManyWithoutStudentInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutClassStudentsInput = {
@@ -813,6 +865,8 @@ export type UserUncheckedCreateWithoutClassStudentsInput = {
   facultyReviewedForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutFacultyReviewerInput
   adminFinalizedForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutAdminFinalizerInput
   posts?: Prisma.PostUncheckedCreateNestedManyWithoutAuthorInput
+  evidences?: Prisma.EvidenceUncheckedCreateNestedManyWithoutStudentInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutClassStudentsInput = {
@@ -851,6 +905,8 @@ export type UserUpdateWithoutClassStudentsInput = {
   facultyReviewedForms?: Prisma.EvaluationFormUpdateManyWithoutFacultyReviewerNestedInput
   adminFinalizedForms?: Prisma.EvaluationFormUpdateManyWithoutAdminFinalizerNestedInput
   posts?: Prisma.PostUpdateManyWithoutAuthorNestedInput
+  evidences?: Prisma.EvidenceUpdateManyWithoutStudentNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutClassStudentsInput = {
@@ -873,6 +929,8 @@ export type UserUncheckedUpdateWithoutClassStudentsInput = {
   facultyReviewedForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutFacultyReviewerNestedInput
   adminFinalizedForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutAdminFinalizerNestedInput
   posts?: Prisma.PostUncheckedUpdateManyWithoutAuthorNestedInput
+  evidences?: Prisma.EvidenceUncheckedUpdateManyWithoutStudentNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutClassCouncilAssignmentsInput = {
@@ -895,6 +953,8 @@ export type UserCreateWithoutClassCouncilAssignmentsInput = {
   facultyReviewedForms?: Prisma.EvaluationFormCreateNestedManyWithoutFacultyReviewerInput
   adminFinalizedForms?: Prisma.EvaluationFormCreateNestedManyWithoutAdminFinalizerInput
   posts?: Prisma.PostCreateNestedManyWithoutAuthorInput
+  evidences?: Prisma.EvidenceCreateNestedManyWithoutStudentInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutClassCouncilAssignmentsInput = {
@@ -917,6 +977,8 @@ export type UserUncheckedCreateWithoutClassCouncilAssignmentsInput = {
   facultyReviewedForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutFacultyReviewerInput
   adminFinalizedForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutAdminFinalizerInput
   posts?: Prisma.PostUncheckedCreateNestedManyWithoutAuthorInput
+  evidences?: Prisma.EvidenceUncheckedCreateNestedManyWithoutStudentInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutClassCouncilAssignmentsInput = {
@@ -955,6 +1017,8 @@ export type UserUpdateWithoutClassCouncilAssignmentsInput = {
   facultyReviewedForms?: Prisma.EvaluationFormUpdateManyWithoutFacultyReviewerNestedInput
   adminFinalizedForms?: Prisma.EvaluationFormUpdateManyWithoutAdminFinalizerNestedInput
   posts?: Prisma.PostUpdateManyWithoutAuthorNestedInput
+  evidences?: Prisma.EvidenceUpdateManyWithoutStudentNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutClassCouncilAssignmentsInput = {
@@ -977,6 +1041,8 @@ export type UserUncheckedUpdateWithoutClassCouncilAssignmentsInput = {
   facultyReviewedForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutFacultyReviewerNestedInput
   adminFinalizedForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutAdminFinalizerNestedInput
   posts?: Prisma.PostUncheckedUpdateManyWithoutAuthorNestedInput
+  evidences?: Prisma.EvidenceUncheckedUpdateManyWithoutStudentNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutFacultyCouncilAssignmentsInput = {
@@ -999,6 +1065,8 @@ export type UserCreateWithoutFacultyCouncilAssignmentsInput = {
   facultyReviewedForms?: Prisma.EvaluationFormCreateNestedManyWithoutFacultyReviewerInput
   adminFinalizedForms?: Prisma.EvaluationFormCreateNestedManyWithoutAdminFinalizerInput
   posts?: Prisma.PostCreateNestedManyWithoutAuthorInput
+  evidences?: Prisma.EvidenceCreateNestedManyWithoutStudentInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutFacultyCouncilAssignmentsInput = {
@@ -1021,6 +1089,8 @@ export type UserUncheckedCreateWithoutFacultyCouncilAssignmentsInput = {
   facultyReviewedForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutFacultyReviewerInput
   adminFinalizedForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutAdminFinalizerInput
   posts?: Prisma.PostUncheckedCreateNestedManyWithoutAuthorInput
+  evidences?: Prisma.EvidenceUncheckedCreateNestedManyWithoutStudentInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutFacultyCouncilAssignmentsInput = {
@@ -1059,6 +1129,8 @@ export type UserUpdateWithoutFacultyCouncilAssignmentsInput = {
   facultyReviewedForms?: Prisma.EvaluationFormUpdateManyWithoutFacultyReviewerNestedInput
   adminFinalizedForms?: Prisma.EvaluationFormUpdateManyWithoutAdminFinalizerNestedInput
   posts?: Prisma.PostUpdateManyWithoutAuthorNestedInput
+  evidences?: Prisma.EvidenceUpdateManyWithoutStudentNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFacultyCouncilAssignmentsInput = {
@@ -1081,6 +1153,8 @@ export type UserUncheckedUpdateWithoutFacultyCouncilAssignmentsInput = {
   facultyReviewedForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutFacultyReviewerNestedInput
   adminFinalizedForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutAdminFinalizerNestedInput
   posts?: Prisma.PostUncheckedUpdateManyWithoutAuthorNestedInput
+  evidences?: Prisma.EvidenceUncheckedUpdateManyWithoutStudentNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutEvaluationFormsInput = {
@@ -1103,6 +1177,8 @@ export type UserCreateWithoutEvaluationFormsInput = {
   facultyReviewedForms?: Prisma.EvaluationFormCreateNestedManyWithoutFacultyReviewerInput
   adminFinalizedForms?: Prisma.EvaluationFormCreateNestedManyWithoutAdminFinalizerInput
   posts?: Prisma.PostCreateNestedManyWithoutAuthorInput
+  evidences?: Prisma.EvidenceCreateNestedManyWithoutStudentInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutEvaluationFormsInput = {
@@ -1125,6 +1201,8 @@ export type UserUncheckedCreateWithoutEvaluationFormsInput = {
   facultyReviewedForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutFacultyReviewerInput
   adminFinalizedForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutAdminFinalizerInput
   posts?: Prisma.PostUncheckedCreateNestedManyWithoutAuthorInput
+  evidences?: Prisma.EvidenceUncheckedCreateNestedManyWithoutStudentInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutEvaluationFormsInput = {
@@ -1152,6 +1230,8 @@ export type UserCreateWithoutClassReviewedFormsInput = {
   facultyReviewedForms?: Prisma.EvaluationFormCreateNestedManyWithoutFacultyReviewerInput
   adminFinalizedForms?: Prisma.EvaluationFormCreateNestedManyWithoutAdminFinalizerInput
   posts?: Prisma.PostCreateNestedManyWithoutAuthorInput
+  evidences?: Prisma.EvidenceCreateNestedManyWithoutStudentInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutClassReviewedFormsInput = {
@@ -1174,6 +1254,8 @@ export type UserUncheckedCreateWithoutClassReviewedFormsInput = {
   facultyReviewedForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutFacultyReviewerInput
   adminFinalizedForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutAdminFinalizerInput
   posts?: Prisma.PostUncheckedCreateNestedManyWithoutAuthorInput
+  evidences?: Prisma.EvidenceUncheckedCreateNestedManyWithoutStudentInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutClassReviewedFormsInput = {
@@ -1201,6 +1283,8 @@ export type UserCreateWithoutFacultyReviewedFormsInput = {
   classReviewedForms?: Prisma.EvaluationFormCreateNestedManyWithoutClassReviewerInput
   adminFinalizedForms?: Prisma.EvaluationFormCreateNestedManyWithoutAdminFinalizerInput
   posts?: Prisma.PostCreateNestedManyWithoutAuthorInput
+  evidences?: Prisma.EvidenceCreateNestedManyWithoutStudentInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutFacultyReviewedFormsInput = {
@@ -1223,6 +1307,8 @@ export type UserUncheckedCreateWithoutFacultyReviewedFormsInput = {
   classReviewedForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutClassReviewerInput
   adminFinalizedForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutAdminFinalizerInput
   posts?: Prisma.PostUncheckedCreateNestedManyWithoutAuthorInput
+  evidences?: Prisma.EvidenceUncheckedCreateNestedManyWithoutStudentInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutFacultyReviewedFormsInput = {
@@ -1250,6 +1336,8 @@ export type UserCreateWithoutAdminFinalizedFormsInput = {
   classReviewedForms?: Prisma.EvaluationFormCreateNestedManyWithoutClassReviewerInput
   facultyReviewedForms?: Prisma.EvaluationFormCreateNestedManyWithoutFacultyReviewerInput
   posts?: Prisma.PostCreateNestedManyWithoutAuthorInput
+  evidences?: Prisma.EvidenceCreateNestedManyWithoutStudentInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutAdminFinalizedFormsInput = {
@@ -1272,6 +1360,8 @@ export type UserUncheckedCreateWithoutAdminFinalizedFormsInput = {
   classReviewedForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutClassReviewerInput
   facultyReviewedForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutFacultyReviewerInput
   posts?: Prisma.PostUncheckedCreateNestedManyWithoutAuthorInput
+  evidences?: Prisma.EvidenceUncheckedCreateNestedManyWithoutStudentInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutAdminFinalizedFormsInput = {
@@ -1310,6 +1400,8 @@ export type UserUpdateWithoutEvaluationFormsInput = {
   facultyReviewedForms?: Prisma.EvaluationFormUpdateManyWithoutFacultyReviewerNestedInput
   adminFinalizedForms?: Prisma.EvaluationFormUpdateManyWithoutAdminFinalizerNestedInput
   posts?: Prisma.PostUpdateManyWithoutAuthorNestedInput
+  evidences?: Prisma.EvidenceUpdateManyWithoutStudentNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutEvaluationFormsInput = {
@@ -1332,6 +1424,8 @@ export type UserUncheckedUpdateWithoutEvaluationFormsInput = {
   facultyReviewedForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutFacultyReviewerNestedInput
   adminFinalizedForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutAdminFinalizerNestedInput
   posts?: Prisma.PostUncheckedUpdateManyWithoutAuthorNestedInput
+  evidences?: Prisma.EvidenceUncheckedUpdateManyWithoutStudentNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserUpsertWithoutClassReviewedFormsInput = {
@@ -1365,6 +1459,8 @@ export type UserUpdateWithoutClassReviewedFormsInput = {
   facultyReviewedForms?: Prisma.EvaluationFormUpdateManyWithoutFacultyReviewerNestedInput
   adminFinalizedForms?: Prisma.EvaluationFormUpdateManyWithoutAdminFinalizerNestedInput
   posts?: Prisma.PostUpdateManyWithoutAuthorNestedInput
+  evidences?: Prisma.EvidenceUpdateManyWithoutStudentNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutClassReviewedFormsInput = {
@@ -1387,6 +1483,8 @@ export type UserUncheckedUpdateWithoutClassReviewedFormsInput = {
   facultyReviewedForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutFacultyReviewerNestedInput
   adminFinalizedForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutAdminFinalizerNestedInput
   posts?: Prisma.PostUncheckedUpdateManyWithoutAuthorNestedInput
+  evidences?: Prisma.EvidenceUncheckedUpdateManyWithoutStudentNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserUpsertWithoutFacultyReviewedFormsInput = {
@@ -1420,6 +1518,8 @@ export type UserUpdateWithoutFacultyReviewedFormsInput = {
   classReviewedForms?: Prisma.EvaluationFormUpdateManyWithoutClassReviewerNestedInput
   adminFinalizedForms?: Prisma.EvaluationFormUpdateManyWithoutAdminFinalizerNestedInput
   posts?: Prisma.PostUpdateManyWithoutAuthorNestedInput
+  evidences?: Prisma.EvidenceUpdateManyWithoutStudentNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFacultyReviewedFormsInput = {
@@ -1442,6 +1542,8 @@ export type UserUncheckedUpdateWithoutFacultyReviewedFormsInput = {
   classReviewedForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutClassReviewerNestedInput
   adminFinalizedForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutAdminFinalizerNestedInput
   posts?: Prisma.PostUncheckedUpdateManyWithoutAuthorNestedInput
+  evidences?: Prisma.EvidenceUncheckedUpdateManyWithoutStudentNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserUpsertWithoutAdminFinalizedFormsInput = {
@@ -1475,6 +1577,8 @@ export type UserUpdateWithoutAdminFinalizedFormsInput = {
   classReviewedForms?: Prisma.EvaluationFormUpdateManyWithoutClassReviewerNestedInput
   facultyReviewedForms?: Prisma.EvaluationFormUpdateManyWithoutFacultyReviewerNestedInput
   posts?: Prisma.PostUpdateManyWithoutAuthorNestedInput
+  evidences?: Prisma.EvidenceUpdateManyWithoutStudentNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAdminFinalizedFormsInput = {
@@ -1497,6 +1601,232 @@ export type UserUncheckedUpdateWithoutAdminFinalizedFormsInput = {
   classReviewedForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutClassReviewerNestedInput
   facultyReviewedForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutFacultyReviewerNestedInput
   posts?: Prisma.PostUncheckedUpdateManyWithoutAuthorNestedInput
+  evidences?: Prisma.EvidenceUncheckedUpdateManyWithoutStudentNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutEvidencesInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  role?: $Enums.UserRole
+  fullName: string
+  phone?: string | null
+  dateOfBirth?: Date | string | null
+  isActive?: boolean
+  refreshTokenHash?: string | null
+  refreshTokenExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  classStudents?: Prisma.ClassStudentCreateNestedManyWithoutStudentInput
+  classCouncilAssignments?: Prisma.ClassCouncilAssignmentCreateNestedManyWithoutUserInput
+  facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentCreateNestedManyWithoutUserInput
+  evaluationForms?: Prisma.EvaluationFormCreateNestedManyWithoutStudentInput
+  classReviewedForms?: Prisma.EvaluationFormCreateNestedManyWithoutClassReviewerInput
+  facultyReviewedForms?: Prisma.EvaluationFormCreateNestedManyWithoutFacultyReviewerInput
+  adminFinalizedForms?: Prisma.EvaluationFormCreateNestedManyWithoutAdminFinalizerInput
+  posts?: Prisma.PostCreateNestedManyWithoutAuthorInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutEvidencesInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  role?: $Enums.UserRole
+  fullName: string
+  phone?: string | null
+  dateOfBirth?: Date | string | null
+  isActive?: boolean
+  refreshTokenHash?: string | null
+  refreshTokenExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  classStudents?: Prisma.ClassStudentUncheckedCreateNestedManyWithoutStudentInput
+  classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
+  facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
+  evaluationForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutStudentInput
+  classReviewedForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutClassReviewerInput
+  facultyReviewedForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutFacultyReviewerInput
+  adminFinalizedForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutAdminFinalizerInput
+  posts?: Prisma.PostUncheckedCreateNestedManyWithoutAuthorInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutEvidencesInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutEvidencesInput, Prisma.UserUncheckedCreateWithoutEvidencesInput>
+}
+
+export type UserUpsertWithoutEvidencesInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutEvidencesInput, Prisma.UserUncheckedUpdateWithoutEvidencesInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutEvidencesInput, Prisma.UserUncheckedCreateWithoutEvidencesInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutEvidencesInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutEvidencesInput, Prisma.UserUncheckedUpdateWithoutEvidencesInput>
+}
+
+export type UserUpdateWithoutEvidencesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dateOfBirth?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  classStudents?: Prisma.ClassStudentUpdateManyWithoutStudentNestedInput
+  classCouncilAssignments?: Prisma.ClassCouncilAssignmentUpdateManyWithoutUserNestedInput
+  facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUpdateManyWithoutUserNestedInput
+  evaluationForms?: Prisma.EvaluationFormUpdateManyWithoutStudentNestedInput
+  classReviewedForms?: Prisma.EvaluationFormUpdateManyWithoutClassReviewerNestedInput
+  facultyReviewedForms?: Prisma.EvaluationFormUpdateManyWithoutFacultyReviewerNestedInput
+  adminFinalizedForms?: Prisma.EvaluationFormUpdateManyWithoutAdminFinalizerNestedInput
+  posts?: Prisma.PostUpdateManyWithoutAuthorNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutEvidencesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dateOfBirth?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  classStudents?: Prisma.ClassStudentUncheckedUpdateManyWithoutStudentNestedInput
+  classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
+  facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
+  evaluationForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutStudentNestedInput
+  classReviewedForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutClassReviewerNestedInput
+  facultyReviewedForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutFacultyReviewerNestedInput
+  adminFinalizedForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutAdminFinalizerNestedInput
+  posts?: Prisma.PostUncheckedUpdateManyWithoutAuthorNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutNotificationsInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  role?: $Enums.UserRole
+  fullName: string
+  phone?: string | null
+  dateOfBirth?: Date | string | null
+  isActive?: boolean
+  refreshTokenHash?: string | null
+  refreshTokenExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  classStudents?: Prisma.ClassStudentCreateNestedManyWithoutStudentInput
+  classCouncilAssignments?: Prisma.ClassCouncilAssignmentCreateNestedManyWithoutUserInput
+  facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentCreateNestedManyWithoutUserInput
+  evaluationForms?: Prisma.EvaluationFormCreateNestedManyWithoutStudentInput
+  classReviewedForms?: Prisma.EvaluationFormCreateNestedManyWithoutClassReviewerInput
+  facultyReviewedForms?: Prisma.EvaluationFormCreateNestedManyWithoutFacultyReviewerInput
+  adminFinalizedForms?: Prisma.EvaluationFormCreateNestedManyWithoutAdminFinalizerInput
+  posts?: Prisma.PostCreateNestedManyWithoutAuthorInput
+  evidences?: Prisma.EvidenceCreateNestedManyWithoutStudentInput
+}
+
+export type UserUncheckedCreateWithoutNotificationsInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  role?: $Enums.UserRole
+  fullName: string
+  phone?: string | null
+  dateOfBirth?: Date | string | null
+  isActive?: boolean
+  refreshTokenHash?: string | null
+  refreshTokenExpiresAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  classStudents?: Prisma.ClassStudentUncheckedCreateNestedManyWithoutStudentInput
+  classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
+  facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
+  evaluationForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutStudentInput
+  classReviewedForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutClassReviewerInput
+  facultyReviewedForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutFacultyReviewerInput
+  adminFinalizedForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutAdminFinalizerInput
+  posts?: Prisma.PostUncheckedCreateNestedManyWithoutAuthorInput
+  evidences?: Prisma.EvidenceUncheckedCreateNestedManyWithoutStudentInput
+}
+
+export type UserCreateOrConnectWithoutNotificationsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutNotificationsInput, Prisma.UserUncheckedCreateWithoutNotificationsInput>
+}
+
+export type UserUpsertWithoutNotificationsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutNotificationsInput, Prisma.UserUncheckedUpdateWithoutNotificationsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutNotificationsInput, Prisma.UserUncheckedCreateWithoutNotificationsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutNotificationsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutNotificationsInput, Prisma.UserUncheckedUpdateWithoutNotificationsInput>
+}
+
+export type UserUpdateWithoutNotificationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dateOfBirth?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  classStudents?: Prisma.ClassStudentUpdateManyWithoutStudentNestedInput
+  classCouncilAssignments?: Prisma.ClassCouncilAssignmentUpdateManyWithoutUserNestedInput
+  facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUpdateManyWithoutUserNestedInput
+  evaluationForms?: Prisma.EvaluationFormUpdateManyWithoutStudentNestedInput
+  classReviewedForms?: Prisma.EvaluationFormUpdateManyWithoutClassReviewerNestedInput
+  facultyReviewedForms?: Prisma.EvaluationFormUpdateManyWithoutFacultyReviewerNestedInput
+  adminFinalizedForms?: Prisma.EvaluationFormUpdateManyWithoutAdminFinalizerNestedInput
+  posts?: Prisma.PostUpdateManyWithoutAuthorNestedInput
+  evidences?: Prisma.EvidenceUpdateManyWithoutStudentNestedInput
+}
+
+export type UserUncheckedUpdateWithoutNotificationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dateOfBirth?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  classStudents?: Prisma.ClassStudentUncheckedUpdateManyWithoutStudentNestedInput
+  classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
+  facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
+  evaluationForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutStudentNestedInput
+  classReviewedForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutClassReviewerNestedInput
+  facultyReviewedForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutFacultyReviewerNestedInput
+  adminFinalizedForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutAdminFinalizerNestedInput
+  posts?: Prisma.PostUncheckedUpdateManyWithoutAuthorNestedInput
+  evidences?: Prisma.EvidenceUncheckedUpdateManyWithoutStudentNestedInput
 }
 
 
@@ -1513,6 +1843,8 @@ export type UserCountOutputType = {
   facultyReviewedForms: number
   adminFinalizedForms: number
   posts: number
+  evidences: number
+  notifications: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1524,6 +1856,8 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   facultyReviewedForms?: boolean | UserCountOutputTypeCountFacultyReviewedFormsArgs
   adminFinalizedForms?: boolean | UserCountOutputTypeCountAdminFinalizedFormsArgs
   posts?: boolean | UserCountOutputTypeCountPostsArgs
+  evidences?: boolean | UserCountOutputTypeCountEvidencesArgs
+  notifications?: boolean | UserCountOutputTypeCountNotificationsArgs
 }
 
 /**
@@ -1592,6 +1926,20 @@ export type UserCountOutputTypeCountPostsArgs<ExtArgs extends runtime.Types.Exte
   where?: Prisma.PostWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountEvidencesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.EvidenceWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountNotificationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.NotificationWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1614,6 +1962,8 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   facultyReviewedForms?: boolean | Prisma.User$facultyReviewedFormsArgs<ExtArgs>
   adminFinalizedForms?: boolean | Prisma.User$adminFinalizedFormsArgs<ExtArgs>
   posts?: boolean | Prisma.User$postsArgs<ExtArgs>
+  evidences?: boolean | Prisma.User$evidencesArgs<ExtArgs>
+  notifications?: boolean | Prisma.User$notificationsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -1672,6 +2022,8 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   facultyReviewedForms?: boolean | Prisma.User$facultyReviewedFormsArgs<ExtArgs>
   adminFinalizedForms?: boolean | Prisma.User$adminFinalizedFormsArgs<ExtArgs>
   posts?: boolean | Prisma.User$postsArgs<ExtArgs>
+  evidences?: boolean | Prisma.User$evidencesArgs<ExtArgs>
+  notifications?: boolean | Prisma.User$notificationsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1688,6 +2040,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     facultyReviewedForms: Prisma.$EvaluationFormPayload<ExtArgs>[]
     adminFinalizedForms: Prisma.$EvaluationFormPayload<ExtArgs>[]
     posts: Prisma.$PostPayload<ExtArgs>[]
+    evidences: Prisma.$EvidencePayload<ExtArgs>[]
+    notifications: Prisma.$NotificationPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2104,6 +2458,8 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   facultyReviewedForms<T extends Prisma.User$facultyReviewedFormsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$facultyReviewedFormsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EvaluationFormPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   adminFinalizedForms<T extends Prisma.User$adminFinalizedFormsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$adminFinalizedFormsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EvaluationFormPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   posts<T extends Prisma.User$postsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$postsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PostPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  evidences<T extends Prisma.User$evidencesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$evidencesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EvidencePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  notifications<T extends Prisma.User$notificationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$notificationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2727,6 +3083,54 @@ export type User$postsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs
   take?: number
   skip?: number
   distinct?: Prisma.PostScalarFieldEnum | Prisma.PostScalarFieldEnum[]
+}
+
+/**
+ * User.evidences
+ */
+export type User$evidencesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Evidence
+   */
+  select?: Prisma.EvidenceSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Evidence
+   */
+  omit?: Prisma.EvidenceOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.EvidenceInclude<ExtArgs> | null
+  where?: Prisma.EvidenceWhereInput
+  orderBy?: Prisma.EvidenceOrderByWithRelationInput | Prisma.EvidenceOrderByWithRelationInput[]
+  cursor?: Prisma.EvidenceWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.EvidenceScalarFieldEnum | Prisma.EvidenceScalarFieldEnum[]
+}
+
+/**
+ * User.notifications
+ */
+export type User$notificationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Notification
+   */
+  select?: Prisma.NotificationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Notification
+   */
+  omit?: Prisma.NotificationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.NotificationInclude<ExtArgs> | null
+  where?: Prisma.NotificationWhereInput
+  orderBy?: Prisma.NotificationOrderByWithRelationInput | Prisma.NotificationOrderByWithRelationInput[]
+  cursor?: Prisma.NotificationWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.NotificationScalarFieldEnum | Prisma.NotificationScalarFieldEnum[]
 }
 
 /**

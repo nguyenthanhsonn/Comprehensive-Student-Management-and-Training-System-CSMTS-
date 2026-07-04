@@ -80,6 +80,8 @@ model User {
   facultyReviewedForms      EvaluationForm[]           @relation("FacultyReviewer")
   adminFinalizedForms       EvaluationForm[]           @relation("AdminFinalizer")
   posts                     Post[]
+  evidences                 Evidence[]
+  notifications             Notification[]
 
   // INDEX QUAN TRỌNG ĐỂ LOGIN SIÊU NHANH
   @@index([email])
@@ -158,7 +160,7 @@ model Class {
 model ClassStudent {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   classId     String   @map("class_id") @db.Uuid
-  studentId   String   @map("student_id") @db.Uuid
+  studentId   String   @unique @map("student_id") @db.Uuid
   studentCode String   @unique @map("student_code") @db.VarChar(20)
   enrolledAt  DateTime @default(now()) @map("enrolled_at") @db.Timestamptz
 
@@ -168,7 +170,6 @@ model ClassStudent {
 
   // Constraints & Indexes
   @@unique([classId, studentId])
-  @@index([studentId]) // Tối ưu khi truy vấn ngược: "Tìm xem sinh viên này học lớp nào"
   @@map("class_students")
 }
 
@@ -238,6 +239,7 @@ model EvaluationCriteria {
   children           EvaluationCriteria[] @relation("CriteriaHierarchy")
   formCriteriaScores FormCriteriaScore[]
   formAttachments    FormAttachment[]
+  evidences          Evidence[]
 
   @@map("evaluation_criteria")
 }
@@ -279,6 +281,9 @@ model EvaluationForm {
   adminFinalizedAt  DateTime? @map("admin_finalized_at") @db.Timestamptz
 
   submittedAt DateTime? @map("submitted_at") @db.Timestamptz
+  isLocked    Boolean   @default(false) @map("is_locked")
+  lockedAt    DateTime? @map("locked_at") @db.Timestamptz
+  lockedBy    String?   @map("locked_by") @db.Uuid
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz // BỎ @default(now())
 
@@ -291,6 +296,7 @@ model EvaluationForm {
   adminFinalizer  User?               @relation("AdminFinalizer", fields: [adminFinalizedBy], references: [id], onDelete: SetNull)
   criteriaScores  FormCriteriaScore[]
   attachments     FormAttachment[]
+  evidences       Evidence[]
 
   // Constraints & Indexes
   @@unique([studentId, semesterId])
@@ -345,4 +351,42 @@ model FormAttachment {
   @@index([formId]) // Đọc nhanh toàn bộ minh chứng của một form cụ thể khi tải trang chấm điểm
   @@index([criteriaId]) // Gom nhóm kiểm tra các tài liệu nộp vào cùng một mục tiêu chí công tác
   @@map("form_attachments")
+}
+
+// 13. Minh chứng ảnh do sinh viên upload lên cloud ở FE, BE chỉ lưu URL
+model Evidence {
+  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId        String           @map("student_id") @db.Uuid
+  evaluationFormId String           @map("evaluation_form_id") @db.Uuid
+  criterionId      String           @map("criterion_id") @db.Uuid
+  imageUrl         String           @map("image_url") @db.VarChar(1000)
+  publicId         String?          @map("public_id") @db.VarChar(500)
+  createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  student        User               @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  evaluationForm EvaluationForm     @relation(fields: [evaluationFormId], references: [id], onDelete: Cascade)
+  criterion      EvaluationCriteria @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([evaluationFormId])
+  @@index([criterionId])
+  @@map("evidences")
+}
+
+// 14. Thông báo nội bộ cho sinh viên khi phiếu bị trả về/chờ xử lý
+model Notification {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  title     String   @db.VarChar(255)
+  content   String   @db.Text
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("notifications")
 }

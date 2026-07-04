@@ -15,6 +15,7 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { CreateTrainingEvaluationDto } from './dto/create-training-evaluation.dto';
+import { ReviewScoresDto } from './dto/review-scores.dto';
 import { ReviewTrainingEvaluationDto } from './dto/review-training-evaluation.dto';
 import { UpdateActivityScoreDto } from './dto/update-activity-score.dto';
 import { UpdateCommunityScoreDto } from './dto/update-community-score.dto';
@@ -180,6 +181,16 @@ export class TrainingEvaluationsController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.trainingEvaluationsService.submit(userId, id);
+  }
+
+  @Patch(':id/review-scores')
+  @Roles(UserRole.ClassCouncil)
+  reviewScores(
+    @CurrentUser('id') userId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ReviewScoresDto,
+  ) {
+    return this.trainingEvaluationsService.reviewScores(userId, id, dto);
   }
 
   @Post(':id/review')

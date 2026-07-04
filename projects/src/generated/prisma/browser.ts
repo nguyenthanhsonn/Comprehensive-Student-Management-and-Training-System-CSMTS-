@@ -82,3 +82,13 @@ export type FormCriteriaScore = Prisma.FormCriteriaScoreModel
  * 
  */
 export type FormAttachment = Prisma.FormAttachmentModel
+/**
+ * Model Evidence
+ * 
+ */
+export type Evidence = Prisma.EvidenceModel
+/**
+ * Model Notification
+ * 
+ */
+export type Notification = Prisma.NotificationModel
