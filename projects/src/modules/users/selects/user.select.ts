@@ -18,6 +18,7 @@ export const authProfileUserSelect = {
   fullName: true,
   role: true,
   isActive: true,
+  deletedAt: true,
 } satisfies Prisma.UserSelect;
 
 export const loginUserSelect = {
@@ -26,6 +27,7 @@ export const loginUserSelect = {
   passwordHash: true,
   role: true,
   isActive: true,
+  deletedAt: true,
 } satisfies Prisma.UserSelect;
 
 export const passwordUserSelect = {
@@ -38,6 +40,7 @@ export const refreshTokenUserSelect = {
   email: true,
   role: true,
   isActive: true,
+  deletedAt: true,
   refreshTokenHash: true,
   refreshTokenExpiresAt: true,
 } satisfies Prisma.UserSelect;

@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../database/prisma.service';
-import { Prisma } from '../../generated/prisma/client';
+import { CreateUserDto } from './dto/create-user.dto';
 import {
   authProfileUserSelect,
   loginUserSelect,
@@ -23,6 +23,28 @@ import {
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async create(dto: CreateUserDto): Promise<PublicUser> {
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+      select: { id: true },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('Email đã tồn tại');
+    }
+
+    const passwordHash = await bcrypt.hash(dto.password, 12);
+
+    return this.prisma.user.create({
+      data: {
+        email: dto.email,
+        fullName: dto.fullName,
+        passwordHash,
+        role: dto.role,
+      },
+      select: publicUserSelect,
+    });
+  }
   findAll(): Promise<PublicUser[]> {
     return this.prisma.user.findMany({
       select: publicUserSelect,

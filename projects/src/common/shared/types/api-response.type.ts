@@ -3,11 +3,19 @@ export type ApiErrorDetail = {
   error: string;
 };
 
+export type ApiPaginationMeta = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+};
+
 export type ApiSuccessResponse<T> = {
   success: true;
   statusCode: number;
   message: string;
   data: T;
+  meta?: ApiPaginationMeta;
   timestamp: string;
   path: string;
 };

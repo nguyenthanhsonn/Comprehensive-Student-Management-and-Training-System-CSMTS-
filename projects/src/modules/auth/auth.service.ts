@@ -57,11 +57,15 @@ export class AuthService {
     const user = await this.usersService.findByEmailWithPassword(dto.email);
 
     if (!user || !(await bcrypt.compare(dto.password, user.passwordHash))) {
-      throw new UnauthorizedException('Invalid email or password');
+      throw new UnauthorizedException('Email hoặc mật khẩu không đúng');
+    }
+
+    if (user.deletedAt) {
+      throw new UnauthorizedException('Tài khoản không tồn tại');
     }
 
     if (!user.isActive) {
-      throw new UnauthorizedException('User account is inactive');
+      throw new UnauthorizedException('Tài khoản đã bị khóa');
     }
 
     return this.createSession({
@@ -85,11 +89,11 @@ export class AuthService {
     }
 
     const user = await this.usersService.findAuthProfileById(id);
-    if (!user) {
+    if (!user || user.deletedAt) {
       throw new NotFoundException('Người dùng không tồn tại');
     }
     if (!user.isActive) {
-      throw new UnauthorizedException('Người dùng không hoạt động');
+      throw new UnauthorizedException('Tài khoản đã bị khóa');
     }
 
     const profile = mapAuthProfileToUser(user);
@@ -103,17 +107,17 @@ export class AuthService {
     const payload = await this.verifyRefreshToken(dto.refreshToken);
     const user = await this.usersService.findByIdWithRefreshToken(payload.sub);
 
-    if (!user || !user.isActive) {
-      throw new UnauthorizedException('Invalid refresh token');
+    if (!user || user.deletedAt || !user.isActive) {
+      throw new UnauthorizedException('Refresh token không hợp lệ');
     }
 
     if (!user.refreshTokenHash || !user.refreshTokenExpiresAt) {
-      throw new UnauthorizedException('Refresh token has been revoked');
+      throw new UnauthorizedException('Refresh token đã bị thu hồi');
     }
 
     if (user.refreshTokenExpiresAt.getTime() <= Date.now()) {
       await this.usersService.clearRefreshToken(user.id);
-      throw new UnauthorizedException('Refresh token has expired');
+      throw new UnauthorizedException('Refresh token đã hết hạn');
     }
 
     const isRefreshTokenValid = await this.isRefreshTokenHashValid(

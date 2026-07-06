@@ -6,6 +6,8 @@ import appConfig from './config/app.config';
 import { validateEnvironment } from './config/env.validation';
 import { PrismaModule } from './database/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { AdminUsersModule } from './modules/admin/users/admin-users.module';
+import { AdminStudentsModule } from './modules/admin/students/admin-students.module';
 import { PostsModule } from './modules/posts/posts.module';
 import { StudentsModule } from './modules/students/students.module';
 import { TrainingEvaluationsModule } from './modules/training-evaluations/training-evaluations.module';
@@ -28,6 +30,8 @@ import { UsersModule } from './modules/users/users.module';
     UsersModule,
     StudentsModule,
     TrainingEvaluationsModule,
+    AdminUsersModule,
+    AdminStudentsModule,
     PostsModule,
   ],
   controllers: [AppController],

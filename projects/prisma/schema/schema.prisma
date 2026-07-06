@@ -57,19 +57,22 @@ enum CriteriaInputType {
 // 1. Users - tất cả actor dùng chung bảng, phân biệt qua role
 model User {
   id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email                 String    @unique @db.VarChar(255)
+  username              String    @unique @db.VarChar(50) // Định danh đăng nhập - chữ thường, số, chấm, gạch dưới
+  email                 String    @unique @db.VarChar(255) // Thông tin liên hệ - không dùng để đăng nhập
   passwordHash          String    @map("password_hash") @db.VarChar(255)
   role                  UserRole  @default(student)
   fullName              String    @map("full_name") @db.VarChar(255)
   phone                 String?   @db.VarChar(20)
   dateOfBirth           DateTime? @map("date_of_birth") @db.Date
   isActive              Boolean   @default(true) @map("is_active")
-  // Lưu ý: Chuỗi hash SHA-256 có độ dài cố định là 64 ký tự hex, 
+  lockedAt              DateTime? @map("locked_at") @db.Timestamptz // Thời điểm admin khóa tài khoản (isActive=false)
+  // Lưu ý: Chuỗi hash SHA-256 có độ dài cố định là 64 ký tự hex,
   // nên sửa VarChar(255) thành VarChar(64) để tiết kiệm dung lượng bộ nhớ lưu trữ
   refreshTokenHash      String?   @map("refresh_token_hash") @db.VarChar(64)
   refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at") @db.Timestamptz
   createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz // BỎ @default(now())
+  deletedAt             DateTime? @map("deleted_at") @db.Timestamptz // Xóa mềm - user không login/hiện trong danh sách được nữa
 
   // Relations
   classStudents             ClassStudent[]
@@ -81,7 +84,7 @@ model User {
   adminFinalizedForms       EvaluationForm[]           @relation("AdminFinalizer")
   posts                     Post[]
 
-  // INDEX QUAN TRỌNG ĐỂ LOGIN SIÊU NHANH
+  // username đã @unique nên tự có index - đây là cột dùng để login siêu nhanh
   @@index([email])
   @@map("users")
 }
@@ -159,6 +162,7 @@ model ClassStudent {
   studentId   String   @map("student_id") @db.Uuid
   studentCode String   @unique @map("student_code") @db.VarChar(20)
   enrolledAt  DateTime @default(now()) @map("enrolled_at") @db.Timestamptz
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz // Xóa mềm hồ sơ sinh viên - không đụng tới User
 
   // Relations
   class   Class @relation(fields: [classId], references: [id], onDelete: Cascade)

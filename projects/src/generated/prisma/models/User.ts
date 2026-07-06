@@ -33,10 +33,12 @@ export type UserMinAggregateOutputType = {
   phone: string | null
   dateOfBirth: Date | null
   isActive: boolean | null
+  lockedAt: Date | null
   refreshTokenHash: string | null
   refreshTokenExpiresAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
+  deletedAt: Date | null
 }
 
 export type UserMaxAggregateOutputType = {
@@ -48,10 +50,12 @@ export type UserMaxAggregateOutputType = {
   phone: string | null
   dateOfBirth: Date | null
   isActive: boolean | null
+  lockedAt: Date | null
   refreshTokenHash: string | null
   refreshTokenExpiresAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
+  deletedAt: Date | null
 }
 
 export type UserCountAggregateOutputType = {
@@ -63,10 +67,12 @@ export type UserCountAggregateOutputType = {
   phone: number
   dateOfBirth: number
   isActive: number
+  lockedAt: number
   refreshTokenHash: number
   refreshTokenExpiresAt: number
   createdAt: number
   updatedAt: number
+  deletedAt: number
   _all: number
 }
 
@@ -80,10 +86,12 @@ export type UserMinAggregateInputType = {
   phone?: true
   dateOfBirth?: true
   isActive?: true
+  lockedAt?: true
   refreshTokenHash?: true
   refreshTokenExpiresAt?: true
   createdAt?: true
   updatedAt?: true
+  deletedAt?: true
 }
 
 export type UserMaxAggregateInputType = {
@@ -95,10 +103,12 @@ export type UserMaxAggregateInputType = {
   phone?: true
   dateOfBirth?: true
   isActive?: true
+  lockedAt?: true
   refreshTokenHash?: true
   refreshTokenExpiresAt?: true
   createdAt?: true
   updatedAt?: true
+  deletedAt?: true
 }
 
 export type UserCountAggregateInputType = {
@@ -110,10 +120,12 @@ export type UserCountAggregateInputType = {
   phone?: true
   dateOfBirth?: true
   isActive?: true
+  lockedAt?: true
   refreshTokenHash?: true
   refreshTokenExpiresAt?: true
   createdAt?: true
   updatedAt?: true
+  deletedAt?: true
   _all?: true
 }
 
@@ -198,10 +210,12 @@ export type UserGroupByOutputType = {
   phone: string | null
   dateOfBirth: Date | null
   isActive: boolean
+  lockedAt: Date | null
   refreshTokenHash: string | null
   refreshTokenExpiresAt: Date | null
   createdAt: Date
   updatedAt: Date
+  deletedAt: Date | null
   _count: UserCountAggregateOutputType | null
   _min: UserMinAggregateOutputType | null
   _max: UserMaxAggregateOutputType | null
@@ -234,10 +248,12 @@ export type UserWhereInput = {
   phone?: Prisma.StringNullableFilter<"User"> | string | null
   dateOfBirth?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   isActive?: Prisma.BoolFilter<"User"> | boolean
+  lockedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   refreshTokenHash?: Prisma.StringNullableFilter<"User"> | string | null
   refreshTokenExpiresAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   classStudents?: Prisma.ClassStudentListRelationFilter
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentListRelationFilter
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentListRelationFilter
@@ -257,10 +273,12 @@ export type UserOrderByWithRelationInput = {
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
   dateOfBirth?: Prisma.SortOrderInput | Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  lockedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   refreshTokenHash?: Prisma.SortOrderInput | Prisma.SortOrder
   refreshTokenExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   classStudents?: Prisma.ClassStudentOrderByRelationAggregateInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentOrderByRelationAggregateInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentOrderByRelationAggregateInput
@@ -283,10 +301,12 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   phone?: Prisma.StringNullableFilter<"User"> | string | null
   dateOfBirth?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   isActive?: Prisma.BoolFilter<"User"> | boolean
+  lockedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   refreshTokenHash?: Prisma.StringNullableFilter<"User"> | string | null
   refreshTokenExpiresAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   classStudents?: Prisma.ClassStudentListRelationFilter
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentListRelationFilter
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentListRelationFilter
@@ -306,10 +326,12 @@ export type UserOrderByWithAggregationInput = {
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
   dateOfBirth?: Prisma.SortOrderInput | Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  lockedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   refreshTokenHash?: Prisma.SortOrderInput | Prisma.SortOrder
   refreshTokenExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
   _max?: Prisma.UserMaxOrderByAggregateInput
   _min?: Prisma.UserMinOrderByAggregateInput
@@ -327,10 +349,12 @@ export type UserScalarWhereWithAggregatesInput = {
   phone?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   dateOfBirth?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   isActive?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  lockedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   refreshTokenHash?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   refreshTokenExpiresAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
 }
 
 export type UserCreateInput = {
@@ -342,10 +366,12 @@ export type UserCreateInput = {
   phone?: string | null
   dateOfBirth?: Date | string | null
   isActive?: boolean
+  lockedAt?: Date | string | null
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentCreateNestedManyWithoutStudentInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentCreateNestedManyWithoutUserInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentCreateNestedManyWithoutUserInput
@@ -365,10 +391,12 @@ export type UserUncheckedCreateInput = {
   phone?: string | null
   dateOfBirth?: Date | string | null
   isActive?: boolean
+  lockedAt?: Date | string | null
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedCreateNestedManyWithoutStudentInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
@@ -388,10 +416,12 @@ export type UserUpdateInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dateOfBirth?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUpdateManyWithoutStudentNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUpdateManyWithoutUserNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUpdateManyWithoutUserNestedInput
@@ -411,10 +441,12 @@ export type UserUncheckedUpdateInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dateOfBirth?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedUpdateManyWithoutStudentNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
@@ -434,10 +466,12 @@ export type UserCreateManyInput = {
   phone?: string | null
   dateOfBirth?: Date | string | null
   isActive?: boolean
+  lockedAt?: Date | string | null
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
 }
 
 export type UserUpdateManyMutationInput = {
@@ -449,10 +483,12 @@ export type UserUpdateManyMutationInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dateOfBirth?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type UserUncheckedUpdateManyInput = {
@@ -464,10 +500,12 @@ export type UserUncheckedUpdateManyInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dateOfBirth?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type UserCountOrderByAggregateInput = {
@@ -479,10 +517,12 @@ export type UserCountOrderByAggregateInput = {
   phone?: Prisma.SortOrder
   dateOfBirth?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  lockedAt?: Prisma.SortOrder
   refreshTokenHash?: Prisma.SortOrder
   refreshTokenExpiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
 }
 
 export type UserMaxOrderByAggregateInput = {
@@ -494,10 +534,12 @@ export type UserMaxOrderByAggregateInput = {
   phone?: Prisma.SortOrder
   dateOfBirth?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  lockedAt?: Prisma.SortOrder
   refreshTokenHash?: Prisma.SortOrder
   refreshTokenExpiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
 }
 
 export type UserMinOrderByAggregateInput = {
@@ -509,10 +551,12 @@ export type UserMinOrderByAggregateInput = {
   phone?: Prisma.SortOrder
   dateOfBirth?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  lockedAt?: Prisma.SortOrder
   refreshTokenHash?: Prisma.SortOrder
   refreshTokenExpiresAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
 }
 
 export type UserScalarRelationFilter = {
@@ -676,10 +720,12 @@ export type UserCreateWithoutPostsInput = {
   phone?: string | null
   dateOfBirth?: Date | string | null
   isActive?: boolean
+  lockedAt?: Date | string | null
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentCreateNestedManyWithoutStudentInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentCreateNestedManyWithoutUserInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentCreateNestedManyWithoutUserInput
@@ -698,10 +744,12 @@ export type UserUncheckedCreateWithoutPostsInput = {
   phone?: string | null
   dateOfBirth?: Date | string | null
   isActive?: boolean
+  lockedAt?: Date | string | null
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedCreateNestedManyWithoutStudentInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
@@ -736,10 +784,12 @@ export type UserUpdateWithoutPostsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dateOfBirth?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUpdateManyWithoutStudentNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUpdateManyWithoutUserNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUpdateManyWithoutUserNestedInput
@@ -758,10 +808,12 @@ export type UserUncheckedUpdateWithoutPostsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dateOfBirth?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedUpdateManyWithoutStudentNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
@@ -780,10 +832,12 @@ export type UserCreateWithoutClassStudentsInput = {
   phone?: string | null
   dateOfBirth?: Date | string | null
   isActive?: boolean
+  lockedAt?: Date | string | null
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentCreateNestedManyWithoutUserInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentCreateNestedManyWithoutUserInput
   evaluationForms?: Prisma.EvaluationFormCreateNestedManyWithoutStudentInput
@@ -802,10 +856,12 @@ export type UserUncheckedCreateWithoutClassStudentsInput = {
   phone?: string | null
   dateOfBirth?: Date | string | null
   isActive?: boolean
+  lockedAt?: Date | string | null
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
   evaluationForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutStudentInput
@@ -840,10 +896,12 @@ export type UserUpdateWithoutClassStudentsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dateOfBirth?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUpdateManyWithoutUserNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUpdateManyWithoutUserNestedInput
   evaluationForms?: Prisma.EvaluationFormUpdateManyWithoutStudentNestedInput
@@ -862,10 +920,12 @@ export type UserUncheckedUpdateWithoutClassStudentsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dateOfBirth?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
   evaluationForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutStudentNestedInput
@@ -884,10 +944,12 @@ export type UserCreateWithoutClassCouncilAssignmentsInput = {
   phone?: string | null
   dateOfBirth?: Date | string | null
   isActive?: boolean
+  lockedAt?: Date | string | null
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentCreateNestedManyWithoutStudentInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentCreateNestedManyWithoutUserInput
   evaluationForms?: Prisma.EvaluationFormCreateNestedManyWithoutStudentInput
@@ -906,10 +968,12 @@ export type UserUncheckedCreateWithoutClassCouncilAssignmentsInput = {
   phone?: string | null
   dateOfBirth?: Date | string | null
   isActive?: boolean
+  lockedAt?: Date | string | null
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedCreateNestedManyWithoutStudentInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
   evaluationForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutStudentInput
@@ -944,10 +1008,12 @@ export type UserUpdateWithoutClassCouncilAssignmentsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dateOfBirth?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUpdateManyWithoutStudentNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUpdateManyWithoutUserNestedInput
   evaluationForms?: Prisma.EvaluationFormUpdateManyWithoutStudentNestedInput
@@ -966,10 +1032,12 @@ export type UserUncheckedUpdateWithoutClassCouncilAssignmentsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dateOfBirth?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedUpdateManyWithoutStudentNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
   evaluationForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutStudentNestedInput
@@ -988,10 +1056,12 @@ export type UserCreateWithoutFacultyCouncilAssignmentsInput = {
   phone?: string | null
   dateOfBirth?: Date | string | null
   isActive?: boolean
+  lockedAt?: Date | string | null
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentCreateNestedManyWithoutStudentInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentCreateNestedManyWithoutUserInput
   evaluationForms?: Prisma.EvaluationFormCreateNestedManyWithoutStudentInput
@@ -1010,10 +1080,12 @@ export type UserUncheckedCreateWithoutFacultyCouncilAssignmentsInput = {
   phone?: string | null
   dateOfBirth?: Date | string | null
   isActive?: boolean
+  lockedAt?: Date | string | null
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedCreateNestedManyWithoutStudentInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
   evaluationForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutStudentInput
@@ -1048,10 +1120,12 @@ export type UserUpdateWithoutFacultyCouncilAssignmentsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dateOfBirth?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUpdateManyWithoutStudentNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUpdateManyWithoutUserNestedInput
   evaluationForms?: Prisma.EvaluationFormUpdateManyWithoutStudentNestedInput
@@ -1070,10 +1144,12 @@ export type UserUncheckedUpdateWithoutFacultyCouncilAssignmentsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dateOfBirth?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedUpdateManyWithoutStudentNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
   evaluationForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutStudentNestedInput
@@ -1092,10 +1168,12 @@ export type UserCreateWithoutEvaluationFormsInput = {
   phone?: string | null
   dateOfBirth?: Date | string | null
   isActive?: boolean
+  lockedAt?: Date | string | null
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentCreateNestedManyWithoutStudentInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentCreateNestedManyWithoutUserInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentCreateNestedManyWithoutUserInput
@@ -1114,10 +1192,12 @@ export type UserUncheckedCreateWithoutEvaluationFormsInput = {
   phone?: string | null
   dateOfBirth?: Date | string | null
   isActive?: boolean
+  lockedAt?: Date | string | null
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedCreateNestedManyWithoutStudentInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
@@ -1141,10 +1221,12 @@ export type UserCreateWithoutClassReviewedFormsInput = {
   phone?: string | null
   dateOfBirth?: Date | string | null
   isActive?: boolean
+  lockedAt?: Date | string | null
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentCreateNestedManyWithoutStudentInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentCreateNestedManyWithoutUserInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentCreateNestedManyWithoutUserInput
@@ -1163,10 +1245,12 @@ export type UserUncheckedCreateWithoutClassReviewedFormsInput = {
   phone?: string | null
   dateOfBirth?: Date | string | null
   isActive?: boolean
+  lockedAt?: Date | string | null
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedCreateNestedManyWithoutStudentInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
@@ -1190,10 +1274,12 @@ export type UserCreateWithoutFacultyReviewedFormsInput = {
   phone?: string | null
   dateOfBirth?: Date | string | null
   isActive?: boolean
+  lockedAt?: Date | string | null
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentCreateNestedManyWithoutStudentInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentCreateNestedManyWithoutUserInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentCreateNestedManyWithoutUserInput
@@ -1212,10 +1298,12 @@ export type UserUncheckedCreateWithoutFacultyReviewedFormsInput = {
   phone?: string | null
   dateOfBirth?: Date | string | null
   isActive?: boolean
+  lockedAt?: Date | string | null
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedCreateNestedManyWithoutStudentInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
@@ -1239,10 +1327,12 @@ export type UserCreateWithoutAdminFinalizedFormsInput = {
   phone?: string | null
   dateOfBirth?: Date | string | null
   isActive?: boolean
+  lockedAt?: Date | string | null
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentCreateNestedManyWithoutStudentInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentCreateNestedManyWithoutUserInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentCreateNestedManyWithoutUserInput
@@ -1261,10 +1351,12 @@ export type UserUncheckedCreateWithoutAdminFinalizedFormsInput = {
   phone?: string | null
   dateOfBirth?: Date | string | null
   isActive?: boolean
+  lockedAt?: Date | string | null
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedCreateNestedManyWithoutStudentInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
@@ -1299,10 +1391,12 @@ export type UserUpdateWithoutEvaluationFormsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dateOfBirth?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUpdateManyWithoutStudentNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUpdateManyWithoutUserNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUpdateManyWithoutUserNestedInput
@@ -1321,10 +1415,12 @@ export type UserUncheckedUpdateWithoutEvaluationFormsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dateOfBirth?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedUpdateManyWithoutStudentNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
@@ -1354,10 +1450,12 @@ export type UserUpdateWithoutClassReviewedFormsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dateOfBirth?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUpdateManyWithoutStudentNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUpdateManyWithoutUserNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUpdateManyWithoutUserNestedInput
@@ -1376,10 +1474,12 @@ export type UserUncheckedUpdateWithoutClassReviewedFormsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dateOfBirth?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedUpdateManyWithoutStudentNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
@@ -1409,10 +1509,12 @@ export type UserUpdateWithoutFacultyReviewedFormsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dateOfBirth?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUpdateManyWithoutStudentNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUpdateManyWithoutUserNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUpdateManyWithoutUserNestedInput
@@ -1431,10 +1533,12 @@ export type UserUncheckedUpdateWithoutFacultyReviewedFormsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dateOfBirth?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedUpdateManyWithoutStudentNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
@@ -1464,10 +1568,12 @@ export type UserUpdateWithoutAdminFinalizedFormsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dateOfBirth?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUpdateManyWithoutStudentNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUpdateManyWithoutUserNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUpdateManyWithoutUserNestedInput
@@ -1486,10 +1592,12 @@ export type UserUncheckedUpdateWithoutAdminFinalizedFormsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   dateOfBirth?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedUpdateManyWithoutStudentNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
@@ -1602,10 +1710,12 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   phone?: boolean
   dateOfBirth?: boolean
   isActive?: boolean
+  lockedAt?: boolean
   refreshTokenHash?: boolean
   refreshTokenExpiresAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  deletedAt?: boolean
   classStudents?: boolean | Prisma.User$classStudentsArgs<ExtArgs>
   classCouncilAssignments?: boolean | Prisma.User$classCouncilAssignmentsArgs<ExtArgs>
   facultyCouncilAssignments?: boolean | Prisma.User$facultyCouncilAssignmentsArgs<ExtArgs>
@@ -1626,10 +1736,12 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   phone?: boolean
   dateOfBirth?: boolean
   isActive?: boolean
+  lockedAt?: boolean
   refreshTokenHash?: boolean
   refreshTokenExpiresAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  deletedAt?: boolean
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1641,10 +1753,12 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   phone?: boolean
   dateOfBirth?: boolean
   isActive?: boolean
+  lockedAt?: boolean
   refreshTokenHash?: boolean
   refreshTokenExpiresAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  deletedAt?: boolean
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectScalar = {
@@ -1656,13 +1770,15 @@ export type UserSelectScalar = {
   phone?: boolean
   dateOfBirth?: boolean
   isActive?: boolean
+  lockedAt?: boolean
   refreshTokenHash?: boolean
   refreshTokenExpiresAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  deletedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "passwordHash" | "role" | "fullName" | "phone" | "dateOfBirth" | "isActive" | "refreshTokenHash" | "refreshTokenExpiresAt" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "passwordHash" | "role" | "fullName" | "phone" | "dateOfBirth" | "isActive" | "lockedAt" | "refreshTokenHash" | "refreshTokenExpiresAt" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   classStudents?: boolean | Prisma.User$classStudentsArgs<ExtArgs>
   classCouncilAssignments?: boolean | Prisma.User$classCouncilAssignmentsArgs<ExtArgs>
@@ -1698,10 +1814,12 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     phone: string | null
     dateOfBirth: Date | null
     isActive: boolean
+    lockedAt: Date | null
     refreshTokenHash: string | null
     refreshTokenExpiresAt: Date | null
     createdAt: Date
     updatedAt: Date
+    deletedAt: Date | null
   }, ExtArgs["result"]["user"]>
   composites: {}
 }
@@ -2141,10 +2259,12 @@ export interface UserFieldRefs {
   readonly phone: Prisma.FieldRef<"User", 'String'>
   readonly dateOfBirth: Prisma.FieldRef<"User", 'DateTime'>
   readonly isActive: Prisma.FieldRef<"User", 'Boolean'>
+  readonly lockedAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly refreshTokenHash: Prisma.FieldRef<"User", 'String'>
   readonly refreshTokenExpiresAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>
+  readonly deletedAt: Prisma.FieldRef<"User", 'DateTime'>
 }
     
 

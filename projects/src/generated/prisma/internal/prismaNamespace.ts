@@ -1426,10 +1426,12 @@ export const UserScalarFieldEnum = {
   phone: 'phone',
   dateOfBirth: 'dateOfBirth',
   isActive: 'isActive',
+  lockedAt: 'lockedAt',
   refreshTokenHash: 'refreshTokenHash',
   refreshTokenExpiresAt: 'refreshTokenExpiresAt',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
@@ -1488,7 +1490,8 @@ export const ClassStudentScalarFieldEnum = {
   classId: 'classId',
   studentId: 'studentId',
   studentCode: 'studentCode',
-  enrolledAt: 'enrolledAt'
+  enrolledAt: 'enrolledAt',
+  deletedAt: 'deletedAt'
 } as const
 
 export type ClassStudentScalarFieldEnum = (typeof ClassStudentScalarFieldEnum)[keyof typeof ClassStudentScalarFieldEnum]
