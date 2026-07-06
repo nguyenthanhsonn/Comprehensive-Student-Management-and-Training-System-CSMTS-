@@ -2,6 +2,7 @@ import { Prisma } from '../../../generated/prisma/client';
 
 export const publicUserSelect = {
   id: true,
+  username: true,
   email: true,
   fullName: true,
   role: true,
@@ -14,14 +15,17 @@ export const publicUserSelect = {
 
 export const authProfileUserSelect = {
   id: true,
+  username: true,
   email: true,
   fullName: true,
   role: true,
   isActive: true,
 } satisfies Prisma.UserSelect;
 
+// Dùng để đăng nhập - tìm theo username, nhưng vẫn lấy kèm email để đưa vào JWT payload.
 export const loginUserSelect = {
   id: true,
+  username: true,
   email: true,
   passwordHash: true,
   role: true,
@@ -35,6 +39,7 @@ export const passwordUserSelect = {
 
 export const refreshTokenUserSelect = {
   id: true,
+  username: true,
   email: true,
   role: true,
   isActive: true,

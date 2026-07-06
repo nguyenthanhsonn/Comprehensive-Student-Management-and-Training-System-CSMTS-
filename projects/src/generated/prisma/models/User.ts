@@ -26,6 +26,7 @@ export type AggregateUser = {
 
 export type UserMinAggregateOutputType = {
   id: string | null
+  username: string | null
   email: string | null
   passwordHash: string | null
   role: $Enums.UserRole | null
@@ -35,12 +36,15 @@ export type UserMinAggregateOutputType = {
   isActive: boolean | null
   refreshTokenHash: string | null
   refreshTokenExpiresAt: Date | null
+  lockedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
+  deletedAt: Date | null
 }
 
 export type UserMaxAggregateOutputType = {
   id: string | null
+  username: string | null
   email: string | null
   passwordHash: string | null
   role: $Enums.UserRole | null
@@ -50,12 +54,15 @@ export type UserMaxAggregateOutputType = {
   isActive: boolean | null
   refreshTokenHash: string | null
   refreshTokenExpiresAt: Date | null
+  lockedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
+  deletedAt: Date | null
 }
 
 export type UserCountAggregateOutputType = {
   id: number
+  username: number
   email: number
   passwordHash: number
   role: number
@@ -65,14 +72,17 @@ export type UserCountAggregateOutputType = {
   isActive: number
   refreshTokenHash: number
   refreshTokenExpiresAt: number
+  lockedAt: number
   createdAt: number
   updatedAt: number
+  deletedAt: number
   _all: number
 }
 
 
 export type UserMinAggregateInputType = {
   id?: true
+  username?: true
   email?: true
   passwordHash?: true
   role?: true
@@ -82,12 +92,15 @@ export type UserMinAggregateInputType = {
   isActive?: true
   refreshTokenHash?: true
   refreshTokenExpiresAt?: true
+  lockedAt?: true
   createdAt?: true
   updatedAt?: true
+  deletedAt?: true
 }
 
 export type UserMaxAggregateInputType = {
   id?: true
+  username?: true
   email?: true
   passwordHash?: true
   role?: true
@@ -97,12 +110,15 @@ export type UserMaxAggregateInputType = {
   isActive?: true
   refreshTokenHash?: true
   refreshTokenExpiresAt?: true
+  lockedAt?: true
   createdAt?: true
   updatedAt?: true
+  deletedAt?: true
 }
 
 export type UserCountAggregateInputType = {
   id?: true
+  username?: true
   email?: true
   passwordHash?: true
   role?: true
@@ -112,8 +128,10 @@ export type UserCountAggregateInputType = {
   isActive?: true
   refreshTokenHash?: true
   refreshTokenExpiresAt?: true
+  lockedAt?: true
   createdAt?: true
   updatedAt?: true
+  deletedAt?: true
   _all?: true
 }
 
@@ -191,6 +209,7 @@ export type UserGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
 
 export type UserGroupByOutputType = {
   id: string
+  username: string
   email: string
   passwordHash: string
   role: $Enums.UserRole
@@ -200,8 +219,10 @@ export type UserGroupByOutputType = {
   isActive: boolean
   refreshTokenHash: string | null
   refreshTokenExpiresAt: Date | null
+  lockedAt: Date | null
   createdAt: Date
   updatedAt: Date
+  deletedAt: Date | null
   _count: UserCountAggregateOutputType | null
   _min: UserMinAggregateOutputType | null
   _max: UserMaxAggregateOutputType | null
@@ -227,6 +248,7 @@ export type UserWhereInput = {
   OR?: Prisma.UserWhereInput[]
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   id?: Prisma.UuidFilter<"User"> | string
+  username?: Prisma.StringFilter<"User"> | string
   email?: Prisma.StringFilter<"User"> | string
   passwordHash?: Prisma.StringFilter<"User"> | string
   role?: Prisma.EnumUserRoleFilter<"User"> | $Enums.UserRole
@@ -236,8 +258,10 @@ export type UserWhereInput = {
   isActive?: Prisma.BoolFilter<"User"> | boolean
   refreshTokenHash?: Prisma.StringNullableFilter<"User"> | string | null
   refreshTokenExpiresAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  lockedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   classStudents?: Prisma.ClassStudentListRelationFilter
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentListRelationFilter
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentListRelationFilter
@@ -252,6 +276,7 @@ export type UserWhereInput = {
 
 export type UserOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  username?: Prisma.SortOrder
   email?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   role?: Prisma.SortOrder
@@ -261,8 +286,10 @@ export type UserOrderByWithRelationInput = {
   isActive?: Prisma.SortOrder
   refreshTokenHash?: Prisma.SortOrderInput | Prisma.SortOrder
   refreshTokenExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  lockedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   classStudents?: Prisma.ClassStudentOrderByRelationAggregateInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentOrderByRelationAggregateInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentOrderByRelationAggregateInput
@@ -277,6 +304,7 @@ export type UserOrderByWithRelationInput = {
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  username?: string
   email?: string
   AND?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   OR?: Prisma.UserWhereInput[]
@@ -289,8 +317,10 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   isActive?: Prisma.BoolFilter<"User"> | boolean
   refreshTokenHash?: Prisma.StringNullableFilter<"User"> | string | null
   refreshTokenExpiresAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  lockedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   classStudents?: Prisma.ClassStudentListRelationFilter
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentListRelationFilter
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentListRelationFilter
@@ -301,10 +331,11 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   posts?: Prisma.PostListRelationFilter
   evidences?: Prisma.EvidenceListRelationFilter
   notifications?: Prisma.NotificationListRelationFilter
-}, "id" | "email">
+}, "id" | "username" | "email">
 
 export type UserOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  username?: Prisma.SortOrder
   email?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   role?: Prisma.SortOrder
@@ -314,8 +345,10 @@ export type UserOrderByWithAggregationInput = {
   isActive?: Prisma.SortOrder
   refreshTokenHash?: Prisma.SortOrderInput | Prisma.SortOrder
   refreshTokenExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  lockedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
   _max?: Prisma.UserMaxOrderByAggregateInput
   _min?: Prisma.UserMinOrderByAggregateInput
@@ -326,6 +359,7 @@ export type UserScalarWhereWithAggregatesInput = {
   OR?: Prisma.UserScalarWhereWithAggregatesInput[]
   NOT?: Prisma.UserScalarWhereWithAggregatesInput | Prisma.UserScalarWhereWithAggregatesInput[]
   id?: Prisma.UuidWithAggregatesFilter<"User"> | string
+  username?: Prisma.StringWithAggregatesFilter<"User"> | string
   email?: Prisma.StringWithAggregatesFilter<"User"> | string
   passwordHash?: Prisma.StringWithAggregatesFilter<"User"> | string
   role?: Prisma.EnumUserRoleWithAggregatesFilter<"User"> | $Enums.UserRole
@@ -335,12 +369,15 @@ export type UserScalarWhereWithAggregatesInput = {
   isActive?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   refreshTokenHash?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   refreshTokenExpiresAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  lockedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
 }
 
 export type UserCreateInput = {
   id?: string
+  username: string
   email: string
   passwordHash: string
   role?: $Enums.UserRole
@@ -350,8 +387,10 @@ export type UserCreateInput = {
   isActive?: boolean
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
+  lockedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentCreateNestedManyWithoutStudentInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentCreateNestedManyWithoutUserInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentCreateNestedManyWithoutUserInput
@@ -366,6 +405,7 @@ export type UserCreateInput = {
 
 export type UserUncheckedCreateInput = {
   id?: string
+  username: string
   email: string
   passwordHash: string
   role?: $Enums.UserRole
@@ -375,8 +415,10 @@ export type UserUncheckedCreateInput = {
   isActive?: boolean
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
+  lockedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedCreateNestedManyWithoutStudentInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
@@ -391,6 +433,7 @@ export type UserUncheckedCreateInput = {
 
 export type UserUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
@@ -400,8 +443,10 @@ export type UserUpdateInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUpdateManyWithoutStudentNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUpdateManyWithoutUserNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUpdateManyWithoutUserNestedInput
@@ -416,6 +461,7 @@ export type UserUpdateInput = {
 
 export type UserUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
@@ -425,8 +471,10 @@ export type UserUncheckedUpdateInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedUpdateManyWithoutStudentNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
@@ -441,6 +489,7 @@ export type UserUncheckedUpdateInput = {
 
 export type UserCreateManyInput = {
   id?: string
+  username: string
   email: string
   passwordHash: string
   role?: $Enums.UserRole
@@ -450,12 +499,15 @@ export type UserCreateManyInput = {
   isActive?: boolean
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
+  lockedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
 }
 
 export type UserUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
@@ -465,12 +517,15 @@ export type UserUpdateManyMutationInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type UserUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
@@ -480,12 +535,15 @@ export type UserUncheckedUpdateManyInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type UserCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  username?: Prisma.SortOrder
   email?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   role?: Prisma.SortOrder
@@ -495,12 +553,15 @@ export type UserCountOrderByAggregateInput = {
   isActive?: Prisma.SortOrder
   refreshTokenHash?: Prisma.SortOrder
   refreshTokenExpiresAt?: Prisma.SortOrder
+  lockedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
 }
 
 export type UserMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  username?: Prisma.SortOrder
   email?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   role?: Prisma.SortOrder
@@ -510,12 +571,15 @@ export type UserMaxOrderByAggregateInput = {
   isActive?: Prisma.SortOrder
   refreshTokenHash?: Prisma.SortOrder
   refreshTokenExpiresAt?: Prisma.SortOrder
+  lockedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
 }
 
 export type UserMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  username?: Prisma.SortOrder
   email?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   role?: Prisma.SortOrder
@@ -525,8 +589,10 @@ export type UserMinOrderByAggregateInput = {
   isActive?: Prisma.SortOrder
   refreshTokenHash?: Prisma.SortOrder
   refreshTokenExpiresAt?: Prisma.SortOrder
+  lockedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
 }
 
 export type UserScalarRelationFilter = {
@@ -711,6 +777,7 @@ export type UserUpdateOneRequiredWithoutNotificationsNestedInput = {
 
 export type UserCreateWithoutPostsInput = {
   id?: string
+  username: string
   email: string
   passwordHash: string
   role?: $Enums.UserRole
@@ -720,8 +787,10 @@ export type UserCreateWithoutPostsInput = {
   isActive?: boolean
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
+  lockedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentCreateNestedManyWithoutStudentInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentCreateNestedManyWithoutUserInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentCreateNestedManyWithoutUserInput
@@ -735,6 +804,7 @@ export type UserCreateWithoutPostsInput = {
 
 export type UserUncheckedCreateWithoutPostsInput = {
   id?: string
+  username: string
   email: string
   passwordHash: string
   role?: $Enums.UserRole
@@ -744,8 +814,10 @@ export type UserUncheckedCreateWithoutPostsInput = {
   isActive?: boolean
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
+  lockedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedCreateNestedManyWithoutStudentInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
@@ -775,6 +847,7 @@ export type UserUpdateToOneWithWhereWithoutPostsInput = {
 
 export type UserUpdateWithoutPostsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
@@ -784,8 +857,10 @@ export type UserUpdateWithoutPostsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUpdateManyWithoutStudentNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUpdateManyWithoutUserNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUpdateManyWithoutUserNestedInput
@@ -799,6 +874,7 @@ export type UserUpdateWithoutPostsInput = {
 
 export type UserUncheckedUpdateWithoutPostsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
@@ -808,8 +884,10 @@ export type UserUncheckedUpdateWithoutPostsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedUpdateManyWithoutStudentNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
@@ -823,6 +901,7 @@ export type UserUncheckedUpdateWithoutPostsInput = {
 
 export type UserCreateWithoutClassStudentsInput = {
   id?: string
+  username: string
   email: string
   passwordHash: string
   role?: $Enums.UserRole
@@ -832,8 +911,10 @@ export type UserCreateWithoutClassStudentsInput = {
   isActive?: boolean
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
+  lockedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentCreateNestedManyWithoutUserInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentCreateNestedManyWithoutUserInput
   evaluationForms?: Prisma.EvaluationFormCreateNestedManyWithoutStudentInput
@@ -847,6 +928,7 @@ export type UserCreateWithoutClassStudentsInput = {
 
 export type UserUncheckedCreateWithoutClassStudentsInput = {
   id?: string
+  username: string
   email: string
   passwordHash: string
   role?: $Enums.UserRole
@@ -856,8 +938,10 @@ export type UserUncheckedCreateWithoutClassStudentsInput = {
   isActive?: boolean
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
+  lockedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
   evaluationForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutStudentInput
@@ -887,6 +971,7 @@ export type UserUpdateToOneWithWhereWithoutClassStudentsInput = {
 
 export type UserUpdateWithoutClassStudentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
@@ -896,8 +981,10 @@ export type UserUpdateWithoutClassStudentsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUpdateManyWithoutUserNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUpdateManyWithoutUserNestedInput
   evaluationForms?: Prisma.EvaluationFormUpdateManyWithoutStudentNestedInput
@@ -911,6 +998,7 @@ export type UserUpdateWithoutClassStudentsInput = {
 
 export type UserUncheckedUpdateWithoutClassStudentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
@@ -920,8 +1008,10 @@ export type UserUncheckedUpdateWithoutClassStudentsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
   evaluationForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutStudentNestedInput
@@ -935,6 +1025,7 @@ export type UserUncheckedUpdateWithoutClassStudentsInput = {
 
 export type UserCreateWithoutClassCouncilAssignmentsInput = {
   id?: string
+  username: string
   email: string
   passwordHash: string
   role?: $Enums.UserRole
@@ -944,8 +1035,10 @@ export type UserCreateWithoutClassCouncilAssignmentsInput = {
   isActive?: boolean
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
+  lockedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentCreateNestedManyWithoutStudentInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentCreateNestedManyWithoutUserInput
   evaluationForms?: Prisma.EvaluationFormCreateNestedManyWithoutStudentInput
@@ -959,6 +1052,7 @@ export type UserCreateWithoutClassCouncilAssignmentsInput = {
 
 export type UserUncheckedCreateWithoutClassCouncilAssignmentsInput = {
   id?: string
+  username: string
   email: string
   passwordHash: string
   role?: $Enums.UserRole
@@ -968,8 +1062,10 @@ export type UserUncheckedCreateWithoutClassCouncilAssignmentsInput = {
   isActive?: boolean
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
+  lockedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedCreateNestedManyWithoutStudentInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
   evaluationForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutStudentInput
@@ -999,6 +1095,7 @@ export type UserUpdateToOneWithWhereWithoutClassCouncilAssignmentsInput = {
 
 export type UserUpdateWithoutClassCouncilAssignmentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
@@ -1008,8 +1105,10 @@ export type UserUpdateWithoutClassCouncilAssignmentsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUpdateManyWithoutStudentNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUpdateManyWithoutUserNestedInput
   evaluationForms?: Prisma.EvaluationFormUpdateManyWithoutStudentNestedInput
@@ -1023,6 +1122,7 @@ export type UserUpdateWithoutClassCouncilAssignmentsInput = {
 
 export type UserUncheckedUpdateWithoutClassCouncilAssignmentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
@@ -1032,8 +1132,10 @@ export type UserUncheckedUpdateWithoutClassCouncilAssignmentsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedUpdateManyWithoutStudentNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
   evaluationForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutStudentNestedInput
@@ -1047,6 +1149,7 @@ export type UserUncheckedUpdateWithoutClassCouncilAssignmentsInput = {
 
 export type UserCreateWithoutFacultyCouncilAssignmentsInput = {
   id?: string
+  username: string
   email: string
   passwordHash: string
   role?: $Enums.UserRole
@@ -1056,8 +1159,10 @@ export type UserCreateWithoutFacultyCouncilAssignmentsInput = {
   isActive?: boolean
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
+  lockedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentCreateNestedManyWithoutStudentInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentCreateNestedManyWithoutUserInput
   evaluationForms?: Prisma.EvaluationFormCreateNestedManyWithoutStudentInput
@@ -1071,6 +1176,7 @@ export type UserCreateWithoutFacultyCouncilAssignmentsInput = {
 
 export type UserUncheckedCreateWithoutFacultyCouncilAssignmentsInput = {
   id?: string
+  username: string
   email: string
   passwordHash: string
   role?: $Enums.UserRole
@@ -1080,8 +1186,10 @@ export type UserUncheckedCreateWithoutFacultyCouncilAssignmentsInput = {
   isActive?: boolean
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
+  lockedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedCreateNestedManyWithoutStudentInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
   evaluationForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutStudentInput
@@ -1111,6 +1219,7 @@ export type UserUpdateToOneWithWhereWithoutFacultyCouncilAssignmentsInput = {
 
 export type UserUpdateWithoutFacultyCouncilAssignmentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
@@ -1120,8 +1229,10 @@ export type UserUpdateWithoutFacultyCouncilAssignmentsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUpdateManyWithoutStudentNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUpdateManyWithoutUserNestedInput
   evaluationForms?: Prisma.EvaluationFormUpdateManyWithoutStudentNestedInput
@@ -1135,6 +1246,7 @@ export type UserUpdateWithoutFacultyCouncilAssignmentsInput = {
 
 export type UserUncheckedUpdateWithoutFacultyCouncilAssignmentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
@@ -1144,8 +1256,10 @@ export type UserUncheckedUpdateWithoutFacultyCouncilAssignmentsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedUpdateManyWithoutStudentNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
   evaluationForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutStudentNestedInput
@@ -1159,6 +1273,7 @@ export type UserUncheckedUpdateWithoutFacultyCouncilAssignmentsInput = {
 
 export type UserCreateWithoutEvaluationFormsInput = {
   id?: string
+  username: string
   email: string
   passwordHash: string
   role?: $Enums.UserRole
@@ -1168,8 +1283,10 @@ export type UserCreateWithoutEvaluationFormsInput = {
   isActive?: boolean
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
+  lockedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentCreateNestedManyWithoutStudentInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentCreateNestedManyWithoutUserInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentCreateNestedManyWithoutUserInput
@@ -1183,6 +1300,7 @@ export type UserCreateWithoutEvaluationFormsInput = {
 
 export type UserUncheckedCreateWithoutEvaluationFormsInput = {
   id?: string
+  username: string
   email: string
   passwordHash: string
   role?: $Enums.UserRole
@@ -1192,8 +1310,10 @@ export type UserUncheckedCreateWithoutEvaluationFormsInput = {
   isActive?: boolean
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
+  lockedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedCreateNestedManyWithoutStudentInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
@@ -1212,6 +1332,7 @@ export type UserCreateOrConnectWithoutEvaluationFormsInput = {
 
 export type UserCreateWithoutClassReviewedFormsInput = {
   id?: string
+  username: string
   email: string
   passwordHash: string
   role?: $Enums.UserRole
@@ -1221,8 +1342,10 @@ export type UserCreateWithoutClassReviewedFormsInput = {
   isActive?: boolean
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
+  lockedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentCreateNestedManyWithoutStudentInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentCreateNestedManyWithoutUserInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentCreateNestedManyWithoutUserInput
@@ -1236,6 +1359,7 @@ export type UserCreateWithoutClassReviewedFormsInput = {
 
 export type UserUncheckedCreateWithoutClassReviewedFormsInput = {
   id?: string
+  username: string
   email: string
   passwordHash: string
   role?: $Enums.UserRole
@@ -1245,8 +1369,10 @@ export type UserUncheckedCreateWithoutClassReviewedFormsInput = {
   isActive?: boolean
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
+  lockedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedCreateNestedManyWithoutStudentInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
@@ -1265,6 +1391,7 @@ export type UserCreateOrConnectWithoutClassReviewedFormsInput = {
 
 export type UserCreateWithoutFacultyReviewedFormsInput = {
   id?: string
+  username: string
   email: string
   passwordHash: string
   role?: $Enums.UserRole
@@ -1274,8 +1401,10 @@ export type UserCreateWithoutFacultyReviewedFormsInput = {
   isActive?: boolean
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
+  lockedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentCreateNestedManyWithoutStudentInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentCreateNestedManyWithoutUserInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentCreateNestedManyWithoutUserInput
@@ -1289,6 +1418,7 @@ export type UserCreateWithoutFacultyReviewedFormsInput = {
 
 export type UserUncheckedCreateWithoutFacultyReviewedFormsInput = {
   id?: string
+  username: string
   email: string
   passwordHash: string
   role?: $Enums.UserRole
@@ -1298,8 +1428,10 @@ export type UserUncheckedCreateWithoutFacultyReviewedFormsInput = {
   isActive?: boolean
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
+  lockedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedCreateNestedManyWithoutStudentInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
@@ -1318,6 +1450,7 @@ export type UserCreateOrConnectWithoutFacultyReviewedFormsInput = {
 
 export type UserCreateWithoutAdminFinalizedFormsInput = {
   id?: string
+  username: string
   email: string
   passwordHash: string
   role?: $Enums.UserRole
@@ -1327,8 +1460,10 @@ export type UserCreateWithoutAdminFinalizedFormsInput = {
   isActive?: boolean
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
+  lockedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentCreateNestedManyWithoutStudentInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentCreateNestedManyWithoutUserInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentCreateNestedManyWithoutUserInput
@@ -1342,6 +1477,7 @@ export type UserCreateWithoutAdminFinalizedFormsInput = {
 
 export type UserUncheckedCreateWithoutAdminFinalizedFormsInput = {
   id?: string
+  username: string
   email: string
   passwordHash: string
   role?: $Enums.UserRole
@@ -1351,8 +1487,10 @@ export type UserUncheckedCreateWithoutAdminFinalizedFormsInput = {
   isActive?: boolean
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
+  lockedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedCreateNestedManyWithoutStudentInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
@@ -1382,6 +1520,7 @@ export type UserUpdateToOneWithWhereWithoutEvaluationFormsInput = {
 
 export type UserUpdateWithoutEvaluationFormsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
@@ -1391,8 +1530,10 @@ export type UserUpdateWithoutEvaluationFormsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUpdateManyWithoutStudentNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUpdateManyWithoutUserNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUpdateManyWithoutUserNestedInput
@@ -1406,6 +1547,7 @@ export type UserUpdateWithoutEvaluationFormsInput = {
 
 export type UserUncheckedUpdateWithoutEvaluationFormsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
@@ -1415,8 +1557,10 @@ export type UserUncheckedUpdateWithoutEvaluationFormsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedUpdateManyWithoutStudentNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
@@ -1441,6 +1585,7 @@ export type UserUpdateToOneWithWhereWithoutClassReviewedFormsInput = {
 
 export type UserUpdateWithoutClassReviewedFormsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
@@ -1450,8 +1595,10 @@ export type UserUpdateWithoutClassReviewedFormsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUpdateManyWithoutStudentNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUpdateManyWithoutUserNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUpdateManyWithoutUserNestedInput
@@ -1465,6 +1612,7 @@ export type UserUpdateWithoutClassReviewedFormsInput = {
 
 export type UserUncheckedUpdateWithoutClassReviewedFormsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
@@ -1474,8 +1622,10 @@ export type UserUncheckedUpdateWithoutClassReviewedFormsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedUpdateManyWithoutStudentNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
@@ -1500,6 +1650,7 @@ export type UserUpdateToOneWithWhereWithoutFacultyReviewedFormsInput = {
 
 export type UserUpdateWithoutFacultyReviewedFormsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
@@ -1509,8 +1660,10 @@ export type UserUpdateWithoutFacultyReviewedFormsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUpdateManyWithoutStudentNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUpdateManyWithoutUserNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUpdateManyWithoutUserNestedInput
@@ -1524,6 +1677,7 @@ export type UserUpdateWithoutFacultyReviewedFormsInput = {
 
 export type UserUncheckedUpdateWithoutFacultyReviewedFormsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
@@ -1533,8 +1687,10 @@ export type UserUncheckedUpdateWithoutFacultyReviewedFormsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedUpdateManyWithoutStudentNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
@@ -1559,6 +1715,7 @@ export type UserUpdateToOneWithWhereWithoutAdminFinalizedFormsInput = {
 
 export type UserUpdateWithoutAdminFinalizedFormsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
@@ -1568,8 +1725,10 @@ export type UserUpdateWithoutAdminFinalizedFormsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUpdateManyWithoutStudentNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUpdateManyWithoutUserNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUpdateManyWithoutUserNestedInput
@@ -1583,6 +1742,7 @@ export type UserUpdateWithoutAdminFinalizedFormsInput = {
 
 export type UserUncheckedUpdateWithoutAdminFinalizedFormsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
@@ -1592,8 +1752,10 @@ export type UserUncheckedUpdateWithoutAdminFinalizedFormsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedUpdateManyWithoutStudentNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
@@ -1607,6 +1769,7 @@ export type UserUncheckedUpdateWithoutAdminFinalizedFormsInput = {
 
 export type UserCreateWithoutEvidencesInput = {
   id?: string
+  username: string
   email: string
   passwordHash: string
   role?: $Enums.UserRole
@@ -1616,8 +1779,10 @@ export type UserCreateWithoutEvidencesInput = {
   isActive?: boolean
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
+  lockedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentCreateNestedManyWithoutStudentInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentCreateNestedManyWithoutUserInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentCreateNestedManyWithoutUserInput
@@ -1631,6 +1796,7 @@ export type UserCreateWithoutEvidencesInput = {
 
 export type UserUncheckedCreateWithoutEvidencesInput = {
   id?: string
+  username: string
   email: string
   passwordHash: string
   role?: $Enums.UserRole
@@ -1640,8 +1806,10 @@ export type UserUncheckedCreateWithoutEvidencesInput = {
   isActive?: boolean
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
+  lockedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedCreateNestedManyWithoutStudentInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
@@ -1671,6 +1839,7 @@ export type UserUpdateToOneWithWhereWithoutEvidencesInput = {
 
 export type UserUpdateWithoutEvidencesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
@@ -1680,8 +1849,10 @@ export type UserUpdateWithoutEvidencesInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUpdateManyWithoutStudentNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUpdateManyWithoutUserNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUpdateManyWithoutUserNestedInput
@@ -1695,6 +1866,7 @@ export type UserUpdateWithoutEvidencesInput = {
 
 export type UserUncheckedUpdateWithoutEvidencesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
@@ -1704,8 +1876,10 @@ export type UserUncheckedUpdateWithoutEvidencesInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedUpdateManyWithoutStudentNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
@@ -1719,6 +1893,7 @@ export type UserUncheckedUpdateWithoutEvidencesInput = {
 
 export type UserCreateWithoutNotificationsInput = {
   id?: string
+  username: string
   email: string
   passwordHash: string
   role?: $Enums.UserRole
@@ -1728,8 +1903,10 @@ export type UserCreateWithoutNotificationsInput = {
   isActive?: boolean
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
+  lockedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentCreateNestedManyWithoutStudentInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentCreateNestedManyWithoutUserInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentCreateNestedManyWithoutUserInput
@@ -1743,6 +1920,7 @@ export type UserCreateWithoutNotificationsInput = {
 
 export type UserUncheckedCreateWithoutNotificationsInput = {
   id?: string
+  username: string
   email: string
   passwordHash: string
   role?: $Enums.UserRole
@@ -1752,8 +1930,10 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   isActive?: boolean
   refreshTokenHash?: string | null
   refreshTokenExpiresAt?: Date | string | null
+  lockedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedCreateNestedManyWithoutStudentInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedCreateNestedManyWithoutUserInput
@@ -1783,6 +1963,7 @@ export type UserUpdateToOneWithWhereWithoutNotificationsInput = {
 
 export type UserUpdateWithoutNotificationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
@@ -1792,8 +1973,10 @@ export type UserUpdateWithoutNotificationsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUpdateManyWithoutStudentNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUpdateManyWithoutUserNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUpdateManyWithoutUserNestedInput
@@ -1807,6 +1990,7 @@ export type UserUpdateWithoutNotificationsInput = {
 
 export type UserUncheckedUpdateWithoutNotificationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
@@ -1816,8 +2000,10 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   refreshTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refreshTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedUpdateManyWithoutStudentNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedUpdateManyWithoutUserNestedInput
@@ -1943,6 +2129,7 @@ export type UserCountOutputTypeCountNotificationsArgs<ExtArgs extends runtime.Ty
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  username?: boolean
   email?: boolean
   passwordHash?: boolean
   role?: boolean
@@ -1952,8 +2139,10 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   isActive?: boolean
   refreshTokenHash?: boolean
   refreshTokenExpiresAt?: boolean
+  lockedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  deletedAt?: boolean
   classStudents?: boolean | Prisma.User$classStudentsArgs<ExtArgs>
   classCouncilAssignments?: boolean | Prisma.User$classCouncilAssignmentsArgs<ExtArgs>
   facultyCouncilAssignments?: boolean | Prisma.User$facultyCouncilAssignmentsArgs<ExtArgs>
@@ -1969,6 +2158,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
 
 export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  username?: boolean
   email?: boolean
   passwordHash?: boolean
   role?: boolean
@@ -1978,12 +2168,15 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   isActive?: boolean
   refreshTokenHash?: boolean
   refreshTokenExpiresAt?: boolean
+  lockedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  deletedAt?: boolean
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  username?: boolean
   email?: boolean
   passwordHash?: boolean
   role?: boolean
@@ -1993,12 +2186,15 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   isActive?: boolean
   refreshTokenHash?: boolean
   refreshTokenExpiresAt?: boolean
+  lockedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  deletedAt?: boolean
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectScalar = {
   id?: boolean
+  username?: boolean
   email?: boolean
   passwordHash?: boolean
   role?: boolean
@@ -2008,11 +2204,13 @@ export type UserSelectScalar = {
   isActive?: boolean
   refreshTokenHash?: boolean
   refreshTokenExpiresAt?: boolean
+  lockedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  deletedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "passwordHash" | "role" | "fullName" | "phone" | "dateOfBirth" | "isActive" | "refreshTokenHash" | "refreshTokenExpiresAt" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "username" | "email" | "passwordHash" | "role" | "fullName" | "phone" | "dateOfBirth" | "isActive" | "refreshTokenHash" | "refreshTokenExpiresAt" | "lockedAt" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   classStudents?: boolean | Prisma.User$classStudentsArgs<ExtArgs>
   classCouncilAssignments?: boolean | Prisma.User$classCouncilAssignmentsArgs<ExtArgs>
@@ -2045,6 +2243,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
+    username: string
     email: string
     passwordHash: string
     role: $Enums.UserRole
@@ -2054,8 +2253,10 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     isActive: boolean
     refreshTokenHash: string | null
     refreshTokenExpiresAt: Date | null
+    lockedAt: Date | null
     createdAt: Date
     updatedAt: Date
+    deletedAt: Date | null
   }, ExtArgs["result"]["user"]>
   composites: {}
 }
@@ -2490,6 +2691,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
  */
 export interface UserFieldRefs {
   readonly id: Prisma.FieldRef<"User", 'String'>
+  readonly username: Prisma.FieldRef<"User", 'String'>
   readonly email: Prisma.FieldRef<"User", 'String'>
   readonly passwordHash: Prisma.FieldRef<"User", 'String'>
   readonly role: Prisma.FieldRef<"User", 'UserRole'>
@@ -2499,8 +2701,10 @@ export interface UserFieldRefs {
   readonly isActive: Prisma.FieldRef<"User", 'Boolean'>
   readonly refreshTokenHash: Prisma.FieldRef<"User", 'String'>
   readonly refreshTokenExpiresAt: Prisma.FieldRef<"User", 'DateTime'>
+  readonly lockedAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>
+  readonly deletedAt: Prisma.FieldRef<"User", 'DateTime'>
 }
     
 

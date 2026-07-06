@@ -7,6 +7,7 @@ export const adminMajorSelect = {
   facultyId: true,
   isActive: true,
   createdAt: true,
+  deletedAt: true,
   faculty: {
     select: {
       id: true,
@@ -16,7 +17,7 @@ export const adminMajorSelect = {
   },
   _count: {
     select: {
-      classes: true,
+      classes: { where: { deletedAt: null } },
     },
   },
 } satisfies Prisma.MajorSelect;

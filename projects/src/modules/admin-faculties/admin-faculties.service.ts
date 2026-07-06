@@ -5,22 +5,23 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import type { PaginatedResult } from '../../common/shared';
-import { PrismaService } from '../../database/prisma.service';
 import { Prisma } from '../../generated/prisma/client';
+import { AdminFacultiesRepository } from './admin-faculties.repository';
 import { CreateFacultyDto } from './dto/create-faculty.dto';
 import { GetFacultiesQueryDto } from './dto/get-faculties-query.dto';
 import { UpdateFacultyStatusDto } from './dto/update-faculty-status.dto';
 import { UpdateFacultyDto } from './dto/update-faculty.dto';
 import {
-  adminFacultySelect,
-  type AdminFacultyRecord,
-} from './selects/admin-faculty.select';
+  mapToAdminFacultyResponse,
+  normalizeFacultyCode,
+} from './mappers/admin-faculty.mapper';
 import type { AdminFacultyResponse } from './types/admin-faculty.types';
 
 @Injectable()
 export class AdminFacultiesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly repository: AdminFacultiesRepository) {}
 
+  /** Lấy danh sách khoa có phân trang, tìm kiếm và lọc. Mặc định chỉ lấy khoa chưa xóa mềm. */
   async findAll(
     query: GetFacultiesQueryDto,
   ): Promise<PaginatedResult<AdminFacultyResponse>> {
@@ -28,7 +29,9 @@ export class AdminFacultiesService {
     const limit = query.limit;
     const skip = (page - 1) * limit;
     const search = query.search?.trim();
+
     const where: Prisma.FacultyWhereInput = {
+      ...(query.includeDeleted ? {} : { deletedAt: null }),
       ...(query.isActive !== undefined ? { isActive: query.isActive } : {}),
       ...(search
         ? {
@@ -40,30 +43,23 @@ export class AdminFacultiesService {
         : {}),
     };
 
-    const [faculties, total] = await Promise.all([
-      this.prisma.faculty.findMany({
-        where,
-        select: adminFacultySelect,
-        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-        skip,
-        take: limit,
-      }),
-      this.prisma.faculty.count({ where }),
-    ]);
+    const { items, total } = await this.repository.findMany(
+      where,
+      skip,
+      limit,
+    );
 
     return {
-      items: faculties.map(mapToAdminFacultyResponse),
+      items: items.map(mapToAdminFacultyResponse),
       page,
       limit,
       total,
     };
   }
 
+  /** Xem chi tiết 1 khoa - cho phép xem cả khoa đã xóa mềm để phục vụ tra cứu/audit. */
   async findOne(id: string): Promise<AdminFacultyResponse> {
-    const faculty = await this.prisma.faculty.findUnique({
-      where: { id },
-      select: adminFacultySelect,
-    });
+    const faculty = await this.repository.findById(id);
 
     if (!faculty) {
       throw new NotFoundException('Không tìm thấy khoa');
@@ -73,13 +69,13 @@ export class AdminFacultiesService {
   }
 
   async create(dto: CreateFacultyDto): Promise<AdminFacultyResponse> {
+    const code = normalizeFacultyCode(dto.code);
+    await this.assertCodeAvailable(code);
+
     try {
-      const faculty = await this.prisma.faculty.create({
-        data: {
-          code: normalizeFacultyCode(dto.code),
-          name: dto.name.trim(),
-        },
-        select: adminFacultySelect,
+      const faculty = await this.repository.create({
+        code,
+        name: dto.name.trim(),
       });
 
       return mapToAdminFacultyResponse(faculty);
@@ -97,16 +93,23 @@ export class AdminFacultiesService {
       throw new BadRequestException('Chưa cung cấp thông tin cần cập nhật');
     }
 
+    const current = await this.repository.findActiveById(id);
+    if (!current) {
+      throw new NotFoundException('Không tìm thấy khoa');
+    }
+
+    const nextCode =
+      dto.code !== undefined ? normalizeFacultyCode(dto.code) : undefined;
+
+    if (nextCode !== undefined && nextCode !== current.code) {
+      await this.assertCodeAvailable(nextCode);
+    }
+
     try {
-      const faculty = await this.prisma.faculty.update({
-        where: { id },
-        data: {
-          ...(dto.code !== undefined
-            ? { code: normalizeFacultyCode(dto.code) }
-            : {}),
-          ...(dto.name !== undefined ? { name: dto.name.trim() } : {}),
-        },
-        select: adminFacultySelect,
+      const faculty = await this.repository.update(id, {
+        ...(nextCode !== undefined && { code: nextCode }),
+        ...(dto.name !== undefined && { name: dto.name.trim() }),
+        ...(dto.isActive !== undefined && { isActive: dto.isActive }),
       });
 
       return mapToAdminFacultyResponse(faculty);
@@ -116,29 +119,30 @@ export class AdminFacultiesService {
     }
   }
 
+  /** Giữ lại endpoint /status riêng cho tương thích ngược - chỉ đổi isActive, không đổi code/name. */
   async updateStatus(
     id: string,
     dto: UpdateFacultyStatusDto,
   ): Promise<AdminFacultyResponse> {
-    try {
-      const faculty = await this.prisma.faculty.update({
-        where: { id },
-        data: { isActive: dto.isActive },
-        select: adminFacultySelect,
-      });
-
-      return mapToAdminFacultyResponse(faculty);
-    } catch (error) {
-      this.handleKnownFacultyError(error);
-      throw error;
+    const current = await this.repository.findActiveById(id);
+    if (!current) {
+      throw new NotFoundException('Không tìm thấy khoa');
     }
+
+    const faculty = await this.repository.update(id, {
+      isActive: dto.isActive,
+    });
+
+    return mapToAdminFacultyResponse(faculty);
   }
 
+  /**
+   * Xóa mềm khoa bằng cách cập nhật deletedAt + isActive=false.
+   * Chặn xóa nếu khoa còn ngành học hoặc phân công hội đồng khoa đang hoạt động,
+   * tránh để dữ liệu con "mồ côi" tham chiếu tới 1 khoa đã bị xóa.
+   */
   async remove(id: string): Promise<AdminFacultyResponse> {
-    const faculty = await this.prisma.faculty.findUnique({
-      where: { id },
-      select: adminFacultySelect,
-    });
+    const faculty = await this.repository.findActiveById(id);
 
     if (!faculty) {
       throw new NotFoundException('Không tìm thấy khoa');
@@ -146,22 +150,40 @@ export class AdminFacultiesService {
 
     if (faculty._count.majors > 0) {
       throw new BadRequestException(
-        'Không thể xóa khoa đã có ngành học. Vui lòng ẩn khoa thay vì xóa.',
+        'Không thể xóa khoa đang có ngành học hoạt động. Vui lòng ẩn hoặc xóa các ngành học trước.',
       );
     }
 
     if (faculty._count.facultyCouncilAssignments > 0) {
       throw new BadRequestException(
-        'Không thể xóa khoa đã có phân công hội đồng khoa. Vui lòng gỡ phân công trước hoặc ẩn khoa.',
+        'Không thể xóa khoa đã có phân công hội đồng khoa. Vui lòng gỡ phân công trước.',
       );
     }
 
-    await this.prisma.faculty.delete({
-      where: { id },
-      select: { id: true },
-    });
+    const removed = await this.repository.softDelete(id);
 
-    return mapToAdminFacultyResponse(faculty);
+    return mapToAdminFacultyResponse(removed);
+  }
+
+  /**
+   * Kiểm tra mã khoa còn dùng được không - phân biệt rõ 2 trường hợp: trùng với khoa
+   * đang hoạt động (Conflict thông thường) hay trùng với khoa đã xóa mềm (Conflict kèm
+   * gợi ý rõ ràng, không tự động ghi đè/khôi phục bản ghi cũ).
+   */
+  private async assertCodeAvailable(code: string): Promise<void> {
+    const existing = await this.repository.findByCode(code);
+
+    if (!existing) {
+      return;
+    }
+
+    if (existing.deletedAt) {
+      throw new ConflictException(
+        'Mã khoa này đã thuộc về một khoa đã bị xóa mềm trước đó. Vui lòng dùng mã khác.',
+      );
+    }
+
+    throw new ConflictException('Mã khoa đã tồn tại');
   }
 
   private handleKnownFacultyError(error: unknown): void {
@@ -177,22 +199,4 @@ export class AdminFacultiesService {
       throw new NotFoundException('Không tìm thấy khoa');
     }
   }
-}
-
-function mapToAdminFacultyResponse(
-  record: AdminFacultyRecord,
-): AdminFacultyResponse {
-  return {
-    id: record.id,
-    code: record.code,
-    name: record.name,
-    isActive: record.isActive,
-    createdAt: record.createdAt,
-    majorCount: record._count.majors,
-    assignmentCount: record._count.facultyCouncilAssignments,
-  };
-}
-
-function normalizeFacultyCode(code: string): string {
-  return code.trim().toUpperCase();
 }
