@@ -5,6 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import ExcelJS from 'exceljs';
 import { read, utils } from 'xlsx';
 import { PrismaService } from '../../database/prisma.service';
 import { Prisma } from '../../generated/prisma/client';
@@ -25,6 +26,14 @@ type ImportRow = {
   email?: string;
   studentId?: string;
   studentCode?: string;
+  classCode?: string;
+};
+
+type ManageableClassRecord = {
+  id: string;
+  code: string;
+  name: string;
+  major: { facultyId: string };
 };
 
 export type UploadedExcelFile = {
@@ -67,7 +76,7 @@ export class AdminClassesService {
         : {}),
     };
 
-    const [students, total] = await this.prisma.$transaction([
+    const [students, total] = await Promise.all([
       this.prisma.classStudent.findMany({
         where,
         select: adminClassStudentSelect,
@@ -167,109 +176,176 @@ export class AdminClassesService {
     classId: string,
     file: UploadedExcelFile | undefined,
   ): Promise<ImportClassStudentsResult> {
-    await this.assertCanManageClass(userId, role, classId);
+    const classRecord = await this.assertCanManageClass(userId, role, classId);
+    const rows = parseUploadedImportFile(file);
 
-    if (!file) {
-      throw new BadRequestException('Vui lòng tải lên file Excel');
-    }
+    return this.importParsedRows(rows, async (row) => {
+      if (
+        row.classCode &&
+        !isSameClassInImportFile(row.classCode, classRecord.code, classRecord.name)
+      ) {
+        throw new BadRequestException(
+          `Lớp trong file (${row.classCode}) không khớp với lớp đang import (${classRecord.code})`,
+        );
+      }
 
-    if (!isExcelFile(file)) {
-      throw new BadRequestException('File import phải có định dạng .xlsx hoặc .xls');
-    }
+      return classRecord;
+    });
+  }
 
-    const rows = parseImportRows(file.buffer);
+  async importStudentsFromTemplate(
+    userId: string,
+    role: UserRole,
+    file: UploadedExcelFile | undefined,
+  ): Promise<ImportClassStudentsResult> {
+    const rows = parseUploadedImportFile(file);
+
+    return this.importParsedRows(rows, async (row, tx) => {
+      if (!row.classCode) {
+        throw new BadRequestException('Thiếu lớp');
+      }
+
+      const classRecord = await tx.class.findFirst({
+        where: {
+          OR: [
+            { code: { equals: row.classCode, mode: 'insensitive' } },
+            { name: { equals: row.classCode, mode: 'insensitive' } },
+          ],
+        },
+        select: {
+          id: true,
+          code: true,
+          name: true,
+          major: { select: { facultyId: true } },
+        },
+      });
+
+      if (!classRecord) {
+        throw new BadRequestException(`Không tìm thấy lớp ${row.classCode}`);
+      }
+
+      await this.assertCanManageClassRecord(userId, role, classRecord);
+      return classRecord;
+    });
+  }
+
+  async generateImportTemplate(): Promise<Buffer> {
+    return this.buildImportTemplate('CNTT01');
+  }
+
+  private async importParsedRows(
+    rows: ImportRow[],
+    resolveClass: (
+      row: ImportRow,
+      tx: Prisma.TransactionClient,
+    ) => Promise<ManageableClassRecord>,
+  ): Promise<ImportClassStudentsResult> {
     const errors: ImportClassStudentsResult['errors'] = [];
     let successCount = 0;
     let skippedCount = 0;
 
-    await this.prisma.$transaction(async (tx) => {
-      for (const row of rows) {
-        try {
-          if (!row.studentCode) {
-            throw new BadRequestException('Thiếu studentCode');
+    await this.prisma
+      .$transaction(async (tx) => {
+        for (const row of rows) {
+          try {
+            if (!row.studentId && !row.email) {
+              throw new BadRequestException(
+                'Thiếu mã sinh viên hệ thống hoặc email',
+              );
+            }
+
+            const classRecord = await resolveClass(row, tx);
+            const student = await tx.user.findFirst({
+              where: {
+                role: 'student',
+                ...(row.studentId
+                  ? { id: row.studentId }
+                  : { email: row.email?.toLowerCase() }),
+              },
+              select: { id: true, email: true },
+            });
+
+            if (!student) {
+              throw new BadRequestException(
+                'Không tìm thấy sinh viên có sẵn trong hệ thống',
+              );
+            }
+
+            const studentCode =
+              row.studentCode ?? deriveStudentCodeFromEmail(student.email);
+            if (!studentCode) {
+              throw new BadRequestException(
+                'Thiếu mã sinh viên. Vui lòng bổ sung cột "Mã sinh viên" hoặc dùng email có phần mã trước ký tự @ không quá 20 ký tự',
+              );
+            }
+
+            const enrollmentByStudent = await tx.classStudent.findFirst({
+              where: { studentId: student.id },
+              select: { id: true, classId: true, studentCode: true },
+            });
+
+            if (
+              enrollmentByStudent &&
+              enrollmentByStudent.classId !== classRecord.id
+            ) {
+              throw new BadRequestException(
+                'Sinh viên đã thuộc lớp khác, vui lòng chuyển lớp thủ công trước khi import',
+              );
+            }
+
+            const enrollmentByCode = await tx.classStudent.findUnique({
+              where: { studentCode },
+              select: { id: true, classId: true, studentId: true },
+            });
+
+            if (enrollmentByCode && enrollmentByCode.studentId !== student.id) {
+              throw new BadRequestException(
+                'Mã sinh viên đã được sử dụng cho sinh viên khác',
+              );
+            }
+
+            if (enrollmentByCode && enrollmentByCode.classId !== classRecord.id) {
+              throw new BadRequestException(
+                'Mã sinh viên đang thuộc lớp khác, vui lòng kiểm tra lại file import',
+              );
+            }
+
+            if (enrollmentByStudent) {
+              skippedCount += 1;
+              continue;
+            }
+
+            await tx.classStudent.create({
+              data: {
+                classId: classRecord.id,
+                studentId: student.id,
+                studentCode,
+              },
+              select: { id: true },
+            });
+            successCount += 1;
+          } catch (error) {
+            errors.push({
+              row: row.rowNumber,
+              message:
+                error instanceof Error
+                  ? error.message
+                  : 'Dòng dữ liệu không hợp lệ',
+            });
           }
-
-          if (!row.studentId && !row.email) {
-            throw new BadRequestException('Thiếu studentId hoặc email');
-          }
-
-          const student = await tx.user.findFirst({
-            where: {
-              role: 'student',
-              ...(row.studentId
-                ? { id: row.studentId }
-                : { email: row.email?.toLowerCase() }),
-            },
-            select: { id: true },
-          });
-
-          if (!student) {
-            throw new BadRequestException(
-              'Không tìm thấy sinh viên có sẵn trong hệ thống',
-            );
-          }
-
-          const enrollmentByStudent = await tx.classStudent.findFirst({
-            where: { studentId: student.id },
-            select: { id: true, classId: true, studentCode: true },
-          });
-
-          if (enrollmentByStudent && enrollmentByStudent.classId !== classId) {
-            throw new BadRequestException(
-              'Sinh viên đã thuộc lớp khác, vui lòng chuyển lớp thủ công trước khi import',
-            );
-          }
-
-          const enrollmentByCode = await tx.classStudent.findUnique({
-            where: { studentCode: row.studentCode },
-            select: { id: true, classId: true, studentId: true },
-          });
-
-          if (enrollmentByCode && enrollmentByCode.studentId !== student.id) {
-            throw new BadRequestException(
-              'Mã sinh viên đã được sử dụng cho sinh viên khác',
-            );
-          }
-
-          if (enrollmentByCode && enrollmentByCode.classId !== classId) {
-            throw new BadRequestException(
-              'Mã sinh viên đang thuộc lớp khác, vui lòng kiểm tra lại file import',
-            );
-          }
-
-          if (enrollmentByStudent) {
-            skippedCount += 1;
-            continue;
-          }
-
-          await tx.classStudent.create({
-            data: {
-              classId,
-              studentId: student.id,
-              studentCode: row.studentCode,
-            },
-            select: { id: true },
-          });
-          successCount += 1;
-        } catch (error) {
-          errors.push({
-            row: row.rowNumber,
-            message:
-              error instanceof Error ? error.message : 'Dòng dữ liệu không hợp lệ',
-          });
         }
-      }
 
-      if (errors.length > 0) {
-        throw new ImportValidationError();
-      }
-    }).catch((error) => {
-      if (error instanceof ImportValidationError) {
-        return;
-      }
+        if (errors.length > 0) {
+          throw new ImportValidationError();
+        }
+      })
+      .catch((error) => {
+        if (error instanceof ImportValidationError) {
+          return;
+        }
 
-      throw error;
-    });
+        throw error;
+      });
 
     return {
       totalRows: rows.length,
@@ -278,6 +354,41 @@ export class AdminClassesService {
       failedCount: errors.length,
       errors,
     };
+  }
+
+  private async buildImportTemplate(classCode: string): Promise<Buffer> {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Danh sách');
+
+    sheet.columns = [
+      { header: 'Mã sinh viên', key: 'studentCode', width: 15 },
+      { header: 'Họ và tên', key: 'fullName', width: 25 },
+      { header: 'Email', key: 'email', width: 30 },
+      { header: 'Số điện thoại', key: 'phone', width: 18 },
+      { header: 'Lớp', key: 'className', width: 15 },
+    ];
+
+    const headerRow = sheet.getRow(1);
+    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    headerRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: '4472C4' },
+    };
+    headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+
+    sheet.addRow({
+      studentCode: 'SV001',
+      fullName: 'Nguyễn Văn A',
+      email: 'vana@example.com',
+      phone: '0901234567',
+      className: classCode,
+    });
+
+    sheet.views = [{ state: 'frozen', ySplit: 1 }];
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    return Buffer.from(buffer);
   }
 
   private async assertCanManageClass(
@@ -289,6 +400,8 @@ export class AdminClassesService {
       where: { id: classId },
       select: {
         id: true,
+        code: true,
+        name: true,
         major: { select: { facultyId: true } },
       },
     });
@@ -297,6 +410,15 @@ export class AdminClassesService {
       throw new NotFoundException('Không tìm thấy lớp học');
     }
 
+    await this.assertCanManageClassRecord(userId, role, classRecord);
+    return classRecord;
+  }
+
+  private async assertCanManageClassRecord(
+    userId: string,
+    role: UserRole,
+    classRecord: ManageableClassRecord,
+  ) {
     if (role === UserRole.Admin) {
       return;
     }
@@ -371,6 +493,23 @@ function isExcelFile(file: UploadedExcelFile) {
   );
 }
 
+function parseUploadedImportFile(file: UploadedExcelFile | undefined) {
+  if (!file) {
+    throw new BadRequestException('Vui lòng tải lên file Excel');
+  }
+
+  if (!isExcelFile(file)) {
+    throw new BadRequestException('File import phải có định dạng .xlsx hoặc .xls');
+  }
+
+  const rows = parseImportRows(file.buffer);
+  if (rows.length === 0) {
+    throw new BadRequestException('File Excel không có dữ liệu sinh viên');
+  }
+
+  return rows;
+}
+
 function parseImportRows(buffer: Buffer): ImportRow[] {
   const workbook = read(buffer, { type: 'buffer' });
   const sheetName = workbook.SheetNames[0];
@@ -388,18 +527,35 @@ function parseImportRows(buffer: Buffer): ImportRow[] {
     defval: '',
   });
 
-  return rows.map((row, index) => ({
-    rowNumber: index + 2,
-    studentId: getCellValue(row, ['studentId', 'student_id', 'id']),
-    email: getCellValue(row, ['email']),
-    studentCode: getCellValue(row, [
-      'studentCode',
-      'student_code',
-      'maSinhVien',
-      'mã sinh viên',
-      'Mã sinh viên',
-    ]),
-  }));
+  return rows
+    .map((row, index) => {
+      const normalizedRow = normalizeImportRow(row);
+
+      return {
+        rowNumber: index + 2,
+        studentId: getCellValue(normalizedRow, [
+          'studentid',
+          'student_id',
+          'id',
+          'masinhvienhethong',
+        ]),
+        email: getCellValue(normalizedRow, ['email', 'mail', 'gmail']),
+        studentCode: getCellValue(normalizedRow, [
+          'studentcode',
+          'student_code',
+          'masinhvien',
+          'masv',
+          'mssv',
+        ]),
+        classCode: getCellValue(normalizedRow, [
+          'lop',
+          'class',
+          'classcode',
+          'malop',
+        ]),
+      };
+    })
+    .filter((row) => row.studentId || row.email || row.studentCode || row.classCode);
 }
 
 function getCellValue(row: Record<string, unknown>, keys: string[]) {
@@ -412,6 +568,50 @@ function getCellValue(row: Record<string, unknown>, keys: string[]) {
   }
 
   return undefined;
+}
+
+function normalizeImportRow(row: Record<string, unknown>) {
+  return Object.entries(row).reduce<Record<string, unknown>>(
+    (result, [key, value]) => {
+      result[normalizeHeader(key)] = value;
+      return result;
+    },
+    {},
+  );
+}
+
+function normalizeHeader(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, '');
+}
+
+function normalizeComparableValue(value: string) {
+  return normalizeHeader(value).replace(/_/g, '');
+}
+
+function isSameClassInImportFile(
+  importedClass: string,
+  classCode: string,
+  className: string,
+) {
+  const imported = normalizeComparableValue(importedClass);
+  return (
+    imported === normalizeComparableValue(classCode) ||
+    imported === normalizeComparableValue(className)
+  );
+}
+
+function deriveStudentCodeFromEmail(email: string) {
+  const localPart = email.split('@')[0]?.trim();
+
+  if (!localPart || localPart.length > 20) {
+    return undefined;
+  }
+
+  return localPart;
 }
 
 class ImportValidationError extends Error {}

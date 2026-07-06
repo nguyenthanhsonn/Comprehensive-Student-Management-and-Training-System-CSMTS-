@@ -6,6 +6,8 @@ import appConfig from './config/app.config';
 import { validateEnvironment } from './config/env.validation';
 import { PrismaModule } from './database/prisma.module';
 import { AdminClassesModule } from './modules/admin-classes/admin-classes.module';
+import { AdminFacultiesModule } from './modules/admin-faculties/admin-faculties.module';
+import { AdminMajorsModule } from './modules/admin-majors/admin-majors.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CouncilAssignmentsModule } from './modules/council-assignments/council-assignments.module';
 import { EvidencesModule } from './modules/evidences/evidences.module';
@@ -31,6 +33,8 @@ import { UsersModule } from './modules/users/users.module';
     }),
     PrismaModule,
     AdminClassesModule,
+    AdminFacultiesModule,
+    AdminMajorsModule,
     AuthModule,
     UsersModule,
     StudentsModule,
