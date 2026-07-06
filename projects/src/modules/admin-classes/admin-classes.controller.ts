@@ -7,11 +7,13 @@ import {
   ParseUUIDPipe,
   Post,
   Query,
+  Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import type { Response } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -74,5 +76,40 @@ export class AdminClassesController {
     @UploadedFile() file: UploadedExcelFile | undefined,
   ) {
     return this.adminClassesService.importStudents(userId, role, classId, file);
+  }
+
+}
+
+@Controller('admin/students')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.Admin, UserRole.FacultyCouncil)
+export class AdminStudentsController {
+  constructor(private readonly adminClassesService: AdminClassesService) {}
+
+  @Get('import-template')
+  async downloadImportTemplate(@Res() res: Response) {
+    const buffer = await this.adminClassesService.generateImportTemplate();
+
+    res.set({
+      'Content-Type':
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition':
+        'attachment; filename=mau_import_sinh_vien.xlsx',
+    });
+    res.send(buffer);
+  }
+
+  @Post('import')
+  @UseInterceptors(FileInterceptor('file'))
+  importStudents(
+    @CurrentUser('id') userId: string,
+    @CurrentUser('role') role: UserRole,
+    @UploadedFile() file: UploadedExcelFile | undefined,
+  ) {
+    return this.adminClassesService.importStudentsFromTemplate(
+      userId,
+      role,
+      file,
+    );
   }
 }
