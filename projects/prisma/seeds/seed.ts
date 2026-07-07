@@ -34,6 +34,7 @@ async function main() {
     const admin = await prisma.user.upsert({
       where: { email: 'admin@csmts.edu.vn' },
       update: {
+        username: 'admin',
         fullName: 'Hội đồng Học viện Admin',
         passwordHash,
         role: UserRole.admin,
@@ -44,6 +45,7 @@ async function main() {
         refreshTokenExpiresAt: null,
       },
       create: {
+        username: 'admin',
         email: 'admin@csmts.edu.vn',
         fullName: 'Hội đồng Học viện Admin',
         passwordHash,
@@ -57,6 +59,7 @@ async function main() {
     const studentTest = await prisma.user.upsert({
       where: { email: 'student.test2@csmts.local' },
       update: {
+        username: 'student.test2',
         fullName: 'Sinh viên Test Postman',
         passwordHash,
         role: UserRole.student,
@@ -67,6 +70,7 @@ async function main() {
         refreshTokenExpiresAt: null,
       },
       create: {
+        username: 'student.test2',
         email: 'student.test2@csmts.local',
         fullName: 'Sinh viên Test Postman',
         passwordHash,
@@ -80,6 +84,7 @@ async function main() {
     const studentSon = await prisma.user.upsert({
       where: { email: 'student.son@csmts.edu.vn' },
       update: {
+        username: 'student.son',
         fullName: 'Nguyễn Thanh Sơn',
         passwordHash,
         role: UserRole.student,
@@ -90,6 +95,7 @@ async function main() {
         refreshTokenExpiresAt: null,
       },
       create: {
+        username: 'student.son',
         email: 'student.son@csmts.edu.vn',
         fullName: 'Nguyễn Thanh Sơn',
         passwordHash,
@@ -103,6 +109,7 @@ async function main() {
     const studentDuc = await prisma.user.upsert({
       where: { email: 'student.duc@csmts.edu.vn' },
       update: {
+        username: 'student.duc',
         fullName: 'Trần Minh Đức',
         passwordHash,
         role: UserRole.student,
@@ -113,6 +120,7 @@ async function main() {
         refreshTokenExpiresAt: null,
       },
       create: {
+        username: 'student.duc',
         email: 'student.duc@csmts.edu.vn',
         fullName: 'Trần Minh Đức',
         passwordHash,
@@ -126,6 +134,7 @@ async function main() {
     const classCouncil = await prisma.user.upsert({
       where: { email: 'class.council@csmts.edu.vn' },
       update: {
+        username: 'class.council',
         fullName: 'Cố vấn học tập / Ban cán sự lớp',
         passwordHash,
         role: UserRole.class_council,
@@ -136,6 +145,7 @@ async function main() {
         refreshTokenExpiresAt: null,
       },
       create: {
+        username: 'class.council',
         email: 'class.council@csmts.edu.vn',
         fullName: 'Cố vấn học tập / Ban cán sự lớp',
         passwordHash,
@@ -149,6 +159,7 @@ async function main() {
     const facultyCouncil = await prisma.user.upsert({
       where: { email: 'faculty.council@csmts.edu.vn' },
       update: {
+        username: 'faculty.council',
         fullName: 'Hội đồng Khoa Công nghệ thông tin',
         passwordHash,
         role: UserRole.faculty_council,
@@ -159,6 +170,7 @@ async function main() {
         refreshTokenExpiresAt: null,
       },
       create: {
+        username: 'faculty.council',
         email: 'faculty.council@csmts.edu.vn',
         fullName: 'Hội đồng Khoa Công nghệ thông tin',
         passwordHash,
@@ -426,8 +438,8 @@ async function main() {
     }
 
     console.log('Seed hoàn tất. Mật khẩu mặc định cho tài khoản test:', DEFAULT_PASSWORD);
-    console.log('Tài khoản Postman:', studentTest.email);
-    console.log('Tài khoản admin:', admin.email);
+    console.log('Tài khoản Postman:', studentTest.username);
+    console.log('Tài khoản admin:', admin.username);
   } finally {
     await prisma.$disconnect();
     await pool.end();

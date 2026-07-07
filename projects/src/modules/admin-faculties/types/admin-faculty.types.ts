@@ -4,6 +4,7 @@ export type AdminFacultyResponse = {
   name: string;
   isActive: boolean;
   createdAt: Date;
+  deletedAt: Date | null;
   majorCount: number;
   assignmentCount: number;
 };

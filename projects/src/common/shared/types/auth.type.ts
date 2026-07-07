@@ -1,7 +1,7 @@
 import type { User } from './user.type';
 
 export type LoginDto = {
-  email: string;
+  username: string;
   password: string;
 };
 

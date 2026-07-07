@@ -57,7 +57,8 @@ enum CriteriaInputType {
 // 1. Users - tất cả actor dùng chung bảng, phân biệt qua role
 model User {
   id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email                 String    @unique @db.VarChar(255)
+  username              String    @unique @db.VarChar(50) // Định danh đăng nhập - chữ thường, số, chấm, gạch dưới/ngang
+  email                 String    @unique @db.VarChar(255) // Thông tin liên hệ - không còn dùng để đăng nhập
   passwordHash          String    @map("password_hash") @db.VarChar(255)
   role                  UserRole  @default(student)
   fullName              String    @map("full_name") @db.VarChar(255)
@@ -68,8 +69,10 @@ model User {
   // nên sửa VarChar(255) thành VarChar(64) để tiết kiệm dung lượng bộ nhớ lưu trữ
   refreshTokenHash      String?   @map("refresh_token_hash") @db.VarChar(64)
   refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at") @db.Timestamptz
+  lockedAt              DateTime? @map("locked_at") @db.Timestamptz // Thời điểm admin khóa tài khoản (đồng bộ với isActive=false)
   createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz // BỎ @default(now())
+  deletedAt             DateTime? @map("deleted_at") @db.Timestamptz // Xóa mềm - null nghĩa là tài khoản còn hoạt động
 
   // Relations
   classStudents             ClassStudent[]
@@ -83,7 +86,8 @@ model User {
   evidences                 Evidence[]
   notifications             Notification[]
 
-  // INDEX QUAN TRỌNG ĐỂ LOGIN SIÊU NHANH
+  // username đã @unique nên tự có index - đây là cột dùng để đăng nhập siêu nhanh.
+  // Giữ nguyên index email cho các tra cứu liên hệ/báo cáo khác (ngoài phạm vi đổi login).
   @@index([email])
   @@map("users")
 }
@@ -104,11 +108,12 @@ model Post {
 
 // 2. Khoa
 model Faculty {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  code      String   @unique @db.VarChar(20)
-  name      String   @db.VarChar(255)
-  isActive  Boolean  @default(true) @map("is_active")
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String    @unique @db.VarChar(20)
+  name      String    @db.VarChar(255)
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz // Xóa mềm - null nghĩa là khoa còn hoạt động
 
   // Relations
   majors                    Major[]
@@ -119,12 +124,13 @@ model Faculty {
 
 // 3. Ngành học
 model Major {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  code      String   @unique @db.VarChar(20)
-  name      String   @db.VarChar(255)
-  facultyId String   @map("faculty_id") @db.Uuid
-  isActive  Boolean  @default(true) @map("is_active")
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String    @unique @db.VarChar(20)
+  name      String    @db.VarChar(255)
+  facultyId String    @map("faculty_id") @db.Uuid
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz // Xóa mềm - null nghĩa là ngành còn hoạt động
 
   // Relations
   faculty Faculty @relation(fields: [facultyId], references: [id], onDelete: Cascade)
@@ -137,13 +143,14 @@ model Major {
 
 // 4. Lớp học
 model Class {
-  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  code           String   @unique @db.VarChar(30)
-  name           String   @db.VarChar(255)
-  majorId        String   @map("major_id") @db.Uuid
-  enrollmentYear Int      @map("enrollment_year") @db.SmallInt // CHECK: 2000-2100
-  isActive       Boolean  @default(true) @map("is_active")
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code           String    @unique @db.VarChar(30)
+  name           String    @db.VarChar(255)
+  majorId        String    @map("major_id") @db.Uuid
+  enrollmentYear Int       @map("enrollment_year") @db.SmallInt // CHECK: 2000-2100
+  isActive       Boolean   @default(true) @map("is_active")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz // Xóa mềm - null nghĩa là lớp còn hoạt động
 
   // Relations
   major                   Major                    @relation(fields: [majorId], references: [id], onDelete: Cascade)
@@ -163,6 +170,7 @@ model ClassStudent {
   studentId   String   @unique @map("student_id") @db.Uuid
   studentCode String   @unique @map("student_code") @db.VarChar(20)
   enrolledAt  DateTime @default(now()) @map("enrolled_at") @db.Timestamptz
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz // Xóa mềm hồ sơ sinh viên - không đụng tới User
 
   // Relations
   class   Class @relation(fields: [classId], references: [id], onDelete: Cascade)

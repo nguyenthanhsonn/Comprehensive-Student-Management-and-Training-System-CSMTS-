@@ -54,22 +54,27 @@ export class AuthService {
     private readonly captchaService: CaptchaService,
   ) {}
 
-  // đăng nhập
+  // đăng nhập bằng username + mật khẩu
   async login(dto: LoginDto): Promise<AuthTokens> {
     this.captchaService.verify(dto.captchaId, dto.captchaCode);
 
-    const user = await this.usersService.findByEmailWithPassword(dto.email);
+    const user = await this.usersService.findByUsernameWithPassword(
+      dto.username,
+    );
 
     if (!user || !(await bcrypt.compare(dto.password, user.passwordHash))) {
-      throw new UnauthorizedException('Email hoặc mật khẩu không đúng');
+      throw new UnauthorizedException('Tên đăng nhập hoặc mật khẩu không đúng');
     }
 
     if (!user.isActive) {
-      throw new UnauthorizedException('Tài khoản người dùng không hoạt động');
+      throw new UnauthorizedException(
+        'Tài khoản đã bị khóa hoặc không còn hoạt động',
+      );
     }
 
     return this.createSession({
       id: user.id,
+      username: user.username,
       email: user.email,
       role: user.role as UserRole,
     });
@@ -131,6 +136,7 @@ export class AuthService {
 
     return this.createSession({
       id: user.id,
+      username: user.username,
       email: user.email,
       role: user.role as UserRole,
     });
@@ -215,6 +221,7 @@ export class AuthService {
   private signAccessToken(subject: TokenSubject): Promise<string> {
     const payload: JwtPayload = {
       sub: subject.id,
+      username: subject.username,
       email: subject.email,
       role: subject.role,
       jti: randomUUID(),
@@ -232,6 +239,7 @@ export class AuthService {
   private signRefreshToken(subject: TokenSubject): Promise<string> {
     const payload: JwtPayload = {
       sub: subject.id,
+      username: subject.username,
       email: subject.email,
       role: subject.role,
     };

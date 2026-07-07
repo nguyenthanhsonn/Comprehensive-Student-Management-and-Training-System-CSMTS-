@@ -2,6 +2,7 @@ import type { UserRole } from 'src/common/shared';
 
 export type AuthenticatedUser = {
   id: string;
+  username: string;
   email: string;
   fullName: string;
   role: UserRole;

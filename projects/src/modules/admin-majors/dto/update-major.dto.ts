@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsOptional,
   IsString,
   IsUUID,
@@ -21,4 +22,8 @@ export class UpdateMajorDto {
   @IsOptional()
   @IsUUID()
   facultyId?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }

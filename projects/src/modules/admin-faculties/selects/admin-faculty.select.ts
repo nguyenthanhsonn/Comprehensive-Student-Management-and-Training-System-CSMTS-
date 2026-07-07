@@ -6,9 +6,10 @@ export const adminFacultySelect = {
   name: true,
   isActive: true,
   createdAt: true,
+  deletedAt: true,
   _count: {
     select: {
-      majors: true,
+      majors: { where: { deletedAt: null } },
       facultyCouncilAssignments: true,
     },
   },

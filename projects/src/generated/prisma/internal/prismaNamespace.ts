@@ -1569,6 +1569,7 @@ export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof
 
 export const UserScalarFieldEnum = {
   id: 'id',
+  username: 'username',
   email: 'email',
   passwordHash: 'passwordHash',
   role: 'role',
@@ -1578,8 +1579,10 @@ export const UserScalarFieldEnum = {
   isActive: 'isActive',
   refreshTokenHash: 'refreshTokenHash',
   refreshTokenExpiresAt: 'refreshTokenExpiresAt',
+  lockedAt: 'lockedAt',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
@@ -1602,7 +1605,8 @@ export const FacultyScalarFieldEnum = {
   code: 'code',
   name: 'name',
   isActive: 'isActive',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  deletedAt: 'deletedAt'
 } as const
 
 export type FacultyScalarFieldEnum = (typeof FacultyScalarFieldEnum)[keyof typeof FacultyScalarFieldEnum]
@@ -1614,7 +1618,8 @@ export const MajorScalarFieldEnum = {
   name: 'name',
   facultyId: 'facultyId',
   isActive: 'isActive',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  deletedAt: 'deletedAt'
 } as const
 
 export type MajorScalarFieldEnum = (typeof MajorScalarFieldEnum)[keyof typeof MajorScalarFieldEnum]
@@ -1627,7 +1632,8 @@ export const ClassScalarFieldEnum = {
   majorId: 'majorId',
   enrollmentYear: 'enrollmentYear',
   isActive: 'isActive',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  deletedAt: 'deletedAt'
 } as const
 
 export type ClassScalarFieldEnum = (typeof ClassScalarFieldEnum)[keyof typeof ClassScalarFieldEnum]
@@ -1638,7 +1644,8 @@ export const ClassStudentScalarFieldEnum = {
   classId: 'classId',
   studentId: 'studentId',
   studentCode: 'studentCode',
-  enrolledAt: 'enrolledAt'
+  enrolledAt: 'enrolledAt',
+  deletedAt: 'deletedAt'
 } as const
 
 export type ClassStudentScalarFieldEnum = (typeof ClassStudentScalarFieldEnum)[keyof typeof ClassStudentScalarFieldEnum]

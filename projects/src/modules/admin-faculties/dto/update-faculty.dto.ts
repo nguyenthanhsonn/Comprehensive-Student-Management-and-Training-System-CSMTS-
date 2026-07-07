@@ -1,4 +1,10 @@
-import { IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+} from 'class-validator';
 
 export class UpdateFacultyDto {
   @IsOptional()
@@ -11,4 +17,8 @@ export class UpdateFacultyDto {
   @IsString()
   @MaxLength(255)
   name?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }

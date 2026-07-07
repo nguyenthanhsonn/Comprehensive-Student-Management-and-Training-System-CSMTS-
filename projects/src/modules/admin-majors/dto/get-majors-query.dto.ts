@@ -10,6 +10,18 @@ import {
   Min,
 } from 'class-validator';
 
+function toBoolean({ value }: TransformFnParams): unknown {
+  if (value === 'true' || value === true) {
+    return true;
+  }
+
+  if (value === 'false' || value === false) {
+    return false;
+  }
+
+  return value;
+}
+
 export class GetMajorsQueryDto {
   @IsOptional()
   @Type(() => Number)
@@ -34,17 +46,13 @@ export class GetMajorsQueryDto {
   facultyId?: string;
 
   @IsOptional()
-  @Transform(({ value }: TransformFnParams): unknown => {
-    if (value === 'true' || value === true) {
-      return true;
-    }
-
-    if (value === 'false' || value === false) {
-      return false;
-    }
-
-    return value;
-  })
+  @Transform(toBoolean)
   @IsBoolean()
   isActive?: boolean;
+
+  /** Mặc định false - chỉ bật khi admin cần xem lại ngành đã xóa mềm. */
+  @IsOptional()
+  @Transform(toBoolean)
+  @IsBoolean()
+  includeDeleted = false;
 }

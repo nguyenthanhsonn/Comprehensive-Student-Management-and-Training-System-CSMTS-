@@ -30,6 +30,7 @@ export type FacultyMinAggregateOutputType = {
   name: string | null
   isActive: boolean | null
   createdAt: Date | null
+  deletedAt: Date | null
 }
 
 export type FacultyMaxAggregateOutputType = {
@@ -38,6 +39,7 @@ export type FacultyMaxAggregateOutputType = {
   name: string | null
   isActive: boolean | null
   createdAt: Date | null
+  deletedAt: Date | null
 }
 
 export type FacultyCountAggregateOutputType = {
@@ -46,6 +48,7 @@ export type FacultyCountAggregateOutputType = {
   name: number
   isActive: number
   createdAt: number
+  deletedAt: number
   _all: number
 }
 
@@ -56,6 +59,7 @@ export type FacultyMinAggregateInputType = {
   name?: true
   isActive?: true
   createdAt?: true
+  deletedAt?: true
 }
 
 export type FacultyMaxAggregateInputType = {
@@ -64,6 +68,7 @@ export type FacultyMaxAggregateInputType = {
   name?: true
   isActive?: true
   createdAt?: true
+  deletedAt?: true
 }
 
 export type FacultyCountAggregateInputType = {
@@ -72,6 +77,7 @@ export type FacultyCountAggregateInputType = {
   name?: true
   isActive?: true
   createdAt?: true
+  deletedAt?: true
   _all?: true
 }
 
@@ -153,6 +159,7 @@ export type FacultyGroupByOutputType = {
   name: string
   isActive: boolean
   createdAt: Date
+  deletedAt: Date | null
   _count: FacultyCountAggregateOutputType | null
   _min: FacultyMinAggregateOutputType | null
   _max: FacultyMaxAggregateOutputType | null
@@ -182,6 +189,7 @@ export type FacultyWhereInput = {
   name?: Prisma.StringFilter<"Faculty"> | string
   isActive?: Prisma.BoolFilter<"Faculty"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Faculty"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"Faculty"> | Date | string | null
   majors?: Prisma.MajorListRelationFilter
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentListRelationFilter
 }
@@ -192,6 +200,7 @@ export type FacultyOrderByWithRelationInput = {
   name?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   majors?: Prisma.MajorOrderByRelationAggregateInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentOrderByRelationAggregateInput
 }
@@ -205,6 +214,7 @@ export type FacultyWhereUniqueInput = Prisma.AtLeast<{
   name?: Prisma.StringFilter<"Faculty"> | string
   isActive?: Prisma.BoolFilter<"Faculty"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Faculty"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"Faculty"> | Date | string | null
   majors?: Prisma.MajorListRelationFilter
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentListRelationFilter
 }, "id" | "code">
@@ -215,6 +225,7 @@ export type FacultyOrderByWithAggregationInput = {
   name?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.FacultyCountOrderByAggregateInput
   _max?: Prisma.FacultyMaxOrderByAggregateInput
   _min?: Prisma.FacultyMinOrderByAggregateInput
@@ -229,6 +240,7 @@ export type FacultyScalarWhereWithAggregatesInput = {
   name?: Prisma.StringWithAggregatesFilter<"Faculty"> | string
   isActive?: Prisma.BoolWithAggregatesFilter<"Faculty"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Faculty"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Faculty"> | Date | string | null
 }
 
 export type FacultyCreateInput = {
@@ -237,6 +249,7 @@ export type FacultyCreateInput = {
   name: string
   isActive?: boolean
   createdAt?: Date | string
+  deletedAt?: Date | string | null
   majors?: Prisma.MajorCreateNestedManyWithoutFacultyInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentCreateNestedManyWithoutFacultyInput
 }
@@ -247,6 +260,7 @@ export type FacultyUncheckedCreateInput = {
   name: string
   isActive?: boolean
   createdAt?: Date | string
+  deletedAt?: Date | string | null
   majors?: Prisma.MajorUncheckedCreateNestedManyWithoutFacultyInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedCreateNestedManyWithoutFacultyInput
 }
@@ -257,6 +271,7 @@ export type FacultyUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   majors?: Prisma.MajorUpdateManyWithoutFacultyNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUpdateManyWithoutFacultyNestedInput
 }
@@ -267,6 +282,7 @@ export type FacultyUncheckedUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   majors?: Prisma.MajorUncheckedUpdateManyWithoutFacultyNestedInput
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedUpdateManyWithoutFacultyNestedInput
 }
@@ -277,6 +293,7 @@ export type FacultyCreateManyInput = {
   name: string
   isActive?: boolean
   createdAt?: Date | string
+  deletedAt?: Date | string | null
 }
 
 export type FacultyUpdateManyMutationInput = {
@@ -285,6 +302,7 @@ export type FacultyUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type FacultyUncheckedUpdateManyInput = {
@@ -293,6 +311,7 @@ export type FacultyUncheckedUpdateManyInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type FacultyCountOrderByAggregateInput = {
@@ -301,6 +320,7 @@ export type FacultyCountOrderByAggregateInput = {
   name?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
 }
 
 export type FacultyMaxOrderByAggregateInput = {
@@ -309,6 +329,7 @@ export type FacultyMaxOrderByAggregateInput = {
   name?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
 }
 
 export type FacultyMinOrderByAggregateInput = {
@@ -317,6 +338,7 @@ export type FacultyMinOrderByAggregateInput = {
   name?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
 }
 
 export type FacultyScalarRelationFilter = {
@@ -358,6 +380,7 @@ export type FacultyCreateWithoutMajorsInput = {
   name: string
   isActive?: boolean
   createdAt?: Date | string
+  deletedAt?: Date | string | null
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentCreateNestedManyWithoutFacultyInput
 }
 
@@ -367,6 +390,7 @@ export type FacultyUncheckedCreateWithoutMajorsInput = {
   name: string
   isActive?: boolean
   createdAt?: Date | string
+  deletedAt?: Date | string | null
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedCreateNestedManyWithoutFacultyInput
 }
 
@@ -392,6 +416,7 @@ export type FacultyUpdateWithoutMajorsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUpdateManyWithoutFacultyNestedInput
 }
 
@@ -401,6 +426,7 @@ export type FacultyUncheckedUpdateWithoutMajorsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedUpdateManyWithoutFacultyNestedInput
 }
 
@@ -410,6 +436,7 @@ export type FacultyCreateWithoutFacultyCouncilAssignmentsInput = {
   name: string
   isActive?: boolean
   createdAt?: Date | string
+  deletedAt?: Date | string | null
   majors?: Prisma.MajorCreateNestedManyWithoutFacultyInput
 }
 
@@ -419,6 +446,7 @@ export type FacultyUncheckedCreateWithoutFacultyCouncilAssignmentsInput = {
   name: string
   isActive?: boolean
   createdAt?: Date | string
+  deletedAt?: Date | string | null
   majors?: Prisma.MajorUncheckedCreateNestedManyWithoutFacultyInput
 }
 
@@ -444,6 +472,7 @@ export type FacultyUpdateWithoutFacultyCouncilAssignmentsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   majors?: Prisma.MajorUpdateManyWithoutFacultyNestedInput
 }
 
@@ -453,6 +482,7 @@ export type FacultyUncheckedUpdateWithoutFacultyCouncilAssignmentsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   majors?: Prisma.MajorUncheckedUpdateManyWithoutFacultyNestedInput
 }
 
@@ -502,6 +532,7 @@ export type FacultySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   name?: boolean
   isActive?: boolean
   createdAt?: boolean
+  deletedAt?: boolean
   majors?: boolean | Prisma.Faculty$majorsArgs<ExtArgs>
   facultyCouncilAssignments?: boolean | Prisma.Faculty$facultyCouncilAssignmentsArgs<ExtArgs>
   _count?: boolean | Prisma.FacultyCountOutputTypeDefaultArgs<ExtArgs>
@@ -513,6 +544,7 @@ export type FacultySelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   name?: boolean
   isActive?: boolean
   createdAt?: boolean
+  deletedAt?: boolean
 }, ExtArgs["result"]["faculty"]>
 
 export type FacultySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -521,6 +553,7 @@ export type FacultySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   name?: boolean
   isActive?: boolean
   createdAt?: boolean
+  deletedAt?: boolean
 }, ExtArgs["result"]["faculty"]>
 
 export type FacultySelectScalar = {
@@ -529,9 +562,10 @@ export type FacultySelectScalar = {
   name?: boolean
   isActive?: boolean
   createdAt?: boolean
+  deletedAt?: boolean
 }
 
-export type FacultyOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "code" | "name" | "isActive" | "createdAt", ExtArgs["result"]["faculty"]>
+export type FacultyOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "code" | "name" | "isActive" | "createdAt" | "deletedAt", ExtArgs["result"]["faculty"]>
 export type FacultyInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   majors?: boolean | Prisma.Faculty$majorsArgs<ExtArgs>
   facultyCouncilAssignments?: boolean | Prisma.Faculty$facultyCouncilAssignmentsArgs<ExtArgs>
@@ -552,6 +586,7 @@ export type $FacultyPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     name: string
     isActive: boolean
     createdAt: Date
+    deletedAt: Date | null
   }, ExtArgs["result"]["faculty"]>
   composites: {}
 }
@@ -982,6 +1017,7 @@ export interface FacultyFieldRefs {
   readonly name: Prisma.FieldRef<"Faculty", 'String'>
   readonly isActive: Prisma.FieldRef<"Faculty", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"Faculty", 'DateTime'>
+  readonly deletedAt: Prisma.FieldRef<"Faculty", 'DateTime'>
 }
     
 

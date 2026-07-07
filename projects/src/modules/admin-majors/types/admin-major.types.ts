@@ -5,6 +5,7 @@ export type AdminMajorResponse = {
   facultyId: string;
   isActive: boolean;
   createdAt: Date;
+  deletedAt: Date | null;
   faculty: {
     id: string;
     code: string;

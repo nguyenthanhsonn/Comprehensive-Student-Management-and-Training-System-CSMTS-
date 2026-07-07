@@ -4,29 +4,34 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { PrismaService } from '../../database/prisma.service';
-import { Prisma } from '../../generated/prisma/client';
 import type { PaginatedResult } from '../../common/shared';
+import { Prisma } from '../../generated/prisma/client';
+import { AdminMajorsRepository } from './admin-majors.repository';
 import { CreateMajorDto } from './dto/create-major.dto';
 import { GetMajorsQueryDto } from './dto/get-majors-query.dto';
 import { UpdateMajorStatusDto } from './dto/update-major-status.dto';
 import { UpdateMajorDto } from './dto/update-major.dto';
 import {
-  adminMajorSelect,
-  type AdminMajorRecord,
-} from './selects/admin-major.select';
+  mapToAdminMajorResponse,
+  normalizeMajorCode,
+} from './mappers/admin-major.mapper';
 import type { AdminMajorResponse } from './types/admin-major.types';
 
 @Injectable()
 export class AdminMajorsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly repository: AdminMajorsRepository) {}
 
-  async findAll( query: GetMajorsQueryDto): Promise<PaginatedResult<AdminMajorResponse>> {
+  /** Lấy danh sách ngành có phân trang, tìm kiếm và lọc theo khoa. Mặc định chỉ lấy ngành chưa xóa mềm. */
+  async findAll(
+    query: GetMajorsQueryDto,
+  ): Promise<PaginatedResult<AdminMajorResponse>> {
     const page = query.page;
     const limit = query.limit;
     const skip = (page - 1) * limit;
     const search = query.search?.trim();
+
     const where: Prisma.MajorWhereInput = {
+      ...(query.includeDeleted ? {} : { deletedAt: null }),
       ...(query.facultyId ? { facultyId: query.facultyId } : {}),
       ...(query.isActive !== undefined ? { isActive: query.isActive } : {}),
       ...(search
@@ -40,30 +45,23 @@ export class AdminMajorsService {
         : {}),
     };
 
-    const [majors, total] = await Promise.all([
-      this.prisma.major.findMany({
-        where,
-        select: adminMajorSelect,
-        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-        skip,
-        take: limit,
-      }),
-      this.prisma.major.count({ where }),
-    ]);
+    const { items, total } = await this.repository.findMany(
+      where,
+      skip,
+      limit,
+    );
 
     return {
-      items: majors.map(mapToAdminMajorResponse),
+      items: items.map(mapToAdminMajorResponse),
       page,
       limit,
       total,
     };
   }
 
+  /** Xem chi tiết 1 ngành - cho phép xem cả ngành đã xóa mềm để phục vụ tra cứu/audit. */
   async findOne(id: string): Promise<AdminMajorResponse> {
-    const major = await this.prisma.major.findUnique({
-      where: { id },
-      select: adminMajorSelect,
-    });
+    const major = await this.repository.findById(id);
 
     if (!major) {
       throw new NotFoundException('Không tìm thấy ngành học');
@@ -74,15 +72,14 @@ export class AdminMajorsService {
 
   async create(dto: CreateMajorDto): Promise<AdminMajorResponse> {
     await this.assertFacultyExists(dto.facultyId);
+    const code = normalizeMajorCode(dto.code);
+    await this.assertCodeAvailable(code);
 
     try {
-      const major = await this.prisma.major.create({
-        data: {
-          code: normalizeMajorCode(dto.code),
-          name: dto.name.trim(),
-          facultyId: dto.facultyId,
-        },
-        select: adminMajorSelect,
+      const major = await this.repository.create({
+        code,
+        name: dto.name.trim(),
+        facultyId: dto.facultyId,
       });
 
       return mapToAdminMajorResponse(major);
@@ -97,19 +94,28 @@ export class AdminMajorsService {
       throw new BadRequestException('Chưa cung cấp thông tin cần cập nhật');
     }
 
-    if (dto.facultyId) {
+    const current = await this.repository.findActiveById(id);
+    if (!current) {
+      throw new NotFoundException('Không tìm thấy ngành học');
+    }
+
+    if (dto.facultyId !== undefined) {
       await this.assertFacultyExists(dto.facultyId);
     }
 
+    const nextCode =
+      dto.code !== undefined ? normalizeMajorCode(dto.code) : undefined;
+
+    if (nextCode !== undefined && nextCode !== current.code) {
+      await this.assertCodeAvailable(nextCode);
+    }
+
     try {
-      const major = await this.prisma.major.update({
-        where: { id },
-        data: {
-          ...(dto.code !== undefined ? { code: normalizeMajorCode(dto.code) } : {}),
-          ...(dto.name !== undefined ? { name: dto.name.trim() } : {}),
-          ...(dto.facultyId !== undefined ? { facultyId: dto.facultyId } : {}),
-        },
-        select: adminMajorSelect,
+      const major = await this.repository.update(id, {
+        ...(nextCode !== undefined && { code: nextCode }),
+        ...(dto.name !== undefined && { name: dto.name.trim() }),
+        ...(dto.facultyId !== undefined && { facultyId: dto.facultyId }),
+        ...(dto.isActive !== undefined && { isActive: dto.isActive }),
       });
 
       return mapToAdminMajorResponse(major);
@@ -119,29 +125,30 @@ export class AdminMajorsService {
     }
   }
 
+  /** Giữ lại endpoint /status riêng cho tương thích ngược - chỉ đổi isActive. */
   async updateStatus(
     id: string,
     dto: UpdateMajorStatusDto,
   ): Promise<AdminMajorResponse> {
-    try {
-      const major = await this.prisma.major.update({
-        where: { id },
-        data: { isActive: dto.isActive },
-        select: adminMajorSelect,
-      });
-
-      return mapToAdminMajorResponse(major);
-    } catch (error) {
-      this.handleKnownMajorError(error);
-      throw error;
+    const current = await this.repository.findActiveById(id);
+    if (!current) {
+      throw new NotFoundException('Không tìm thấy ngành học');
     }
+
+    const major = await this.repository.update(id, {
+      isActive: dto.isActive,
+    });
+
+    return mapToAdminMajorResponse(major);
   }
 
+  /**
+   * Xóa mềm ngành bằng cách cập nhật deletedAt + isActive=false.
+   * Chặn xóa nếu ngành còn lớp học đang hoạt động, tránh để lớp "mồ côi"
+   * tham chiếu tới 1 ngành đã bị xóa.
+   */
   async remove(id: string): Promise<AdminMajorResponse> {
-    const major = await this.prisma.major.findUnique({
-      where: { id },
-      select: adminMajorSelect,
-    });
+    const major = await this.repository.findActiveById(id);
 
     if (!major) {
       throw new NotFoundException('Không tìm thấy ngành học');
@@ -149,27 +156,42 @@ export class AdminMajorsService {
 
     if (major._count.classes > 0) {
       throw new BadRequestException(
-        'Không thể xóa ngành học đã có lớp. Vui lòng ẩn ngành học thay vì xóa.',
+        'Không thể xóa ngành đang có lớp học hoạt động. Vui lòng ẩn hoặc xóa các lớp học trước.',
       );
     }
 
-    await this.prisma.major.delete({
-      where: { id },
-      select: { id: true },
-    });
+    const removed = await this.repository.softDelete(id);
 
-    return mapToAdminMajorResponse(major);
+    return mapToAdminMajorResponse(removed);
   }
 
+  /** Kiểm tra khoa tồn tại và chưa xóa mềm trước khi gán cho ngành. */
   private async assertFacultyExists(facultyId: string): Promise<void> {
-    const faculty = await this.prisma.faculty.findUnique({
-      where: { id: facultyId },
-      select: { id: true },
-    });
+    const faculty = await this.repository.findActiveFacultyById(facultyId);
 
     if (!faculty) {
       throw new NotFoundException('Không tìm thấy khoa');
     }
+  }
+
+  /**
+   * Kiểm tra mã ngành còn dùng được không - phân biệt trùng với ngành đang hoạt động
+   * hay trùng với ngành đã xóa mềm (không tự động ghi đè/khôi phục bản ghi cũ).
+   */
+  private async assertCodeAvailable(code: string): Promise<void> {
+    const existing = await this.repository.findByCode(code);
+
+    if (!existing) {
+      return;
+    }
+
+    if (existing.deletedAt) {
+      throw new ConflictException(
+        'Mã ngành này đã thuộc về một ngành đã bị xóa mềm trước đó. Vui lòng dùng mã khác.',
+      );
+    }
+
+    throw new ConflictException('Mã ngành đã tồn tại');
   }
 
   private handleKnownMajorError(error: unknown): void {
@@ -185,21 +207,4 @@ export class AdminMajorsService {
       throw new NotFoundException('Không tìm thấy ngành học');
     }
   }
-}
-
-function mapToAdminMajorResponse(record: AdminMajorRecord): AdminMajorResponse {
-  return {
-    id: record.id,
-    code: record.code,
-    name: record.name,
-    facultyId: record.facultyId,
-    isActive: record.isActive,
-    createdAt: record.createdAt,
-    faculty: record.faculty,
-    classCount: record._count.classes,
-  };
-}
-
-function normalizeMajorCode(code: string): string {
-  return code.trim().toUpperCase();
 }

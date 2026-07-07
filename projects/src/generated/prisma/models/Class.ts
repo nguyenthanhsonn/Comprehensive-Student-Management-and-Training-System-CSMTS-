@@ -42,6 +42,7 @@ export type ClassMinAggregateOutputType = {
   enrollmentYear: number | null
   isActive: boolean | null
   createdAt: Date | null
+  deletedAt: Date | null
 }
 
 export type ClassMaxAggregateOutputType = {
@@ -52,6 +53,7 @@ export type ClassMaxAggregateOutputType = {
   enrollmentYear: number | null
   isActive: boolean | null
   createdAt: Date | null
+  deletedAt: Date | null
 }
 
 export type ClassCountAggregateOutputType = {
@@ -62,6 +64,7 @@ export type ClassCountAggregateOutputType = {
   enrollmentYear: number
   isActive: number
   createdAt: number
+  deletedAt: number
   _all: number
 }
 
@@ -82,6 +85,7 @@ export type ClassMinAggregateInputType = {
   enrollmentYear?: true
   isActive?: true
   createdAt?: true
+  deletedAt?: true
 }
 
 export type ClassMaxAggregateInputType = {
@@ -92,6 +96,7 @@ export type ClassMaxAggregateInputType = {
   enrollmentYear?: true
   isActive?: true
   createdAt?: true
+  deletedAt?: true
 }
 
 export type ClassCountAggregateInputType = {
@@ -102,6 +107,7 @@ export type ClassCountAggregateInputType = {
   enrollmentYear?: true
   isActive?: true
   createdAt?: true
+  deletedAt?: true
   _all?: true
 }
 
@@ -199,6 +205,7 @@ export type ClassGroupByOutputType = {
   enrollmentYear: number
   isActive: boolean
   createdAt: Date
+  deletedAt: Date | null
   _count: ClassCountAggregateOutputType | null
   _avg: ClassAvgAggregateOutputType | null
   _sum: ClassSumAggregateOutputType | null
@@ -232,6 +239,7 @@ export type ClassWhereInput = {
   enrollmentYear?: Prisma.IntFilter<"Class"> | number
   isActive?: Prisma.BoolFilter<"Class"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Class"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"Class"> | Date | string | null
   major?: Prisma.XOR<Prisma.MajorScalarRelationFilter, Prisma.MajorWhereInput>
   classStudents?: Prisma.ClassStudentListRelationFilter
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentListRelationFilter
@@ -246,6 +254,7 @@ export type ClassOrderByWithRelationInput = {
   enrollmentYear?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   major?: Prisma.MajorOrderByWithRelationInput
   classStudents?: Prisma.ClassStudentOrderByRelationAggregateInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentOrderByRelationAggregateInput
@@ -263,6 +272,7 @@ export type ClassWhereUniqueInput = Prisma.AtLeast<{
   enrollmentYear?: Prisma.IntFilter<"Class"> | number
   isActive?: Prisma.BoolFilter<"Class"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Class"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"Class"> | Date | string | null
   major?: Prisma.XOR<Prisma.MajorScalarRelationFilter, Prisma.MajorWhereInput>
   classStudents?: Prisma.ClassStudentListRelationFilter
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentListRelationFilter
@@ -277,6 +287,7 @@ export type ClassOrderByWithAggregationInput = {
   enrollmentYear?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.ClassCountOrderByAggregateInput
   _avg?: Prisma.ClassAvgOrderByAggregateInput
   _max?: Prisma.ClassMaxOrderByAggregateInput
@@ -295,6 +306,7 @@ export type ClassScalarWhereWithAggregatesInput = {
   enrollmentYear?: Prisma.IntWithAggregatesFilter<"Class"> | number
   isActive?: Prisma.BoolWithAggregatesFilter<"Class"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Class"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Class"> | Date | string | null
 }
 
 export type ClassCreateInput = {
@@ -304,6 +316,7 @@ export type ClassCreateInput = {
   enrollmentYear: number
   isActive?: boolean
   createdAt?: Date | string
+  deletedAt?: Date | string | null
   major: Prisma.MajorCreateNestedOneWithoutClassesInput
   classStudents?: Prisma.ClassStudentCreateNestedManyWithoutClassInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentCreateNestedManyWithoutClassInput
@@ -318,6 +331,7 @@ export type ClassUncheckedCreateInput = {
   enrollmentYear: number
   isActive?: boolean
   createdAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedCreateNestedManyWithoutClassInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedCreateNestedManyWithoutClassInput
   evaluationForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutClassInput
@@ -330,6 +344,7 @@ export type ClassUpdateInput = {
   enrollmentYear?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   major?: Prisma.MajorUpdateOneRequiredWithoutClassesNestedInput
   classStudents?: Prisma.ClassStudentUpdateManyWithoutClassNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUpdateManyWithoutClassNestedInput
@@ -344,6 +359,7 @@ export type ClassUncheckedUpdateInput = {
   enrollmentYear?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedUpdateManyWithoutClassNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedUpdateManyWithoutClassNestedInput
   evaluationForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutClassNestedInput
@@ -357,6 +373,7 @@ export type ClassCreateManyInput = {
   enrollmentYear: number
   isActive?: boolean
   createdAt?: Date | string
+  deletedAt?: Date | string | null
 }
 
 export type ClassUpdateManyMutationInput = {
@@ -366,6 +383,7 @@ export type ClassUpdateManyMutationInput = {
   enrollmentYear?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type ClassUncheckedUpdateManyInput = {
@@ -376,6 +394,7 @@ export type ClassUncheckedUpdateManyInput = {
   enrollmentYear?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type ClassListRelationFilter = {
@@ -396,6 +415,7 @@ export type ClassCountOrderByAggregateInput = {
   enrollmentYear?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
 }
 
 export type ClassAvgOrderByAggregateInput = {
@@ -410,6 +430,7 @@ export type ClassMaxOrderByAggregateInput = {
   enrollmentYear?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
 }
 
 export type ClassMinOrderByAggregateInput = {
@@ -420,6 +441,7 @@ export type ClassMinOrderByAggregateInput = {
   enrollmentYear?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
 }
 
 export type ClassSumOrderByAggregateInput = {
@@ -530,6 +552,7 @@ export type ClassCreateWithoutMajorInput = {
   enrollmentYear: number
   isActive?: boolean
   createdAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentCreateNestedManyWithoutClassInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentCreateNestedManyWithoutClassInput
   evaluationForms?: Prisma.EvaluationFormCreateNestedManyWithoutClassInput
@@ -542,6 +565,7 @@ export type ClassUncheckedCreateWithoutMajorInput = {
   enrollmentYear: number
   isActive?: boolean
   createdAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedCreateNestedManyWithoutClassInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedCreateNestedManyWithoutClassInput
   evaluationForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutClassInput
@@ -584,6 +608,7 @@ export type ClassScalarWhereInput = {
   enrollmentYear?: Prisma.IntFilter<"Class"> | number
   isActive?: Prisma.BoolFilter<"Class"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Class"> | Date | string
+  deletedAt?: Prisma.DateTimeNullableFilter<"Class"> | Date | string | null
 }
 
 export type ClassCreateWithoutClassStudentsInput = {
@@ -593,6 +618,7 @@ export type ClassCreateWithoutClassStudentsInput = {
   enrollmentYear: number
   isActive?: boolean
   createdAt?: Date | string
+  deletedAt?: Date | string | null
   major: Prisma.MajorCreateNestedOneWithoutClassesInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentCreateNestedManyWithoutClassInput
   evaluationForms?: Prisma.EvaluationFormCreateNestedManyWithoutClassInput
@@ -606,6 +632,7 @@ export type ClassUncheckedCreateWithoutClassStudentsInput = {
   enrollmentYear: number
   isActive?: boolean
   createdAt?: Date | string
+  deletedAt?: Date | string | null
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedCreateNestedManyWithoutClassInput
   evaluationForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutClassInput
 }
@@ -633,6 +660,7 @@ export type ClassUpdateWithoutClassStudentsInput = {
   enrollmentYear?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   major?: Prisma.MajorUpdateOneRequiredWithoutClassesNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUpdateManyWithoutClassNestedInput
   evaluationForms?: Prisma.EvaluationFormUpdateManyWithoutClassNestedInput
@@ -646,6 +674,7 @@ export type ClassUncheckedUpdateWithoutClassStudentsInput = {
   enrollmentYear?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedUpdateManyWithoutClassNestedInput
   evaluationForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutClassNestedInput
 }
@@ -657,6 +686,7 @@ export type ClassCreateWithoutClassCouncilAssignmentsInput = {
   enrollmentYear: number
   isActive?: boolean
   createdAt?: Date | string
+  deletedAt?: Date | string | null
   major: Prisma.MajorCreateNestedOneWithoutClassesInput
   classStudents?: Prisma.ClassStudentCreateNestedManyWithoutClassInput
   evaluationForms?: Prisma.EvaluationFormCreateNestedManyWithoutClassInput
@@ -670,6 +700,7 @@ export type ClassUncheckedCreateWithoutClassCouncilAssignmentsInput = {
   enrollmentYear: number
   isActive?: boolean
   createdAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedCreateNestedManyWithoutClassInput
   evaluationForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutClassInput
 }
@@ -697,6 +728,7 @@ export type ClassUpdateWithoutClassCouncilAssignmentsInput = {
   enrollmentYear?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   major?: Prisma.MajorUpdateOneRequiredWithoutClassesNestedInput
   classStudents?: Prisma.ClassStudentUpdateManyWithoutClassNestedInput
   evaluationForms?: Prisma.EvaluationFormUpdateManyWithoutClassNestedInput
@@ -710,6 +742,7 @@ export type ClassUncheckedUpdateWithoutClassCouncilAssignmentsInput = {
   enrollmentYear?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedUpdateManyWithoutClassNestedInput
   evaluationForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutClassNestedInput
 }
@@ -721,6 +754,7 @@ export type ClassCreateWithoutEvaluationFormsInput = {
   enrollmentYear: number
   isActive?: boolean
   createdAt?: Date | string
+  deletedAt?: Date | string | null
   major: Prisma.MajorCreateNestedOneWithoutClassesInput
   classStudents?: Prisma.ClassStudentCreateNestedManyWithoutClassInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentCreateNestedManyWithoutClassInput
@@ -734,6 +768,7 @@ export type ClassUncheckedCreateWithoutEvaluationFormsInput = {
   enrollmentYear: number
   isActive?: boolean
   createdAt?: Date | string
+  deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedCreateNestedManyWithoutClassInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedCreateNestedManyWithoutClassInput
 }
@@ -761,6 +796,7 @@ export type ClassUpdateWithoutEvaluationFormsInput = {
   enrollmentYear?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   major?: Prisma.MajorUpdateOneRequiredWithoutClassesNestedInput
   classStudents?: Prisma.ClassStudentUpdateManyWithoutClassNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUpdateManyWithoutClassNestedInput
@@ -774,6 +810,7 @@ export type ClassUncheckedUpdateWithoutEvaluationFormsInput = {
   enrollmentYear?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedUpdateManyWithoutClassNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedUpdateManyWithoutClassNestedInput
 }
@@ -785,6 +822,7 @@ export type ClassCreateManyMajorInput = {
   enrollmentYear: number
   isActive?: boolean
   createdAt?: Date | string
+  deletedAt?: Date | string | null
 }
 
 export type ClassUpdateWithoutMajorInput = {
@@ -794,6 +832,7 @@ export type ClassUpdateWithoutMajorInput = {
   enrollmentYear?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUpdateManyWithoutClassNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUpdateManyWithoutClassNestedInput
   evaluationForms?: Prisma.EvaluationFormUpdateManyWithoutClassNestedInput
@@ -806,6 +845,7 @@ export type ClassUncheckedUpdateWithoutMajorInput = {
   enrollmentYear?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedUpdateManyWithoutClassNestedInput
   classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedUpdateManyWithoutClassNestedInput
   evaluationForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutClassNestedInput
@@ -818,6 +858,7 @@ export type ClassUncheckedUpdateManyWithoutMajorInput = {
   enrollmentYear?: Prisma.IntFieldUpdateOperationsInput | number
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 
@@ -877,6 +918,7 @@ export type ClassSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   enrollmentYear?: boolean
   isActive?: boolean
   createdAt?: boolean
+  deletedAt?: boolean
   major?: boolean | Prisma.MajorDefaultArgs<ExtArgs>
   classStudents?: boolean | Prisma.Class$classStudentsArgs<ExtArgs>
   classCouncilAssignments?: boolean | Prisma.Class$classCouncilAssignmentsArgs<ExtArgs>
@@ -892,6 +934,7 @@ export type ClassSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   enrollmentYear?: boolean
   isActive?: boolean
   createdAt?: boolean
+  deletedAt?: boolean
   major?: boolean | Prisma.MajorDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["class"]>
 
@@ -903,6 +946,7 @@ export type ClassSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   enrollmentYear?: boolean
   isActive?: boolean
   createdAt?: boolean
+  deletedAt?: boolean
   major?: boolean | Prisma.MajorDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["class"]>
 
@@ -914,9 +958,10 @@ export type ClassSelectScalar = {
   enrollmentYear?: boolean
   isActive?: boolean
   createdAt?: boolean
+  deletedAt?: boolean
 }
 
-export type ClassOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "code" | "name" | "majorId" | "enrollmentYear" | "isActive" | "createdAt", ExtArgs["result"]["class"]>
+export type ClassOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "code" | "name" | "majorId" | "enrollmentYear" | "isActive" | "createdAt" | "deletedAt", ExtArgs["result"]["class"]>
 export type ClassInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   major?: boolean | Prisma.MajorDefaultArgs<ExtArgs>
   classStudents?: boolean | Prisma.Class$classStudentsArgs<ExtArgs>
@@ -947,6 +992,7 @@ export type $ClassPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     enrollmentYear: number
     isActive: boolean
     createdAt: Date
+    deletedAt: Date | null
   }, ExtArgs["result"]["class"]>
   composites: {}
 }
@@ -1381,6 +1427,7 @@ export interface ClassFieldRefs {
   readonly enrollmentYear: Prisma.FieldRef<"Class", 'Int'>
   readonly isActive: Prisma.FieldRef<"Class", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"Class", 'DateTime'>
+  readonly deletedAt: Prisma.FieldRef<"Class", 'DateTime'>
 }
     
 

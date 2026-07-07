@@ -53,10 +53,10 @@ export class UsersService {
     return user;
   }
 
-  // 
-  async findByEmailWithPassword(email: string): Promise<LoginUser> {
+  /** Tìm tài khoản theo username - dùng riêng cho đăng nhập. */
+  async findByUsernameWithPassword(username: string): Promise<LoginUser> {
     const user = await this.prisma.user.findUnique({
-      where: { email },
+      where: { username },
       select: loginUserSelect,
     });
 
