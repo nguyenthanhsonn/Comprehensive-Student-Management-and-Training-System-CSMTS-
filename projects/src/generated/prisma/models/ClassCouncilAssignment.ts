@@ -589,7 +589,7 @@ export type $ClassCouncilAssignmentPayload<ExtArgs extends runtime.Types.Extensi
 export type ClassCouncilAssignmentGetPayload<S extends boolean | null | undefined | ClassCouncilAssignmentDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$ClassCouncilAssignmentPayload, S>
 
 export type ClassCouncilAssignmentCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<ClassCouncilAssignmentFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<ClassCouncilAssignmentFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: ClassCouncilAssignmentCountAggregateInputType | true
   }
 
@@ -1035,6 +1035,7 @@ export type ClassCouncilAssignmentFindUniqueArgs<ExtArgs extends runtime.Types.E
    * Filter, which ClassCouncilAssignment to fetch.
    */
   where: Prisma.ClassCouncilAssignmentWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1057,6 +1058,7 @@ export type ClassCouncilAssignmentFindUniqueOrThrowArgs<ExtArgs extends runtime.
    * Filter, which ClassCouncilAssignment to fetch.
    */
   where: Prisma.ClassCouncilAssignmentWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1109,6 +1111,7 @@ export type ClassCouncilAssignmentFindFirstArgs<ExtArgs extends runtime.Types.Ex
    * Filter by unique combinations of ClassCouncilAssignments.
    */
   distinct?: Prisma.ClassCouncilAssignmentScalarFieldEnum | Prisma.ClassCouncilAssignmentScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1161,6 +1164,7 @@ export type ClassCouncilAssignmentFindFirstOrThrowArgs<ExtArgs extends runtime.T
    * Filter by unique combinations of ClassCouncilAssignments.
    */
   distinct?: Prisma.ClassCouncilAssignmentScalarFieldEnum | Prisma.ClassCouncilAssignmentScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1213,6 +1217,7 @@ export type ClassCouncilAssignmentFindManyArgs<ExtArgs extends runtime.Types.Ext
    * Filter by unique combinations of ClassCouncilAssignments.
    */
   distinct?: Prisma.ClassCouncilAssignmentScalarFieldEnum | Prisma.ClassCouncilAssignmentScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1235,6 +1240,7 @@ export type ClassCouncilAssignmentCreateArgs<ExtArgs extends runtime.Types.Exten
    * The data needed to create a ClassCouncilAssignment.
    */
   data: Prisma.XOR<Prisma.ClassCouncilAssignmentCreateInput, Prisma.ClassCouncilAssignmentUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1295,6 +1301,7 @@ export type ClassCouncilAssignmentUpdateArgs<ExtArgs extends runtime.Types.Exten
    * Choose, which ClassCouncilAssignment to update.
    */
   where: Prisma.ClassCouncilAssignmentWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1373,6 +1380,7 @@ export type ClassCouncilAssignmentUpsertArgs<ExtArgs extends runtime.Types.Exten
    * In case the ClassCouncilAssignment was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.ClassCouncilAssignmentUpdateInput, Prisma.ClassCouncilAssignmentUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1395,6 +1403,7 @@ export type ClassCouncilAssignmentDeleteArgs<ExtArgs extends runtime.Types.Exten
    * Filter which ClassCouncilAssignment to delete.
    */
   where: Prisma.ClassCouncilAssignmentWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

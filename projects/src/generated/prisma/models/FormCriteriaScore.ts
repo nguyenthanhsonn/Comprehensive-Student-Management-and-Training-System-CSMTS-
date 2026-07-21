@@ -793,7 +793,7 @@ export type $FormCriteriaScorePayload<ExtArgs extends runtime.Types.Extensions.I
 export type FormCriteriaScoreGetPayload<S extends boolean | null | undefined | FormCriteriaScoreDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$FormCriteriaScorePayload, S>
 
 export type FormCriteriaScoreCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<FormCriteriaScoreFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<FormCriteriaScoreFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: FormCriteriaScoreCountAggregateInputType | true
   }
 
@@ -1243,6 +1243,7 @@ export type FormCriteriaScoreFindUniqueArgs<ExtArgs extends runtime.Types.Extens
    * Filter, which FormCriteriaScore to fetch.
    */
   where: Prisma.FormCriteriaScoreWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1265,6 +1266,7 @@ export type FormCriteriaScoreFindUniqueOrThrowArgs<ExtArgs extends runtime.Types
    * Filter, which FormCriteriaScore to fetch.
    */
   where: Prisma.FormCriteriaScoreWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1317,6 +1319,7 @@ export type FormCriteriaScoreFindFirstArgs<ExtArgs extends runtime.Types.Extensi
    * Filter by unique combinations of FormCriteriaScores.
    */
   distinct?: Prisma.FormCriteriaScoreScalarFieldEnum | Prisma.FormCriteriaScoreScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1369,6 +1372,7 @@ export type FormCriteriaScoreFindFirstOrThrowArgs<ExtArgs extends runtime.Types.
    * Filter by unique combinations of FormCriteriaScores.
    */
   distinct?: Prisma.FormCriteriaScoreScalarFieldEnum | Prisma.FormCriteriaScoreScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1421,6 +1425,7 @@ export type FormCriteriaScoreFindManyArgs<ExtArgs extends runtime.Types.Extensio
    * Filter by unique combinations of FormCriteriaScores.
    */
   distinct?: Prisma.FormCriteriaScoreScalarFieldEnum | Prisma.FormCriteriaScoreScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1443,6 +1448,7 @@ export type FormCriteriaScoreCreateArgs<ExtArgs extends runtime.Types.Extensions
    * The data needed to create a FormCriteriaScore.
    */
   data: Prisma.XOR<Prisma.FormCriteriaScoreCreateInput, Prisma.FormCriteriaScoreUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1503,6 +1509,7 @@ export type FormCriteriaScoreUpdateArgs<ExtArgs extends runtime.Types.Extensions
    * Choose, which FormCriteriaScore to update.
    */
   where: Prisma.FormCriteriaScoreWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1581,6 +1588,7 @@ export type FormCriteriaScoreUpsertArgs<ExtArgs extends runtime.Types.Extensions
    * In case the FormCriteriaScore was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.FormCriteriaScoreUpdateInput, Prisma.FormCriteriaScoreUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1603,6 +1611,7 @@ export type FormCriteriaScoreDeleteArgs<ExtArgs extends runtime.Types.Extensions
    * Filter which FormCriteriaScore to delete.
    */
   where: Prisma.FormCriteriaScoreWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

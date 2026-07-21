@@ -76,11 +76,35 @@ export class AdminMajorsRepository {
     });
   }
 
+  findByCodes(codes: string[]): Promise<AdminMajorRecord[]> {
+    return this.prisma.major.findMany({
+      where: { code: { in: codes } },
+      select: adminMajorSelect,
+    });
+  }
+
   /** Kiểm tra khoa tồn tại và chưa xóa mềm - dùng validate facultyId khi tạo/sửa ngành. */
-  findActiveFacultyById(facultyId: string): Promise<{ id: string } | null> {
+  findActiveFacultyById(
+    facultyId: string,
+  ): Promise<{ id: string; code: string; name: string } | null> {
     return this.prisma.faculty.findFirst({
       where: { id: facultyId, deletedAt: null },
-      select: { id: true },
+      select: { id: true, code: true, name: true },
+    });
+  }
+
+  findActiveFacultiesByNamesOrCodes(
+    values: string[],
+  ): Promise<Array<{ id: string; code: string; name: string }>> {
+    return this.prisma.faculty.findMany({
+      where: {
+        deletedAt: null,
+        OR: values.flatMap((value) => [
+          { name: { equals: value, mode: 'insensitive' } },
+          { code: { equals: value, mode: 'insensitive' } },
+        ]),
+      },
+      select: { id: true, code: true, name: true },
     });
   }
 
@@ -89,6 +113,10 @@ export class AdminMajorsRepository {
       data,
       select: adminMajorSelect,
     });
+  }
+
+  createMany(data: CreateMajorData[]): Promise<Prisma.BatchPayload> {
+    return this.prisma.major.createMany({ data });
   }
 
   update(id: string, data: UpdateMajorData): Promise<AdminMajorRecord> {

@@ -1,12 +1,5 @@
 import type { StudentProfileRecord } from '../selects/student.select';
-
-function formatDateOnly(date: Date | null): string | null {
-  if (!date) {
-    return null;
-  }
-
-  return date.toISOString().slice(0, 10);
-}
+import { formatDateOnly } from '../../../common/helpers/date-only.helper';
 
 export function mapStudentProfile(student: StudentProfileRecord) {
   const currentEnrollment = student.classStudents[0] ?? null;
@@ -21,6 +14,7 @@ export function mapStudentProfile(student: StudentProfileRecord) {
       fullName: student.fullName,
       role: student.role,
       isActive: student.isActive,
+      studentCode: currentEnrollment?.studentCode ?? null,
     },
     phone: student.phone,
     dateOfBirth: formatDateOnly(student.dateOfBirth),

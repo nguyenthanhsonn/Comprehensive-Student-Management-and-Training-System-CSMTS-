@@ -1,9 +1,9 @@
 import { Transform, type TransformFnParams } from 'class-transformer';
 import {
   IsBoolean,
-  IsDateString,
   IsEmail,
   IsEnum,
+  IsIn,
   IsOptional,
   IsString,
   Length,
@@ -12,10 +12,19 @@ import {
 } from 'class-validator';
 import { UserRole } from 'src/common/shared';
 import {
+  DATE_ONLY_FORMAT_MESSAGE,
+  DATE_ONLY_PATTERN,
+} from 'src/common/helpers/date-only.helper';
+import {
   normalizeUsername,
   USERNAME_FORMAT_MESSAGE,
   USERNAME_PATTERN,
 } from 'src/common/helpers/username.helper';
+
+const MANAGED_USER_ROLES = [
+  UserRole.Admin,
+  UserRole.ClassCouncil,
+];
 
 /**
  * Cập nhật thông tin tài khoản. Không cho sửa password ở đây (dùng /auth/change-password).
@@ -48,11 +57,15 @@ export class UpdateAdminUserDto {
   phone?: string;
 
   @IsOptional()
-  @IsDateString()
+  @Matches(DATE_ONLY_PATTERN, { message: DATE_ONLY_FORMAT_MESSAGE })
   dateOfBirth?: string;
 
   @IsOptional()
-  @IsEnum(UserRole)
+  @IsEnum(UserRole, { message: 'Vai trò không hợp lệ' })
+  @IsIn(MANAGED_USER_ROLES, {
+    message:
+      'Không thể đổi vai trò thành sinh viên qua API này. Vui lòng dùng /admin/students',
+  })
   role?: UserRole;
 
   @IsOptional()

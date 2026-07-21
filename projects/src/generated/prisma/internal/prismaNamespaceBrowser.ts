@@ -58,7 +58,6 @@ export const ModelName = {
   Class: 'Class',
   ClassStudent: 'ClassStudent',
   ClassCouncilAssignment: 'ClassCouncilAssignment',
-  FacultyCouncilAssignment: 'FacultyCouncilAssignment',
   Semester: 'Semester',
   EvaluationCriteria: 'EvaluationCriteria',
   EvaluationForm: 'EvaluationForm',
@@ -103,6 +102,14 @@ export const UserScalarFieldEnum = {
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const RelationLoadStrategy = {
+  query: 'query',
+  join: 'join'
+} as const
+
+export type RelationLoadStrategy = (typeof RelationLoadStrategy)[keyof typeof RelationLoadStrategy]
 
 
 export const PostScalarFieldEnum = {
@@ -178,16 +185,6 @@ export const ClassCouncilAssignmentScalarFieldEnum = {
 export type ClassCouncilAssignmentScalarFieldEnum = (typeof ClassCouncilAssignmentScalarFieldEnum)[keyof typeof ClassCouncilAssignmentScalarFieldEnum]
 
 
-export const FacultyCouncilAssignmentScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  facultyId: 'facultyId',
-  assignedAt: 'assignedAt'
-} as const
-
-export type FacultyCouncilAssignmentScalarFieldEnum = (typeof FacultyCouncilAssignmentScalarFieldEnum)[keyof typeof FacultyCouncilAssignmentScalarFieldEnum]
-
-
 export const SemesterScalarFieldEnum = {
   id: 'id',
   year: 'year',
@@ -241,10 +238,8 @@ export const EvaluationFormScalarFieldEnum = {
   roleScore: 'roleScore',
   roleData: 'roleData',
   classReviewedBy: 'classReviewedBy',
-  facultyReviewedBy: 'facultyReviewedBy',
   adminFinalizedBy: 'adminFinalizedBy',
   classReviewedAt: 'classReviewedAt',
-  facultyReviewedAt: 'facultyReviewedAt',
   adminFinalizedAt: 'adminFinalizedAt',
   submittedAt: 'submittedAt',
   isLocked: 'isLocked',

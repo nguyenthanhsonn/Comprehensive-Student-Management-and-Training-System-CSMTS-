@@ -14,6 +14,19 @@ export const adminUserSelect = {
   deletedAt: true,
   createdAt: true,
   updatedAt: true,
+  classCouncilAssignments: {
+    select: {
+      class: {
+        select: {
+          id: true,
+          code: true,
+          name: true,
+        },
+      },
+      assignedAt: true,
+    },
+    orderBy: { assignedAt: 'desc' },
+  },
 } satisfies Prisma.UserSelect;
 
 export type AdminUserRecord = Prisma.UserGetPayload<{

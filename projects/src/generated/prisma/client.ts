@@ -75,11 +75,6 @@ export type ClassStudent = Prisma.ClassStudentModel
  */
 export type ClassCouncilAssignment = Prisma.ClassCouncilAssignmentModel
 /**
- * Model FacultyCouncilAssignment
- * 
- */
-export type FacultyCouncilAssignment = Prisma.FacultyCouncilAssignmentModel
-/**
  * Model Semester
  * 
  */

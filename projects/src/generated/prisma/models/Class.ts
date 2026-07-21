@@ -1000,7 +1000,7 @@ export type $ClassPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
 export type ClassGetPayload<S extends boolean | null | undefined | ClassDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$ClassPayload, S>
 
 export type ClassCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<ClassFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<ClassFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: ClassCountAggregateInputType | true
   }
 
@@ -1452,6 +1452,7 @@ export type ClassFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.Interna
    * Filter, which Class to fetch.
    */
   where: Prisma.ClassWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1474,6 +1475,7 @@ export type ClassFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Extensions.
    * Filter, which Class to fetch.
    */
   where: Prisma.ClassWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1526,6 +1528,7 @@ export type ClassFindFirstArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Filter by unique combinations of Classes.
    */
   distinct?: Prisma.ClassScalarFieldEnum | Prisma.ClassScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1578,6 +1581,7 @@ export type ClassFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Extensions.I
    * Filter by unique combinations of Classes.
    */
   distinct?: Prisma.ClassScalarFieldEnum | Prisma.ClassScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1630,6 +1634,7 @@ export type ClassFindManyArgs<ExtArgs extends runtime.Types.Extensions.InternalA
    * Filter by unique combinations of Classes.
    */
   distinct?: Prisma.ClassScalarFieldEnum | Prisma.ClassScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1652,6 +1657,7 @@ export type ClassCreateArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
    * The data needed to create a Class.
    */
   data: Prisma.XOR<Prisma.ClassCreateInput, Prisma.ClassUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1712,6 +1718,7 @@ export type ClassUpdateArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
    * Choose, which Class to update.
    */
   where: Prisma.ClassWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1790,6 +1797,7 @@ export type ClassUpsertArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
    * In case the Class was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.ClassUpdateInput, Prisma.ClassUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1812,6 +1820,7 @@ export type ClassDeleteArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
    * Filter which Class to delete.
    */
   where: Prisma.ClassWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

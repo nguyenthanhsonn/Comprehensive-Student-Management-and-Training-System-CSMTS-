@@ -13,7 +13,7 @@ export const REVIEW_ACTIONS = ['approve', 'reject'] as const;
 export type ReviewAction = (typeof REVIEW_ACTIONS)[number];
 
 /**
- * DTO dùng chung cho cả 3 cấp duyệt (lớp/CVHT, khoa, học viện).
+ * DTO dùng chung cho luồng duyệt 2 cấp sau sinh viên (lớp/CVHT, admin).
  * `classScore` chỉ áp dụng khi lớp/CVHT duyệt (bắt buộc — kiểm tra ở service vì
  * phụ thuộc role người gọi, DTO không biết role). `comment` bắt buộc khi từ chối.
  */

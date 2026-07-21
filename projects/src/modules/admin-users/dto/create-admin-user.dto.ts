@@ -1,8 +1,8 @@
 import { Transform, type TransformFnParams } from 'class-transformer';
 import {
-  IsDateString,
   IsEmail,
   IsEnum,
+  IsIn,
   IsOptional,
   IsString,
   Length,
@@ -12,10 +12,16 @@ import {
 } from 'class-validator';
 import { UserRole } from 'src/common/shared';
 import {
+  DATE_ONLY_FORMAT_MESSAGE,
+  DATE_ONLY_PATTERN,
+} from 'src/common/helpers/date-only.helper';
+import {
   normalizeUsername,
   USERNAME_FORMAT_MESSAGE,
   USERNAME_PATTERN,
 } from 'src/common/helpers/username.helper';
+
+const MANAGED_USER_ROLES = [UserRole.Admin, UserRole.ClassCouncil];
 
 /** Dữ liệu tạo tài khoản mới - mật khẩu sẽ được hash bằng bcrypt trước khi lưu. */
 export class CreateAdminUserDto {
@@ -39,7 +45,10 @@ export class CreateAdminUserDto {
   @MinLength(8)
   password: string;
 
-  @IsEnum(UserRole)
+  @IsEnum(UserRole, { message: 'Vai trò không hợp lệ' })
+  @IsIn(MANAGED_USER_ROLES, {
+    message: 'Vui lòng dùng API /admin/students để tạo sinh viên',
+  })
   role: UserRole;
 
   @IsOptional()
@@ -48,6 +57,6 @@ export class CreateAdminUserDto {
   phone?: string;
 
   @IsOptional()
-  @IsDateString()
+  @Matches(DATE_ONLY_PATTERN, { message: DATE_ONLY_FORMAT_MESSAGE })
   dateOfBirth?: string;
 }

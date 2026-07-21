@@ -10,12 +10,13 @@ import { AdminFacultiesModule } from './modules/admin-faculties/admin-faculties.
 import { AdminMajorsModule } from './modules/admin-majors/admin-majors.module';
 import { AdminUsersModule } from './modules/admin-users/admin-users.module';
 import { AuthModule } from './modules/auth/auth.module';
-import { CouncilAssignmentsModule } from './modules/council-assignments/council-assignments.module';
 import { EvidencesModule } from './modules/evidences/evidences.module';
 import { MetadataModule } from './modules/metadata/metadata.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { PostsModule } from './modules/posts/posts.module';
+import { ProfileModule } from './modules/profile/profile.module';
 import { ReportsModule } from './modules/reports/reports.module';
+import { SemestersModule } from './modules/semesters/semesters.module';
 import { StudentsModule } from './modules/students/students.module';
 import { TrainingEvaluationsModule } from './modules/training-evaluations/training-evaluations.module';
 import { UsersModule } from './modules/users/users.module';
@@ -44,9 +45,10 @@ import { UsersModule } from './modules/users/users.module';
     EvidencesModule,
     NotificationsModule,
     MetadataModule,
-    CouncilAssignmentsModule,
     ReportsModule,
+    SemestersModule,
     PostsModule,
+    ProfileModule,
   ],
   controllers: [AppController],
 })

@@ -2,9 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { Prisma } from '../../generated/prisma/client';
 import {
+  adminClassCatalogDetailSelect,
   adminClassCatalogSelect,
+  type AdminClassCatalogDetailRecord,
   type AdminClassCatalogRecord,
 } from './selects/admin-class-catalog.select';
+import { UserRole } from '../../common/shared';
 
 export type CreateClassData = {
   code: string;
@@ -58,6 +61,14 @@ export class AdminClassCatalogRepository {
     });
   }
 
+  findDetailById(id: string): Promise<AdminClassCatalogDetailRecord | null> {
+    return this.prisma.class.findUnique({
+      relationLoadStrategy: 'join',
+      where: { id },
+      select: adminClassCatalogDetailSelect,
+    });
+  }
+
   /** Tìm 1 lớp đang hoạt động (chưa xóa mềm) theo id - dùng cho update/delete. */
   findActiveById(id: string): Promise<AdminClassCatalogRecord | null> {
     return this.prisma.class.findFirst({
@@ -79,6 +90,13 @@ export class AdminClassCatalogRepository {
     });
   }
 
+  findByCodes(codes: string[]): Promise<AdminClassCatalogRecord[]> {
+    return this.prisma.class.findMany({
+      where: { code: { in: codes } },
+      select: adminClassCatalogSelect,
+    });
+  }
+
   /** Kiểm tra ngành tồn tại và chưa xóa mềm - dùng validate majorId khi tạo/sửa lớp. */
   findActiveMajorById(majorId: string): Promise<{ id: string } | null> {
     return this.prisma.major.findFirst({
@@ -87,10 +105,85 @@ export class AdminClassCatalogRepository {
     });
   }
 
+  findActiveMajorsByNamesOrCodes(
+    majorValues: string[],
+    facultyValues: string[],
+  ): Promise<
+    Array<{
+      id: string;
+      code: string;
+      name: string;
+      faculty: { code: string; name: string };
+    }>
+  > {
+    return this.prisma.major.findMany({
+      where: {
+        deletedAt: null,
+        faculty: { deletedAt: null },
+        OR: majorValues.flatMap((majorValue) => [
+          { name: { equals: majorValue, mode: 'insensitive' } },
+          { code: { equals: majorValue, mode: 'insensitive' } },
+        ]),
+        ...(facultyValues.length > 0
+          ? {
+              faculty: {
+                deletedAt: null,
+                OR: facultyValues.flatMap((facultyValue) => [
+                  { name: { equals: facultyValue, mode: 'insensitive' } },
+                  { code: { equals: facultyValue, mode: 'insensitive' } },
+                ]),
+              },
+            }
+          : {}),
+      },
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        faculty: { select: { code: true, name: true } },
+      },
+    });
+  }
+
   create(data: CreateClassData): Promise<AdminClassCatalogRecord> {
     return this.prisma.class.create({
       data,
       select: adminClassCatalogSelect,
+    });
+  }
+
+  createMany(data: CreateClassData[]): Promise<Prisma.BatchPayload> {
+    return this.prisma.class.createMany({ data });
+  }
+
+  findAssignableClassCouncilUsers(
+    userIds: string[],
+  ): Promise<Array<{ id: string }>> {
+    return this.prisma.user.findMany({
+      where: {
+        id: { in: userIds },
+        role: UserRole.ClassCouncil,
+        isActive: true,
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+  }
+
+  async replaceClassCouncils(
+    classId: string,
+    userIds: string[],
+  ): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      await tx.classCouncilAssignment.deleteMany({ where: { classId } });
+
+      if (userIds.length === 0) {
+        return;
+      }
+
+      await tx.classCouncilAssignment.createMany({
+        data: userIds.map((userId) => ({ classId, userId })),
+      });
     });
   }
 

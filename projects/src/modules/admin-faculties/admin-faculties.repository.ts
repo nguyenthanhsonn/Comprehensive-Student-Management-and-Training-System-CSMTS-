@@ -74,11 +74,24 @@ export class AdminFacultiesRepository {
     });
   }
 
+  findByCodes(
+    codes: string[],
+  ): Promise<Array<AdminFacultyRecord & { code: string }>> {
+    return this.prisma.faculty.findMany({
+      where: { code: { in: codes } },
+      select: adminFacultySelect,
+    });
+  }
+
   create(data: CreateFacultyData): Promise<AdminFacultyRecord> {
     return this.prisma.faculty.create({
       data,
       select: adminFacultySelect,
     });
+  }
+
+  createMany(data: CreateFacultyData[]): Promise<Prisma.BatchPayload> {
+    return this.prisma.faculty.createMany({ data });
   }
 
   update(id: string, data: UpdateFacultyData): Promise<AdminFacultyRecord> {

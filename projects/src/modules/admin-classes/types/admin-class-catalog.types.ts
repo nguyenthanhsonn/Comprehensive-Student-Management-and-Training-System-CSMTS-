@@ -18,3 +18,15 @@ export type AdminClassResponse = {
   };
   studentCount: number;
 };
+
+export type AdminClassDetailResponse = AdminClassResponse & {
+  councils: Array<{
+    id: string;
+    userId: string;
+    username: string;
+    fullName: string;
+    email: string;
+    isActive: boolean;
+    assignedAt: Date;
+  }>;
+};

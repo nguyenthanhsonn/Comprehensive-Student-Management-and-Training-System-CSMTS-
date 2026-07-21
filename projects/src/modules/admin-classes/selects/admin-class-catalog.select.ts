@@ -29,3 +29,28 @@ export const adminClassCatalogSelect = {
 export type AdminClassCatalogRecord = Prisma.ClassGetPayload<{
   select: typeof adminClassCatalogSelect;
 }>;
+
+export const adminClassCatalogDetailSelect = {
+  ...adminClassCatalogSelect,
+  classCouncilAssignments: {
+    select: {
+      id: true,
+      userId: true,
+      assignedAt: true,
+      user: {
+        select: {
+          id: true,
+          username: true,
+          fullName: true,
+          email: true,
+          isActive: true,
+        },
+      },
+    },
+    orderBy: { assignedAt: 'desc' },
+  },
+} satisfies Prisma.ClassSelect;
+
+export type AdminClassCatalogDetailRecord = Prisma.ClassGetPayload<{
+  select: typeof adminClassCatalogDetailSelect;
+}>;

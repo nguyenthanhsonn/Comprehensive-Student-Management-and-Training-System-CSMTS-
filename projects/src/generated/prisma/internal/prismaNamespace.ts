@@ -391,7 +391,6 @@ export const ModelName = {
   Class: 'Class',
   ClassStudent: 'ClassStudent',
   ClassCouncilAssignment: 'ClassCouncilAssignment',
-  FacultyCouncilAssignment: 'FacultyCouncilAssignment',
   Semester: 'Semester',
   EvaluationCriteria: 'EvaluationCriteria',
   EvaluationForm: 'EvaluationForm',
@@ -414,7 +413,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "post" | "faculty" | "major" | "class" | "classStudent" | "classCouncilAssignment" | "facultyCouncilAssignment" | "semester" | "evaluationCriteria" | "evaluationForm" | "formCriteriaScore" | "formAttachment" | "evidence" | "notification"
+    modelProps: "user" | "post" | "faculty" | "major" | "class" | "classStudent" | "classCouncilAssignment" | "semester" | "evaluationCriteria" | "evaluationForm" | "formCriteriaScore" | "formAttachment" | "evidence" | "notification"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -933,80 +932,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.ClassCouncilAssignmentCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.ClassCouncilAssignmentCountAggregateOutputType> | number
-        }
-      }
-    }
-    FacultyCouncilAssignment: {
-      payload: Prisma.$FacultyCouncilAssignmentPayload<ExtArgs>
-      fields: Prisma.FacultyCouncilAssignmentFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.FacultyCouncilAssignmentFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$FacultyCouncilAssignmentPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.FacultyCouncilAssignmentFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$FacultyCouncilAssignmentPayload>
-        }
-        findFirst: {
-          args: Prisma.FacultyCouncilAssignmentFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$FacultyCouncilAssignmentPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.FacultyCouncilAssignmentFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$FacultyCouncilAssignmentPayload>
-        }
-        findMany: {
-          args: Prisma.FacultyCouncilAssignmentFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$FacultyCouncilAssignmentPayload>[]
-        }
-        create: {
-          args: Prisma.FacultyCouncilAssignmentCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$FacultyCouncilAssignmentPayload>
-        }
-        createMany: {
-          args: Prisma.FacultyCouncilAssignmentCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.FacultyCouncilAssignmentCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$FacultyCouncilAssignmentPayload>[]
-        }
-        delete: {
-          args: Prisma.FacultyCouncilAssignmentDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$FacultyCouncilAssignmentPayload>
-        }
-        update: {
-          args: Prisma.FacultyCouncilAssignmentUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$FacultyCouncilAssignmentPayload>
-        }
-        deleteMany: {
-          args: Prisma.FacultyCouncilAssignmentDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.FacultyCouncilAssignmentUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.FacultyCouncilAssignmentUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$FacultyCouncilAssignmentPayload>[]
-        }
-        upsert: {
-          args: Prisma.FacultyCouncilAssignmentUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$FacultyCouncilAssignmentPayload>
-        }
-        aggregate: {
-          args: Prisma.FacultyCouncilAssignmentAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateFacultyCouncilAssignment>
-        }
-        groupBy: {
-          args: Prisma.FacultyCouncilAssignmentGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.FacultyCouncilAssignmentGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.FacultyCouncilAssignmentCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.FacultyCouncilAssignmentCountAggregateOutputType> | number
         }
       }
     }
@@ -1588,6 +1513,14 @@ export const UserScalarFieldEnum = {
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
+export const RelationLoadStrategy = {
+  query: 'query',
+  join: 'join'
+} as const
+
+export type RelationLoadStrategy = (typeof RelationLoadStrategy)[keyof typeof RelationLoadStrategy]
+
+
 export const PostScalarFieldEnum = {
   id: 'id',
   title: 'title',
@@ -1661,16 +1594,6 @@ export const ClassCouncilAssignmentScalarFieldEnum = {
 export type ClassCouncilAssignmentScalarFieldEnum = (typeof ClassCouncilAssignmentScalarFieldEnum)[keyof typeof ClassCouncilAssignmentScalarFieldEnum]
 
 
-export const FacultyCouncilAssignmentScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  facultyId: 'facultyId',
-  assignedAt: 'assignedAt'
-} as const
-
-export type FacultyCouncilAssignmentScalarFieldEnum = (typeof FacultyCouncilAssignmentScalarFieldEnum)[keyof typeof FacultyCouncilAssignmentScalarFieldEnum]
-
-
 export const SemesterScalarFieldEnum = {
   id: 'id',
   year: 'year',
@@ -1724,10 +1647,8 @@ export const EvaluationFormScalarFieldEnum = {
   roleScore: 'roleScore',
   roleData: 'roleData',
   classReviewedBy: 'classReviewedBy',
-  facultyReviewedBy: 'facultyReviewedBy',
   adminFinalizedBy: 'adminFinalizedBy',
   classReviewedAt: 'classReviewedAt',
-  facultyReviewedAt: 'facultyReviewedAt',
   adminFinalizedAt: 'adminFinalizedAt',
   submittedAt: 'submittedAt',
   isLocked: 'isLocked',
@@ -2105,7 +2026,6 @@ export type GlobalOmitConfig = {
   class?: Prisma.ClassOmit
   classStudent?: Prisma.ClassStudentOmit
   classCouncilAssignment?: Prisma.ClassCouncilAssignmentOmit
-  facultyCouncilAssignment?: Prisma.FacultyCouncilAssignmentOmit
   semester?: Prisma.SemesterOmit
   evaluationCriteria?: Prisma.EvaluationCriteriaOmit
   evaluationForm?: Prisma.EvaluationFormOmit

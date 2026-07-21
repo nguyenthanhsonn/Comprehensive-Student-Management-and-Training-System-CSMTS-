@@ -23,21 +23,34 @@ export const evaluationListSelect = {
   id: true,
   studentId: true,
   status: true,
+  isLocked: true,
+  lockedAt: true,
   studentScore: true,
   rank: true,
-  semester: { select: { year: true, semester: true } },
+  semester: { select: { year: true, semester: true, isActive: true } },
 } satisfies Prisma.EvaluationFormSelect;
 
 // ─── GET /:id – chi tiết phiếu ────────────────────────────────────────────────
 export const evaluationDetailSelect = {
   ...evaluationListSelect,
   note: true,
+  classScore: true,
+  finalScore: true,
   studyScore: true,
+  studyData: true,
+  disciplineBaseScore: true,
   disciplineScore: true,
+  disciplineData: true,
   activityScore: true,
+  activityData: true,
   communityScore: true,
+  communityData: true,
   roleScore: true,
+  roleData: true,
   student: { select: { phone: true } },
+  submittedAt: true,
+  classReviewedAt: true,
+  adminFinalizedAt: true,
 } satisfies Prisma.EvaluationFormSelect;
 
 // ─── GET /admin/training-evaluations – danh sách cho admin (đa lớp/khoa) ──────
@@ -58,7 +71,26 @@ export const evaluationAdminListSelect = {
       major: { select: { faculty: { select: { id: true, code: true, name: true } } } },
     },
   },
-  semester: { select: { year: true, semester: true } },
+  semester: { select: { year: true, semester: true, isActive: true } },
+} satisfies Prisma.EvaluationFormSelect;
+
+// ─── GET /admin/evaluations – danh sách duyệt cuối cho admin ────────────────
+export const evaluationAdminApprovalListSelect = {
+  id: true,
+  status: true,
+  submittedAt: true,
+  classScore: true,
+  rank: true,
+  student: { select: { id: true, fullName: true, email: true } },
+  class: {
+    select: {
+      id: true,
+      code: true,
+      name: true,
+      major: { select: { faculty: { select: { id: true, code: true, name: true } } } },
+    },
+  },
+  semester: { select: { year: true, semester: true, isActive: true } },
 } satisfies Prisma.EvaluationFormSelect;
 
 // ─── GET /:id/status – approval trail ─────────────────────────────────────────
@@ -66,9 +98,10 @@ export const evaluationStatusSelect = {
   id: true,
   status: true,
   isLocked: true,
+  lockedAt: true,
+  semester: { select: { isActive: true } },
   submittedAt: true,
   classReviewedAt: true,
-  facultyReviewedAt: true,
   adminFinalizedAt: true,
 } satisfies Prisma.EvaluationFormSelect;
 
@@ -85,7 +118,7 @@ export const evaluationScoreSummarySelect = {
   activityScore: true,
   communityScore: true,
   roleScore: true,
-  semester: { select: { year: true, semester: true } },
+  semester: { select: { year: true, semester: true, isActive: true } },
 } satisfies Prisma.EvaluationFormSelect;
 
 // ─── Section score selects ────────────────────────────────────────────────────
@@ -138,6 +171,9 @@ export type EvaluationScoreSummaryRecord = Prisma.EvaluationFormGetPayload<{
 }>;
 export type EvaluationAdminListRecord = Prisma.EvaluationFormGetPayload<{
   select: typeof evaluationAdminListSelect;
+}>;
+export type EvaluationAdminApprovalListRecord = Prisma.EvaluationFormGetPayload<{
+  select: typeof evaluationAdminApprovalListSelect;
 }>;
 export type StudyScoreRecord = Prisma.EvaluationFormGetPayload<{
   select: typeof studyScoreSelect;

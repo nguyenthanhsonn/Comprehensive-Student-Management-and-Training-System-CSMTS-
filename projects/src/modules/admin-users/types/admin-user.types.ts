@@ -14,4 +14,12 @@ export type AdminUserResponse = {
   deletedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+  managedClasses: Array<{
+    id: string;
+    code: string;
+    name: string;
+    assignedAt: Date;
+  }>;
+  accountEmailSent?: boolean;
+  accountEmailError?: string | null;
 };

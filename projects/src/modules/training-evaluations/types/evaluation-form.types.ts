@@ -17,6 +17,9 @@ export type EvaluationListResponse = {
   semester: ApiSemester;
   academicYear: string;
   status: string;
+  isLocked: boolean;
+  lockedAt: Date | null;
+  semesterIsActive: boolean;
   totalScore: number;
   classification: string | null;
 };
@@ -24,11 +27,23 @@ export type EvaluationListResponse = {
 export type EvaluationDetailResponse = EvaluationListResponse & {
   phone: string | null;
   note: string | null;
+  statusLabel: string;
+  classScore: number | null;
+  finalScore: number | null;
   studyScore: number;
   disciplineScore: number;
   activityScore: number;
   communityScore: number;
   roleScore: number;
+  sectionScores: ScoreParts;
+  review: EvaluationStatusResponse;
+  sections: {
+    study: StudyScoreResponse;
+    discipline: DisciplineScoreResponse;
+    activity: ActivityScoreResponse;
+    community: CommunityScoreResponse;
+    role: RoleScoreResponse;
+  };
 };
 
 // ─── Admin: danh sách toàn hệ thống ───────────────────────────────────────────
@@ -48,6 +63,20 @@ export type EvaluationAdminListItem = {
   classification: string | null;
 };
 
+export type EvaluationAdminApprovalListItem = {
+  id: string;
+  status: string;
+  statusLabel: string;
+  submittedAt: Date | null;
+  student: { id: string; fullName: string; email: string };
+  class: { id: string; code: string; name: string };
+  faculty: { id: string; code: string; name: string };
+  semester: ApiSemester;
+  academicYear: string;
+  classScore: number | null;
+  rank: string | null;
+};
+
 // ─── Status / review steps ────────────────────────────────────────────────────
 export type ReviewStepStatus = 'pending' | 'current' | 'completed' | 'rejected';
 
@@ -62,6 +91,9 @@ export type EvaluationStatusResponse = {
   evaluationId: string;
   status: string;
   statusLabel: string;
+  isLocked: boolean;
+  lockedAt: Date | null;
+  semesterIsActive: boolean;
   currentStep: string;
   submittedAt: Date | null;
   steps: ReviewStepResponse[];

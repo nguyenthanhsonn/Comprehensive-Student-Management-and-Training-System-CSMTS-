@@ -17,7 +17,7 @@ type JoinNotificationRoomPayload = {
 @WebSocketGateway({
   namespace: 'notifications',
   cors: {
-    origin: process.env.FRONTEND_URL ?? true,
+    origin: parseCorsOrigins(process.env.FRONTEND_URL) ?? true,
     credentials: true,
   },
 })
@@ -65,6 +65,10 @@ export class NotificationsGateway
       .emit('notifications:new', notification);
   }
 
+  emitRefresh(userId: string) {
+    this.server.to(this.getUserRoom(userId)).emit('notifications:refresh');
+  }
+
   private getUserRoom(userId: string) {
     return `user:${userId}`;
   }
@@ -74,4 +78,17 @@ function isUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
     value,
   );
+}
+
+function parseCorsOrigins(value: string | undefined): string[] | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  const origins = value
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  return origins.length > 0 ? origins : undefined;
 }

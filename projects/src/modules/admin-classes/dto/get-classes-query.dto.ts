@@ -11,6 +11,10 @@ import {
 } from 'class-validator';
 
 function toBoolean({ value }: TransformFnParams): unknown {
+  if (value === '') {
+    return undefined;
+  }
+
   if (value === 'true' || value === true) {
     return true;
   }
@@ -20,6 +24,10 @@ function toBoolean({ value }: TransformFnParams): unknown {
   }
 
   return value;
+}
+
+function emptyToUndefined({ value }: TransformFnParams): unknown {
+  return value === '' ? undefined : value;
 }
 
 export class GetClassesQueryDto {
@@ -37,15 +45,18 @@ export class GetClassesQueryDto {
   limit = 10;
 
   @IsOptional()
+  @Transform(emptyToUndefined)
   @IsString()
   @MaxLength(100)
   search?: string;
 
   @IsOptional()
+  @Transform(emptyToUndefined)
   @IsUUID()
   facultyId?: string;
 
   @IsOptional()
+  @Transform(emptyToUndefined)
   @IsUUID()
   majorId?: string;
 

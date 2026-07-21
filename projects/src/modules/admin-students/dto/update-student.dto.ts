@@ -1,7 +1,6 @@
 import { Transform, type TransformFnParams } from 'class-transformer';
 import {
   IsBoolean,
-  IsDateString,
   IsEmail,
   IsOptional,
   IsString,
@@ -15,6 +14,10 @@ import {
   USERNAME_FORMAT_MESSAGE,
   USERNAME_PATTERN,
 } from 'src/common/helpers/username.helper';
+import {
+  DATE_ONLY_FORMAT_MESSAGE,
+  DATE_ONLY_PATTERN,
+} from 'src/common/helpers/date-only.helper';
 
 /**
  * Cập nhật hồ sơ sinh viên - sửa thông tin User và/hoặc enrollment (lớp học/mã sinh viên).
@@ -47,7 +50,7 @@ export class UpdateStudentDto {
   phone?: string;
 
   @IsOptional()
-  @IsDateString()
+  @Matches(DATE_ONLY_PATTERN, { message: DATE_ONLY_FORMAT_MESSAGE })
   dateOfBirth?: string;
 
   @IsOptional()

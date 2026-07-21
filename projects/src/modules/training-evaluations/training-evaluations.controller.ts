@@ -6,6 +6,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { UserRole } from 'src/common/shared';
@@ -14,6 +15,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
+import { AdminListEvaluationsQueryDto } from './dto/admin-list-evaluations-query.dto';
 import { CreateTrainingEvaluationDto } from './dto/create-training-evaluation.dto';
 import { ReviewScoresDto } from './dto/review-scores.dto';
 import { ReviewTrainingEvaluationDto } from './dto/review-training-evaluation.dto';
@@ -25,12 +27,7 @@ import { UpdateStudyScoreDto } from './dto/update-study-score.dto';
 import { UpdateTrainingEvaluationDraftDto } from './dto/update-training-evaluation-draft.dto';
 import { TrainingEvaluationsService } from './training-evaluations.service';
 
-const ALL_ROLES = [
-  UserRole.Student,
-  UserRole.ClassCouncil,
-  UserRole.FacultyCouncil,
-  UserRole.Admin,
-];
+const ALL_ROLES = [UserRole.Student, UserRole.ClassCouncil, UserRole.Admin];
 
 @Controller('training-evaluations')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -46,6 +43,15 @@ export class TrainingEvaluationsController {
     @Body() dto: CreateTrainingEvaluationDto,
   ) {
     return this.trainingEvaluationsService.create(userId, dto);
+  }
+
+  @Get()
+  @Roles(UserRole.ClassCouncil, UserRole.Admin)
+  findAll(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() query: AdminListEvaluationsQueryDto,
+  ) {
+    return this.trainingEvaluationsService.findAll(user, query);
   }
 
   @Get('me')
@@ -74,16 +80,6 @@ export class TrainingEvaluationsController {
     return this.trainingEvaluationsService.getStatus(userId, role, id);
   }
 
-  @Get(':id/study-score')
-  @Roles(...ALL_ROLES)
-  getStudyScore(
-    @CurrentUser('id') userId: string,
-    @CurrentUser('role') role: UserRole,
-    @Param('id', ParseUUIDPipe) id: string,
-  ) {
-    return this.trainingEvaluationsService.getStudyScore(userId, role, id);
-  }
-
   @Patch(':id/study-score')
   @Roles(UserRole.Student)
   updateStudyScore(
@@ -94,16 +90,6 @@ export class TrainingEvaluationsController {
     return this.trainingEvaluationsService.updateStudyScore(userId, id, dto);
   }
 
-  @Get(':id/discipline-score')
-  @Roles(...ALL_ROLES)
-  getDisciplineScore(
-    @CurrentUser('id') userId: string,
-    @CurrentUser('role') role: UserRole,
-    @Param('id', ParseUUIDPipe) id: string,
-  ) {
-    return this.trainingEvaluationsService.getDisciplineScore(userId, role, id);
-  }
-
   @Patch(':id/discipline-score')
   @Roles(UserRole.Student)
   updateDisciplineScore(
@@ -111,17 +97,11 @@ export class TrainingEvaluationsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateDisciplineScoreDto,
   ) {
-    return this.trainingEvaluationsService.updateDisciplineScore(userId, id, dto);
-  }
-
-  @Get(':id/activity-score')
-  @Roles(...ALL_ROLES)
-  getActivityScore(
-    @CurrentUser('id') userId: string,
-    @CurrentUser('role') role: UserRole,
-    @Param('id', ParseUUIDPipe) id: string,
-  ) {
-    return this.trainingEvaluationsService.getActivityScore(userId, role, id);
+    return this.trainingEvaluationsService.updateDisciplineScore(
+      userId,
+      id,
+      dto,
+    );
   }
 
   @Patch(':id/activity-score')
@@ -134,16 +114,6 @@ export class TrainingEvaluationsController {
     return this.trainingEvaluationsService.updateActivityScore(userId, id, dto);
   }
 
-  @Get(':id/community-score')
-  @Roles(...ALL_ROLES)
-  getCommunityScore(
-    @CurrentUser('id') userId: string,
-    @CurrentUser('role') role: UserRole,
-    @Param('id', ParseUUIDPipe) id: string,
-  ) {
-    return this.trainingEvaluationsService.getCommunityScore(userId, role, id);
-  }
-
   @Patch(':id/community-score')
   @Roles(UserRole.Student)
   updateCommunityScore(
@@ -151,17 +121,11 @@ export class TrainingEvaluationsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateCommunityScoreDto,
   ) {
-    return this.trainingEvaluationsService.updateCommunityScore(userId, id, dto);
-  }
-
-  @Get(':id/role-score')
-  @Roles(...ALL_ROLES)
-  getRoleScore(
-    @CurrentUser('id') userId: string,
-    @CurrentUser('role') role: UserRole,
-    @Param('id', ParseUUIDPipe) id: string,
-  ) {
-    return this.trainingEvaluationsService.getRoleScore(userId, role, id);
+    return this.trainingEvaluationsService.updateCommunityScore(
+      userId,
+      id,
+      dto,
+    );
   }
 
   @Patch(':id/role-score')
@@ -194,7 +158,7 @@ export class TrainingEvaluationsController {
   }
 
   @Post(':id/review')
-  @Roles(UserRole.ClassCouncil, UserRole.FacultyCouncil, UserRole.Admin)
+  @Roles(UserRole.ClassCouncil, UserRole.Admin)
   review(
     @CurrentUser() reviewer: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,

@@ -1,8 +1,14 @@
-import { EvalRank, FormStatus, Prisma, SemesterNo } from '../../../generated/prisma/client';
+import {
+  EvalRank,
+  FormStatus,
+  Prisma,
+  SemesterNo,
+} from '../../../generated/prisma/client';
 import { CLASSIFICATION_LABELS } from '../constants/score-points.constant';
 import type { TrainingEvaluationSemester } from '../dto/create-training-evaluation.dto';
 import type {
   ActivityScoreRecord,
+  EvaluationAdminApprovalListRecord,
   CommunityScoreRecord,
   DisciplineScoreRecord,
   EvaluationAdminListRecord,
@@ -18,6 +24,7 @@ import type {
   CommunityScoreResponse,
   DisciplineScoreResponse,
   DisciplineViolationResponse,
+  EvaluationAdminApprovalListItem,
   EvaluationAdminListItem,
   EvaluationDetailResponse,
   EvaluationListResponse,
@@ -45,6 +52,9 @@ export function mapToListResponse(
     semester: toApiSemester(evaluation.semester.semester),
     academicYear: toAcademicYear(evaluation.semester.year),
     status: evaluation.status.toUpperCase(),
+    isLocked: evaluation.isLocked,
+    lockedAt: evaluation.lockedAt,
+    semesterIsActive: evaluation.semester.isActive,
     totalScore: evaluation.studentScore ?? 0,
     classification: toClassificationLabel(evaluation.rank),
   };
@@ -52,7 +62,7 @@ export function mapToListResponse(
 
 /**
  * Chuyển đổi record phiếu sang response chi tiết (GET /:id).
- * Kế thừa dữ liệu từ mapToListResponse, thêm: SĐT, ghi chú, điểm từng mục.
+ * Kế thừa dữ liệu từ mapToListResponse, thêm SĐT, ghi chú, review và dữ liệu đủ 5 mục điểm.
  */
 export function mapToDetailResponse(
   evaluation: EvaluationDetailRecord,
@@ -61,11 +71,29 @@ export function mapToDetailResponse(
     ...mapToListResponse(evaluation),
     phone: evaluation.student.phone,
     note: evaluation.note,
+    statusLabel: toStatusLabel(evaluation.status),
+    classScore: evaluation.classScore,
+    finalScore: evaluation.finalScore,
     studyScore: evaluation.studyScore,
     disciplineScore: evaluation.disciplineScore,
     activityScore: evaluation.activityScore,
     communityScore: evaluation.communityScore,
     roleScore: evaluation.roleScore,
+    sectionScores: {
+      studyScore: evaluation.studyScore,
+      disciplineScore: evaluation.disciplineScore,
+      activityScore: evaluation.activityScore,
+      communityScore: evaluation.communityScore,
+      roleScore: evaluation.roleScore,
+    },
+    review: mapToStatusResponse(evaluation),
+    sections: {
+      study: mapToStudyScoreResponse(evaluation),
+      discipline: mapToDisciplineScoreResponse(evaluation),
+      activity: mapToActivityScoreResponse(evaluation),
+      community: mapToCommunityScoreResponse(evaluation),
+      role: mapToRoleScoreResponse(evaluation),
+    },
   };
 }
 
@@ -77,10 +105,12 @@ export function mapToDetailResponse(
 export function mapToAdminListItem(
   evaluation: EvaluationAdminListRecord,
 ): EvaluationAdminListItem {
+  const submissionStatus = toSubmissionStatus(evaluation.status);
+
   return {
     id: evaluation.id,
-    status: evaluation.status.toUpperCase(),
-    statusLabel: toStatusLabel(evaluation.status),
+    status: submissionStatus,
+    statusLabel: toSubmissionStatusLabel(submissionStatus),
     submittedAt: evaluation.submittedAt,
     student: evaluation.student,
     class: {
@@ -96,6 +126,48 @@ export function mapToAdminListItem(
     finalScore: evaluation.finalScore,
     classification: toClassificationLabel(evaluation.rank),
   };
+}
+
+export function mapToAdminApprovalListItem(
+  evaluation: EvaluationAdminApprovalListRecord,
+): EvaluationAdminApprovalListItem {
+  const submissionStatus = toSubmissionStatus(evaluation.status);
+
+  return {
+    id: evaluation.id,
+    status: submissionStatus,
+    statusLabel: toSubmissionStatusLabel(submissionStatus),
+    submittedAt: evaluation.submittedAt,
+    student: evaluation.student,
+    class: {
+      id: evaluation.class.id,
+      code: evaluation.class.code,
+      name: evaluation.class.name,
+    },
+    faculty: evaluation.class.major.faculty,
+    semester: toApiSemester(evaluation.semester.semester),
+    academicYear: toAcademicYear(evaluation.semester.year),
+    classScore: evaluation.classScore,
+    rank: evaluation.rank,
+  };
+}
+
+type SubmissionStatus = 'SUBMITTED' | 'NOT_SUBMITTED';
+
+function toSubmissionStatus(status: FormStatus): SubmissionStatus {
+  if (
+    status === FormStatus.submitted ||
+    status === FormStatus.class_approved ||
+    status === FormStatus.finalized
+  ) {
+    return 'SUBMITTED';
+  }
+
+  return 'NOT_SUBMITTED';
+}
+
+function toSubmissionStatusLabel(status: SubmissionStatus): string {
+  return status === 'SUBMITTED' ? 'Đã nộp' : 'Chưa nộp';
 }
 
 /**
@@ -134,6 +206,9 @@ export function mapToStatusResponse(
     evaluationId: evaluation.id,
     status: status.toUpperCase(),
     statusLabel: toStatusLabel(status),
+    isLocked: evaluation.isLocked,
+    lockedAt: evaluation.lockedAt,
+    semesterIsActive: evaluation.semester.isActive,
     currentStep: toCurrentReviewStep(status),
     submittedAt: evaluation.submittedAt,
     steps: [
@@ -154,21 +229,11 @@ export function mapToStatusResponse(
         completedAt: evaluation.classReviewedAt,
       },
       {
-        key: 'faculty_review',
-        label: 'Khoa duyệt',
-        status: toReviewStepStatus(
-          status,
-          FormStatus.class_approved,
-          Boolean(evaluation.facultyReviewedAt),
-        ),
-        completedAt: evaluation.facultyReviewedAt,
-      },
-      {
         key: 'admin_finalization',
         label: 'Học viện phê duyệt',
         status: toReviewStepStatus(
           status,
-          FormStatus.faculty_approved,
+          FormStatus.class_approved,
           Boolean(evaluation.adminFinalizedAt),
         ),
         completedAt: evaluation.adminFinalizedAt,
@@ -263,7 +328,9 @@ export function mapToCommunityScoreResponse(
     evaluationId: evaluation.id,
     lawComplianceLevel: readNullableString(data.lawComplianceLevel),
     volunteerActivityLevel: readNullableString(data.volunteerActivityLevel),
-    communityRelationshipLevel: readNullableString(data.communityRelationshipLevel),
+    communityRelationshipLevel: readNullableString(
+      data.communityRelationshipLevel,
+    ),
     score: evaluation.communityScore,
     maxScore: 25,
     totalScore: evaluation.studentScore ?? 0,
@@ -300,7 +367,9 @@ export function mapToRoleScoreResponse(
 /**
  * Chuyển giá trị SemesterNo từ DB sang chuỗi học kỳ API (HK1 / HK2 / SUMMER).
  */
-export function toApiSemester(semester: SemesterNo): TrainingEvaluationSemester {
+export function toApiSemester(
+  semester: SemesterNo,
+): TrainingEvaluationSemester {
   const map: Record<SemesterNo, TrainingEvaluationSemester> = {
     [SemesterNo.SEMESTER_1]: 'HK1',
     [SemesterNo.SEMESTER_2]: 'HK2',
@@ -330,16 +399,15 @@ export function toClassificationLabel(rank: EvalRank | null): string | null {
  * Chuyển trạng thái phiếu (FormStatus) sang nhãn tiếng Việt để hiển thị UI.
  */
 export function toStatusLabel(status: FormStatus): string {
-  const labels: Record<FormStatus, string> = {
+  const labels: Partial<Record<FormStatus, string>> = {
     [FormStatus.draft]: 'Nháp',
     [FormStatus.submitted]: 'Đã nộp',
     [FormStatus.class_approved]: 'Lớp/CVHT đã duyệt',
-    [FormStatus.faculty_approved]: 'Khoa đã duyệt',
     [FormStatus.finalized]: 'Đã phê duyệt',
     [FormStatus.rejected]: 'Bị trả về',
   };
 
-  return labels[status];
+  return labels[status] ?? 'Không xác định';
 }
 
 /**
@@ -347,16 +415,15 @@ export function toStatusLabel(status: FormStatus): string {
  * Dùng cho trường `currentStep` trong response trạng thái.
  */
 export function toCurrentReviewStep(status: FormStatus): string {
-  const stepMap: Record<FormStatus, string> = {
+  const stepMap: Partial<Record<FormStatus, string>> = {
     [FormStatus.draft]: 'student_draft',
     [FormStatus.submitted]: 'class_review',
-    [FormStatus.class_approved]: 'faculty_review',
-    [FormStatus.faculty_approved]: 'admin_finalization',
+    [FormStatus.class_approved]: 'admin_finalization',
     [FormStatus.finalized]: 'completed',
     [FormStatus.rejected]: 'student_revision',
   };
 
-  return stepMap[status];
+  return stepMap[status] ?? 'unknown';
 }
 
 /**
@@ -410,9 +477,7 @@ export function readNullableString(
  * Đọc số từ một trường trong JsonObject.
  * Trả về null nếu trường không tồn tại hoặc không phải number.
  */
-export function readNumber(
-  value: Prisma.JsonValue | undefined,
-): number | null {
+export function readNumber(value: Prisma.JsonValue | undefined): number | null {
   return typeof value === 'number' ? value : null;
 }
 
@@ -437,7 +502,9 @@ export function readStudyActivities(
       return [];
     }
 
-    return [{ code: record.code, checked: record.checked, score: record.score }];
+    return [
+      { code: record.code, checked: record.checked, score: record.score },
+    ];
   });
 }
 
@@ -462,7 +529,12 @@ export function readDisciplineViolations(
       return [];
     }
 
-    return [{ code: record.code, count: record.count, deductScore: record.deductScore }];
+    return [
+      {
+        code: record.code,
+        count: record.count,
+        deductScore: record.deductScore,
+      },
+    ];
   });
 }
-

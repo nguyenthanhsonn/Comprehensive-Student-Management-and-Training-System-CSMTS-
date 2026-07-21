@@ -692,7 +692,7 @@ export type $MajorPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
 export type MajorGetPayload<S extends boolean | null | undefined | MajorDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$MajorPayload, S>
 
 export type MajorCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<MajorFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<MajorFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: MajorCountAggregateInputType | true
   }
 
@@ -1141,6 +1141,7 @@ export type MajorFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.Interna
    * Filter, which Major to fetch.
    */
   where: Prisma.MajorWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1163,6 +1164,7 @@ export type MajorFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Extensions.
    * Filter, which Major to fetch.
    */
   where: Prisma.MajorWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1215,6 +1217,7 @@ export type MajorFindFirstArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Filter by unique combinations of Majors.
    */
   distinct?: Prisma.MajorScalarFieldEnum | Prisma.MajorScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1267,6 +1270,7 @@ export type MajorFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Extensions.I
    * Filter by unique combinations of Majors.
    */
   distinct?: Prisma.MajorScalarFieldEnum | Prisma.MajorScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1319,6 +1323,7 @@ export type MajorFindManyArgs<ExtArgs extends runtime.Types.Extensions.InternalA
    * Filter by unique combinations of Majors.
    */
   distinct?: Prisma.MajorScalarFieldEnum | Prisma.MajorScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1341,6 +1346,7 @@ export type MajorCreateArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
    * The data needed to create a Major.
    */
   data: Prisma.XOR<Prisma.MajorCreateInput, Prisma.MajorUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1401,6 +1407,7 @@ export type MajorUpdateArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
    * Choose, which Major to update.
    */
   where: Prisma.MajorWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1479,6 +1486,7 @@ export type MajorUpsertArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
    * In case the Major was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.MajorUpdateInput, Prisma.MajorUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1501,6 +1509,7 @@ export type MajorDeleteArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
    * Filter which Major to delete.
    */
   where: Prisma.MajorWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

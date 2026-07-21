@@ -11,7 +11,7 @@ export type ReviewStageConfig = {
 
 /**
  * Ánh xạ role → bước duyệt tương ứng trong luồng:
- * submitted → (lớp/CVHT) → class_approved → (khoa) → faculty_approved → (học viện) → finalized
+ * submitted → (lớp/CVHT) → class_approved → (admin) → finalized
  */
 const REVIEW_STAGES: Partial<Record<UserRole, ReviewStageConfig>> = {
   [UserRole.ClassCouncil]: {
@@ -19,13 +19,8 @@ const REVIEW_STAGES: Partial<Record<UserRole, ReviewStageConfig>> = {
     nextApprovedStatus: FormStatus.class_approved,
     notePrefix: '[Lớp trả về]',
   },
-  [UserRole.FacultyCouncil]: {
-    requiredStatus: FormStatus.class_approved,
-    nextApprovedStatus: FormStatus.faculty_approved,
-    notePrefix: '[Khoa trả về]',
-  },
   [UserRole.Admin]: {
-    requiredStatus: FormStatus.faculty_approved,
+    requiredStatus: FormStatus.class_approved,
     nextApprovedStatus: FormStatus.finalized,
     notePrefix: '[Học viện trả về]',
   },

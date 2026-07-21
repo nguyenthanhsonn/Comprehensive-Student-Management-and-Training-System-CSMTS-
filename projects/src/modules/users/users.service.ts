@@ -54,17 +54,11 @@ export class UsersService {
   }
 
   /** Tìm tài khoản theo username - dùng riêng cho đăng nhập. */
-  async findByUsernameWithPassword(username: string): Promise<LoginUser> {
-    const user = await this.prisma.user.findUnique({
+  findByUsernameWithPassword(username: string): Promise<LoginUser | null> {
+    return this.prisma.user.findUnique({
       where: { username },
       select: loginUserSelect,
     });
-
-    if (!user) {
-      throw new NotFoundException('Không tìm thấy người dùng');
-    }
-
-    return user;
   }
 
   async findByIdWithPassword(id: string): Promise<PasswordUser> {

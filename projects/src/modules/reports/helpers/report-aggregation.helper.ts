@@ -47,7 +47,6 @@ export function emptyStatusDistribution(): StatusDistribution {
     [FormStatus.draft]: 0,
     [FormStatus.submitted]: 0,
     [FormStatus.class_approved]: 0,
-    [FormStatus.faculty_approved]: 0,
     [FormStatus.finalized]: 0,
     [FormStatus.rejected]: 0,
   };
@@ -58,7 +57,8 @@ export function buildStatusDistribution(groups: StatusGroup[]): StatusDistributi
   const distribution = emptyStatusDistribution();
 
   for (const group of groups) {
-    distribution[group.status] += group._count._all;
+    distribution[group.status] =
+      (distribution[group.status] ?? 0) + group._count._all;
   }
 
   return distribution;

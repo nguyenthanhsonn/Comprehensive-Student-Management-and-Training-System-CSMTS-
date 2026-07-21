@@ -15,6 +15,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
+import { ConfirmImportDto } from '../../common/dto/confirm-import.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -25,11 +26,14 @@ import { CreateStudentDto } from '../admin-students/dto/create-student.dto';
 import { GetAdminStudentsQueryDto } from '../admin-students/dto/get-admin-students-query.dto';
 import { UpdateStudentDto } from '../admin-students/dto/update-student.dto';
 import { AdminClassCatalogService } from './admin-class-catalog.service';
+import type { UploadedClassExcelFile } from './admin-class-catalog.service';
 import { AddClassStudentDto } from './dto/add-class-student.dto';
+import { ConfirmImportStudentsDto } from './dto/confirm-import-students.dto';
 import { CreateClassDto } from './dto/create-class.dto';
 import { GetClassesQueryDto } from './dto/get-classes-query.dto';
 import { GetClassStudentsQueryDto } from './dto/get-class-students-query.dto';
 import { UpdateClassDto } from './dto/update-class.dto';
+import { UpdateClassCouncilsDto } from './dto/update-class-councils.dto';
 import {
   AdminClassesService,
   type UploadedExcelFile,
@@ -37,7 +41,7 @@ import {
 
 @Controller('admin/classes')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.Admin, UserRole.FacultyCouncil)
+@Roles(UserRole.Admin, UserRole.ClassCouncil)
 export class AdminClassesController {
   constructor(
     private readonly adminClassesService: AdminClassesService,
@@ -101,10 +105,45 @@ export class AdminClassesController {
     return this.adminClassCatalogService.findAll(query);
   }
 
+  @Get('import-template')
+  @Roles(UserRole.Admin)
+  async downloadClassImportTemplate(@Res() res: Response) {
+    const buffer = await this.adminClassCatalogService.generateImportTemplate();
+
+    res.set({
+      'Content-Type':
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': 'attachment; filename=mau_import_lop.xlsx',
+    });
+    res.send(buffer);
+  }
+
+  @Post('import')
+  @Roles(UserRole.Admin)
+  @UseInterceptors(FileInterceptor('file'))
+  importClasses(@UploadedFile() file: UploadedClassExcelFile | undefined) {
+    return this.adminClassCatalogService.importFromTemplate(file);
+  }
+
+  @Post('import/confirm')
+  @Roles(UserRole.Admin)
+  confirmImportClasses(@Body() dto: ConfirmImportDto) {
+    return this.adminClassCatalogService.confirmImport(dto.importToken);
+  }
+
   @Get(':id')
   @Roles(UserRole.Admin)
   findOneClass(@Param('id', ParseUUIDPipe) id: string) {
     return this.adminClassCatalogService.findOne(id);
+  }
+
+  @Patch(':id/councils')
+  @Roles(UserRole.Admin)
+  updateClassCouncils(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateClassCouncilsDto,
+  ) {
+    return this.adminClassCatalogService.updateCouncils(id, dto);
   }
 
   @Post()
@@ -129,9 +168,26 @@ export class AdminClassesController {
   }
 }
 
+@Controller('class-council/classes')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.ClassCouncil)
+export class ClassCouncilClassesController {
+  constructor(
+    private readonly adminClassCatalogService: AdminClassCatalogService,
+  ) {}
+
+  @Get(':id')
+  findOneManagedClass(
+    @CurrentUser('id') userId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.adminClassCatalogService.findOneForClassCouncil(userId, id);
+  }
+}
+
 @Controller('admin/students')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.Admin, UserRole.FacultyCouncil)
+@Roles(UserRole.Admin)
 export class AdminStudentsController {
   constructor(
     private readonly adminClassesService: AdminClassesService,
@@ -145,8 +201,7 @@ export class AdminStudentsController {
     res.set({
       'Content-Type':
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'Content-Disposition':
-        'attachment; filename=mau_import_sinh_vien.xlsx',
+      'Content-Disposition': 'attachment; filename=mau_import_sinh_vien.xlsx',
     });
     res.send(buffer);
   }
@@ -162,6 +217,19 @@ export class AdminStudentsController {
       userId,
       role,
       file,
+    );
+  }
+
+  @Post('import/confirm')
+  confirmImportStudents(
+    @CurrentUser('id') userId: string,
+    @CurrentUser('role') role: UserRole,
+    @Body() dto: ConfirmImportStudentsDto,
+  ) {
+    return this.adminClassesService.confirmImportStudents(
+      userId,
+      role,
+      dto.importToken,
     );
   }
 

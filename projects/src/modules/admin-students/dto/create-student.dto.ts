@@ -1,6 +1,5 @@
 import { Transform, type TransformFnParams } from 'class-transformer';
 import {
-  IsDateString,
   IsEmail,
   IsOptional,
   IsString,
@@ -15,6 +14,10 @@ import {
   USERNAME_FORMAT_MESSAGE,
   USERNAME_PATTERN,
 } from 'src/common/helpers/username.helper';
+import {
+  DATE_ONLY_FORMAT_MESSAGE,
+  DATE_ONLY_PATTERN,
+} from 'src/common/helpers/date-only.helper';
 
 /**
  * Dữ liệu tạo hồ sơ sinh viên - tạo mới User (role=student), mật khẩu được hash bằng bcrypt.
@@ -48,7 +51,7 @@ export class CreateStudentDto {
   phone?: string;
 
   @IsOptional()
-  @IsDateString()
+  @Matches(DATE_ONLY_PATTERN, { message: DATE_ONLY_FORMAT_MESSAGE })
   dateOfBirth?: string;
 
   @IsOptional()
