@@ -20,7 +20,12 @@ export class PrismaService
   }
 
   async onModuleInit(): Promise<void> {
+    if (process.env.PRISMA_CONNECT_ON_INIT !== 'true') {
+      return;
+    }
+
     await this.$connect();
+    await this.$queryRaw`SELECT 1`;
   }
 
   async onModuleDestroy(): Promise<void> {

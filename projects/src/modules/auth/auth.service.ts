@@ -1,21 +1,25 @@
 import {
   BadRequestException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { User, UserRole } from 'src/common/shared';
 import * as bcrypt from 'bcrypt';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { UsersService } from '../users/users.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { CaptchaService } from './captcha.service';
 import { LoginDto } from './dto/login.dto';
 import { LogoutDto } from './dto/logout.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { AuthTokenStoreService } from './jwt/auth-token-store';
+import { mapAuthProfileToUser } from '../users/mappers/user.mapper';
+import { PASSWORD_SALT_ROUNDS } from './constants/password.constants';
 import type { AuthenticatedUser } from './types/authenticated-user.type';
-import type { JwtPayload, JwtTokenType } from './types/jwt-payload.type';
+import type { JwtPayload, TokenSubject } from './types/jwt-payload.type';
 
 type AuthTokens = {
   accessToken: string;
@@ -31,71 +35,118 @@ type ChangePasswordResult = {
   requiresLogin: true;
 };
 
+type CachedProfile = {
+  user: User;
+  expiresAt: number;
+};
+
+const PROFILE_CACHE_TTL_MS = 30_000;
+const PROFILE_CACHE_MAX_SIZE = 1_000;
+const DEFAULT_DUMMY_PASSWORD_HASH =
+  '$2b$12$DjZDTP1LMXJ6CGgi9sEmJO2AuIvrdOc4FFkSSI1U7oBRQl6np1Y5.';
+
 @Injectable()
 export class AuthService {
+  private readonly profileCache = new Map<string, CachedProfile>();
+
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly tokenStore: AuthTokenStoreService,
+    private readonly captchaService: CaptchaService,
   ) {}
 
+  // đăng nhập bằng username + mật khẩu
   async login(dto: LoginDto): Promise<AuthTokens> {
-    const user = await this.usersService.findByEmailWithPassword(dto.email);
+    await this.captchaService.verify(dto.captchaId, dto.captchaCode);
 
-    if (!user || !(await bcrypt.compare(dto.password, user.passwordHash))) {
-      throw new UnauthorizedException('Invalid email or password');
+    const user = await this.usersService.findByUsernameWithPassword(
+      dto.username,
+    );
+    const hashToCompare = user
+      ? user.passwordHash
+      : this.configService.get<string>('DUMMY_PASSWORD_HASH') ??
+        DEFAULT_DUMMY_PASSWORD_HASH;
+    const isPasswordValid = await bcrypt.compare(dto.password, hashToCompare);
+
+    if (!user || !isPasswordValid) {
+      throw new UnauthorizedException('Tên đăng nhập hoặc mật khẩu không đúng');
     }
 
     if (!user.isActive) {
-      throw new UnauthorizedException('User account is inactive');
+      throw new UnauthorizedException(
+        'Tài khoản đã bị khóa hoặc không còn hoạt động',
+      );
     }
 
     return this.createSession({
       id: user.id,
+      username: user.username,
       email: user.email,
-      fullName: user.fullName,
       role: user.role as UserRole,
-      isActive: user.isActive,
     });
   }
 
-  me(user: AuthenticatedUser): User {
-    return this.toPublicUser(user);
+  // lấy thông tin người dùng
+  async getProfile(id: string): Promise<User> {
+    const cachedProfile = this.profileCache.get(id);
+    const now = Date.now();
+
+    if (cachedProfile && cachedProfile.expiresAt > now) {
+      return cachedProfile.user;
+    }
+
+    if (cachedProfile) {
+      this.profileCache.delete(id);
+    }
+
+    const user = await this.usersService.findAuthProfileById(id);
+    if (!user) {
+      throw new NotFoundException('Người dùng không tồn tại');
+    }
+    if (!user.isActive) {
+      throw new UnauthorizedException('Người dùng không hoạt động');
+    }
+
+    const profile = mapAuthProfileToUser(user);
+    this.cacheProfile(id, profile, now);
+
+    return profile;
   }
 
+  // làm mới token
   async refreshToken(dto: RefreshTokenDto): Promise<AuthTokens> {
     const payload = await this.verifyRefreshToken(dto.refreshToken);
     const user = await this.usersService.findByIdWithRefreshToken(payload.sub);
 
     if (!user || !user.isActive) {
-      throw new UnauthorizedException('Invalid refresh token');
+      throw new UnauthorizedException('Mã làm mới không hợp lệ');
     }
 
     if (!user.refreshTokenHash || !user.refreshTokenExpiresAt) {
-      throw new UnauthorizedException('Refresh token has been revoked');
+      throw new UnauthorizedException('Mã làm mới đã bị thu hồi');
     }
 
     if (user.refreshTokenExpiresAt.getTime() <= Date.now()) {
       await this.usersService.clearRefreshToken(user.id);
-      throw new UnauthorizedException('Refresh token has expired');
+      throw new UnauthorizedException('Mã làm mới đã hết hạn');
     }
 
-    const isRefreshTokenValid = await bcrypt.compare(
+    const isRefreshTokenValid = await this.isRefreshTokenHashValid(
       dto.refreshToken,
       user.refreshTokenHash,
     );
 
     if (!isRefreshTokenValid) {
-      throw new UnauthorizedException('Invalid refresh token');
+      throw new UnauthorizedException('Mã làm mới không hợp lệ');
     }
 
     return this.createSession({
       id: user.id,
+      username: user.username,
       email: user.email,
-      fullName: user.fullName,
       role: user.role as UserRole,
-      isActive: user.isActive,
     });
   }
 
@@ -108,11 +159,12 @@ export class AuthService {
     if (dto.refreshToken) {
       const payload = await this.verifyRefreshToken(dto.refreshToken);
       if (payload.sub !== user.id) {
-        throw new UnauthorizedException('Invalid refresh token');
+        throw new UnauthorizedException('Mã làm mới không hợp lệ');
       }
     }
 
     await this.usersService.clearRefreshToken(user.id);
+    this.profileCache.delete(user.id);
 
     return { loggedOut: true };
   }
@@ -132,18 +184,22 @@ export class AuthService {
         userWithPassword.passwordHash,
       ))
     ) {
-      throw new UnauthorizedException('Current password is incorrect');
+      throw new UnauthorizedException('Mật khẩu hiện tại không đúng');
     }
 
     if (await bcrypt.compare(dto.newPassword, userWithPassword.passwordHash)) {
       throw new BadRequestException(
-        'New password must be different from current password',
+        'Mật khẩu mới phải khác mật khẩu hiện tại',
       );
     }
 
-    const passwordHash = await bcrypt.hash(dto.newPassword, 12);
+    const passwordHash = await bcrypt.hash(
+      dto.newPassword,
+      PASSWORD_SALT_ROUNDS,
+    );
     await this.usersService.updatePasswordHash(user.id, passwordHash);
     await this.usersService.clearRefreshToken(user.id);
+    this.profileCache.delete(user.id);
     this.tokenStore.revokeToken(user.accessTokenId, user.tokenExpiresAt);
 
     return {
@@ -152,17 +208,17 @@ export class AuthService {
     };
   }
 
-  private async createSession(user: User): Promise<AuthTokens> {
+  private async createSession(subject: TokenSubject): Promise<AuthTokens> {
     const [accessToken, refreshToken] = await Promise.all([
-      this.signToken(user, 'access'),
-      this.signToken(user, 'refresh'),
+      this.signAccessToken(subject),
+      this.signRefreshToken(subject),
     ]);
-    const refreshTokenPayload = await this.verifyRefreshToken(refreshToken);
+    const refreshTokenPayload = this.jwtService.decode<JwtPayload>(refreshToken);
     const refreshTokenExpiresAt = this.getTokenExpiresAt(refreshTokenPayload);
-    const refreshTokenHash = await bcrypt.hash(refreshToken, 12);
+    const refreshTokenHash = this.hashRefreshToken(refreshToken);
 
     await this.usersService.updateRefreshToken(
-      user.id,
+      subject.id,
       refreshTokenHash,
       refreshTokenExpiresAt,
     );
@@ -173,66 +229,92 @@ export class AuthService {
     };
   }
 
-  private signToken(user: User, tokenType: JwtTokenType): Promise<string> {
+
+  private signAccessToken(subject: TokenSubject): Promise<string> {
     const payload: JwtPayload = {
-      sub: user.id,
-      email: user.email,
-      role: user.role,
-      tokenType,
+      sub: subject.id,
+      username: subject.username,
+      email: subject.email,
+      role: subject.role,
       jti: randomUUID(),
     };
 
     return this.jwtService.signAsync(payload, {
-      expiresIn: this.getTokenExpiresIn(tokenType) as never,
+      secret: this.configService.getOrThrow<string>('app.jwtAccessSecret'),
+      expiresIn: this.configService.get<string>(
+        'app.jwtAccessExpiresIn',
+        '15m',
+      ) as never,
     });
   }
 
-  private getTokenExpiresIn(tokenType: JwtTokenType): string {
-    if (tokenType === 'refresh') {
-      return this.configService.get<string>('app.jwtRefreshExpiresIn', '7d');
-    }
+  private signRefreshToken(subject: TokenSubject): Promise<string> {
+    const payload: JwtPayload = {
+      sub: subject.id,
+      username: subject.username,
+      email: subject.email,
+      role: subject.role,
+    };
 
-    return this.configService.get<string>('app.jwtExpiresIn', '15m');
+    return this.jwtService.signAsync(payload, {
+      secret: this.configService.getOrThrow<string>('app.jwtRefreshSecret'),
+      expiresIn: this.configService.get<string>(
+        'app.jwtRefreshExpiresIn',
+        '7d',
+      ) as never,
+    });
   }
 
   private async verifyRefreshToken(refreshToken: string): Promise<JwtPayload> {
     try {
-      const payload = await this.jwtService.verifyAsync<JwtPayload>(
-        refreshToken,
-        {
-          secret: this.configService.getOrThrow<string>('app.jwtSecret'),
-        },
-      );
-
-      if (payload.tokenType !== 'refresh') {
-        throw new UnauthorizedException('Invalid refresh token');
-      }
-
-      return payload;
-    } catch (error) {
-      if (error instanceof UnauthorizedException) {
-        throw error;
-      }
-
-      throw new UnauthorizedException('Invalid refresh token');
+      return await this.jwtService.verifyAsync<JwtPayload>(refreshToken, {
+        secret: this.configService.getOrThrow<string>('app.jwtRefreshSecret'),
+      });
+    } catch {
+      throw new UnauthorizedException('Mã làm mới không hợp lệ');
     }
   }
 
   private getTokenExpiresAt(payload: JwtPayload): Date {
     if (!payload.exp) {
-      throw new UnauthorizedException('Invalid refresh token');
+      throw new UnauthorizedException('Mã làm mới không hợp lệ');
     }
 
     return new Date(payload.exp * 1000);
   }
 
-  private toPublicUser(user: AuthenticatedUser): User {
-    return {
-      id: user.id,
-      email: user.email,
-      fullName: user.fullName,
-      role: user.role,
-      isActive: user.isActive,
-    };
+  private hashRefreshToken(refreshToken: string): string {
+    return createHash('sha256').update(refreshToken).digest('hex');
+  }
+
+  private async isRefreshTokenHashValid(
+    refreshToken: string,
+    refreshTokenHash: string,
+  ): Promise<boolean> {
+    const tokenHash = this.hashRefreshToken(refreshToken);
+
+    if (tokenHash === refreshTokenHash) {
+      return true;
+    }
+
+    if (!refreshTokenHash.startsWith('$2')) {
+      return false;
+    }
+
+    return bcrypt.compare(refreshToken, refreshTokenHash);
+  }
+
+  private cacheProfile(id: string, user: User, now: number): void {
+    if (this.profileCache.size >= PROFILE_CACHE_MAX_SIZE) {
+      const oldestKey = this.profileCache.keys().next().value;
+      if (oldestKey) {
+        this.profileCache.delete(oldestKey);
+      }
+    }
+
+    this.profileCache.set(id, {
+      user,
+      expiresAt: now + PROFILE_CACHE_TTL_MS,
+    });
   }
 }

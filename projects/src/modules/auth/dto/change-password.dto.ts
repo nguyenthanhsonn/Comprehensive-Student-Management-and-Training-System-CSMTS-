@@ -2,13 +2,13 @@ import { IsString, Matches, MinLength } from 'class-validator';
 
 export class ChangePasswordDto {
   @IsString()
-  @MinLength(8)
+  @MinLength(6)
   currentPassword: string;
 
   @IsString()
-  @MinLength(8)
+  @MinLength(6)
   @Matches(/^(?=.*[A-Za-z])(?=.*\d).+$/, {
-    message: 'newPassword must contain at least one letter and one number',
+    message: 'Mật khẩu mới phải chứa ít nhất một chữ cái và một số',
   })
   newPassword: string;
 }

@@ -1,55 +1,24 @@
 import {
-  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../database/prisma.service';
-import { Prisma, type User } from '../../generated/prisma/client';
-import { CreateUserDto } from './dto/create-user.dto';
-
-const publicUserSelect = {
-  id: true,
-  email: true,
-  fullName: true,
-  role: true,
-  isActive: true,
-  phone: true,
-  dateOfBirth: true,
-  createdAt: true,
-  updatedAt: true,
-} satisfies Prisma.UserSelect;
-
-export type PublicUser = Prisma.UserGetPayload<{
-  select: typeof publicUserSelect;
-}>;
+import {
+  authProfileUserSelect,
+  loginUserSelect,
+  passwordUserSelect,
+  publicUserSelect,
+  refreshTokenUserSelect,
+  type AuthProfileUser,
+  type LoginUser,
+  type PasswordUser,
+  type PublicUser,
+  type RefreshTokenUser,
+} from './selects/user.select';
 
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
-
-  async create(dto: CreateUserDto): Promise<PublicUser> {
-    try {
-      return await this.prisma.user.create({
-        data: {
-          email: dto.email,
-          fullName: dto.fullName,
-          passwordHash: await bcrypt.hash(dto.password, 12),
-          role: dto.role,
-        },
-        select: publicUserSelect,
-      });
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
-        throw new ConflictException('Email is already in use');
-      }
-
-      throw error;
-    }
-  }
 
   findAll(): Promise<PublicUser[]> {
     return this.prisma.user.findMany({
@@ -65,28 +34,57 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Không tìm thấy người dùng');
     }
 
     return user;
   }
 
-  findByEmailWithPassword(email: string): Promise<User | null> {
+  async findAuthProfileById(id: string): Promise<AuthProfileUser> {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: authProfileUserSelect,
+    });
+
+    if (!user) {
+      throw new NotFoundException('Không tìm thấy người dùng');
+    }
+
+    return user;
+  }
+
+  /** Tìm tài khoản theo username - dùng riêng cho đăng nhập. */
+  findByUsernameWithPassword(username: string): Promise<LoginUser | null> {
     return this.prisma.user.findUnique({
-      where: { email },
+      where: { username },
+      select: loginUserSelect,
     });
   }
 
-  findByIdWithPassword(id: string): Promise<User | null> {
-    return this.prisma.user.findUnique({
+  async findByIdWithPassword(id: string): Promise<PasswordUser> {
+    const user = await this.prisma.user.findUnique({
       where: { id },
+      select: passwordUserSelect,
     });
+
+    if (!user) {
+      throw new NotFoundException('Không tìm thấy người dùng');
+    }
+
+    return user;
   }
 
-  findByIdWithRefreshToken(id: string): Promise<User | null> {
-    return this.prisma.user.findUnique({
+  async findByIdWithRefreshToken(id: string): Promise<RefreshTokenUser> {
+    const user = await this.prisma.user.findUnique({
       where: { id },
+      select: refreshTokenUserSelect,
     });
+
+    if (!user) {
+      throw new NotFoundException('Không tìm thấy người dùng');
+    }
+
+    return user;
   }
 
   async updateRefreshToken(

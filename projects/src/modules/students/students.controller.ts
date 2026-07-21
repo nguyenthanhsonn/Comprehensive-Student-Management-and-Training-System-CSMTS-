@@ -14,16 +14,16 @@ export class StudentsController {
   constructor(private readonly studentsService: StudentsService) {}
 
   @Get('me')
-  getMe(@Req() request: RequestWithUser) {
-    return this.studentsService.getMe(request.user);
+  getProfileStudent(@Req() req: RequestWithUser) {
+    return this.studentsService.getProfileStudent(req.user.id);
   }
 
   @Patch('me')
-  updateMyContact(
-    @Req() request: RequestWithUser,
+  updateProfile(
+    @Req() req: RequestWithUser,
     @Body() dto: UpdateStudentContactDto,
   ) {
-    return this.studentsService.updateMyContact(request.user, dto);
+    return this.studentsService.updateProfile(req.user.id, dto);
   }
 
   @Get('me/evaluations')

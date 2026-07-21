@@ -8,6 +8,7 @@ import type { ApiResponse } from 'src/common/shared';
 import { map, type Observable } from 'rxjs';
 
 type HttpRequest = {
+  method: string;
   url: string;
 };
 
@@ -32,7 +33,7 @@ export class ResponseInterceptor<T> implements NestInterceptor<
       map((data) => ({
         success: true,
         statusCode: response.statusCode,
-        message: resolveSuccessMessage(response.statusCode),
+        message: resolveSuccessMessage(response.statusCode, request.method),
         data: data ?? null,
         timestamp: new Date().toISOString(),
         path: request.url,
@@ -41,14 +42,26 @@ export class ResponseInterceptor<T> implements NestInterceptor<
   }
 }
 
-function resolveSuccessMessage(statusCode: number): string {
+function resolveSuccessMessage(statusCode: number, method: string): string {
   if (statusCode === 201) {
-    return 'Created successfully';
+    return 'Tạo mới thành công';
   }
 
   if (statusCode === 204) {
-    return 'No content';
+    return 'Thao tác thành công';
   }
 
-  return 'Request completed successfully';
+  if (method === 'POST') {
+    return 'Gửi yêu cầu thành công';
+  }
+
+  if (method === 'PATCH' || method === 'PUT') {
+    return 'Cập nhật thành công';
+  }
+
+  if (method === 'DELETE') {
+    return 'Xóa thành công';
+  }
+
+  return 'Thao tác thành công';
 }

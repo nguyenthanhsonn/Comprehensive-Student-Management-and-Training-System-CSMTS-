@@ -1,30 +1,17 @@
-# Dependencies
-node_modules/
-.pnpm-store/
+# Agent / Assistant folders
+.claude/
+.agents/
+.codex/
+.gemini/
 
-# Production/Build
-.next/
-dist/
-build/
-coverage/
-
-# IDEs/Editors
+# IDE settings
 .idea/
 .vscode/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
 
-# Operating System Files
+# Local OS files
 .DS_Store
 Thumbs.db
 
-# Environment variables
-.env
-.env.*.local
-!.env.example
+# Package manager cache
+.pnpm-store/
 
-# Logs
-*.log

@@ -1,13 +1,18 @@
 import type { UserRole } from 'src/common/shared';
 
-export type JwtTokenType = 'access' | 'refresh';
+export type TokenSubject = {
+  id: string;
+  username: string;
+  email: string;
+  role: UserRole;
+};
 
 export type JwtPayload = {
   sub: string;
+  username: string;
   email: string;
   role: UserRole;
-  tokenType: JwtTokenType;
-  jti: string;
+  jti?: string;
   iat?: number;
   exp?: number;
 };
