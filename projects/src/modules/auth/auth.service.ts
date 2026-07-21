@@ -17,6 +17,7 @@ import { LogoutDto } from './dto/logout.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { AuthTokenStoreService } from './jwt/auth-token-store';
 import { mapAuthProfileToUser } from '../users/mappers/user.mapper';
+import { PASSWORD_SALT_ROUNDS } from './constants/password.constants';
 import type { AuthenticatedUser } from './types/authenticated-user.type';
 import type { JwtPayload, TokenSubject } from './types/jwt-payload.type';
 
@@ -41,6 +42,8 @@ type CachedProfile = {
 
 const PROFILE_CACHE_TTL_MS = 30_000;
 const PROFILE_CACHE_MAX_SIZE = 1_000;
+const DEFAULT_DUMMY_PASSWORD_HASH =
+  '$2b$12$DjZDTP1LMXJ6CGgi9sEmJO2AuIvrdOc4FFkSSI1U7oBRQl6np1Y5.';
 
 @Injectable()
 export class AuthService {
@@ -56,13 +59,18 @@ export class AuthService {
 
   // đăng nhập bằng username + mật khẩu
   async login(dto: LoginDto): Promise<AuthTokens> {
-    this.captchaService.verify(dto.captchaId, dto.captchaCode);
+    await this.captchaService.verify(dto.captchaId, dto.captchaCode);
 
     const user = await this.usersService.findByUsernameWithPassword(
       dto.username,
     );
+    const hashToCompare = user
+      ? user.passwordHash
+      : this.configService.get<string>('DUMMY_PASSWORD_HASH') ??
+        DEFAULT_DUMMY_PASSWORD_HASH;
+    const isPasswordValid = await bcrypt.compare(dto.password, hashToCompare);
 
-    if (!user || !(await bcrypt.compare(dto.password, user.passwordHash))) {
+    if (!user || !isPasswordValid) {
       throw new UnauthorizedException('Tên đăng nhập hoặc mật khẩu không đúng');
     }
 
@@ -185,7 +193,10 @@ export class AuthService {
       );
     }
 
-    const passwordHash = await bcrypt.hash(dto.newPassword, 12);
+    const passwordHash = await bcrypt.hash(
+      dto.newPassword,
+      PASSWORD_SALT_ROUNDS,
+    );
     await this.usersService.updatePasswordHash(user.id, passwordHash);
     await this.usersService.clearRefreshToken(user.id);
     this.profileCache.delete(user.id);
@@ -202,7 +213,7 @@ export class AuthService {
       this.signAccessToken(subject),
       this.signRefreshToken(subject),
     ]);
-    const refreshTokenPayload = await this.verifyRefreshToken(refreshToken);
+    const refreshTokenPayload = this.jwtService.decode<JwtPayload>(refreshToken);
     const refreshTokenExpiresAt = this.getTokenExpiresAt(refreshTokenPayload);
     const refreshTokenHash = this.hashRefreshToken(refreshToken);
 
@@ -217,6 +228,7 @@ export class AuthService {
       refreshToken,
     };
   }
+
 
   private signAccessToken(subject: TokenSubject): Promise<string> {
     const payload: JwtPayload = {

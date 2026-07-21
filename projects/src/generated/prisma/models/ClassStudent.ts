@@ -669,7 +669,7 @@ export type $ClassStudentPayload<ExtArgs extends runtime.Types.Extensions.Intern
 export type ClassStudentGetPayload<S extends boolean | null | undefined | ClassStudentDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$ClassStudentPayload, S>
 
 export type ClassStudentCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<ClassStudentFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<ClassStudentFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: ClassStudentCountAggregateInputType | true
   }
 
@@ -1117,6 +1117,7 @@ export type ClassStudentFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.
    * Filter, which ClassStudent to fetch.
    */
   where: Prisma.ClassStudentWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1139,6 +1140,7 @@ export type ClassStudentFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Exte
    * Filter, which ClassStudent to fetch.
    */
   where: Prisma.ClassStudentWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1191,6 +1193,7 @@ export type ClassStudentFindFirstArgs<ExtArgs extends runtime.Types.Extensions.I
    * Filter by unique combinations of ClassStudents.
    */
   distinct?: Prisma.ClassStudentScalarFieldEnum | Prisma.ClassStudentScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1243,6 +1246,7 @@ export type ClassStudentFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Exten
    * Filter by unique combinations of ClassStudents.
    */
   distinct?: Prisma.ClassStudentScalarFieldEnum | Prisma.ClassStudentScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1295,6 +1299,7 @@ export type ClassStudentFindManyArgs<ExtArgs extends runtime.Types.Extensions.In
    * Filter by unique combinations of ClassStudents.
    */
   distinct?: Prisma.ClassStudentScalarFieldEnum | Prisma.ClassStudentScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1317,6 +1322,7 @@ export type ClassStudentCreateArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * The data needed to create a ClassStudent.
    */
   data: Prisma.XOR<Prisma.ClassStudentCreateInput, Prisma.ClassStudentUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1377,6 +1383,7 @@ export type ClassStudentUpdateArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Choose, which ClassStudent to update.
    */
   where: Prisma.ClassStudentWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1455,6 +1462,7 @@ export type ClassStudentUpsertArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * In case the ClassStudent was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.ClassStudentUpdateInput, Prisma.ClassStudentUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1477,6 +1485,7 @@ export type ClassStudentDeleteArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Filter which ClassStudent to delete.
    */
   where: Prisma.ClassStudentWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

@@ -13,7 +13,7 @@ export function mapToAdminFacultyResponse(
     createdAt: record.createdAt,
     deletedAt: record.deletedAt,
     majorCount: record._count.majors,
-    assignmentCount: record._count.facultyCouncilAssignments,
+    assignmentCount: 0,
   };
 }
 

@@ -4,7 +4,7 @@ import type { EvalRank, FormStatus } from '../../../generated/prisma/client';
 export type RankDistribution = Record<EvalRank, number>;
 
 /** Số lượng phiếu theo từng trạng thái trong luồng duyệt. */
-export type StatusDistribution = Record<FormStatus, number>;
+export type StatusDistribution = Partial<Record<FormStatus, number>>;
 
 /** GET /admin/reports/overview — bức tranh tổng quan theo trạng thái duyệt. */
 export type ReportOverviewResponse = {

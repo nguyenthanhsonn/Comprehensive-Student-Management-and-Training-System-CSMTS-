@@ -2,14 +2,24 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../database/prisma.service';
 import { Prisma, UserRole } from '../../generated/prisma/client';
-import type { PaginatedResult, UserRole as SharedUserRole } from '../../common/shared';
+import type {
+  PaginatedResult,
+  UserRole as SharedUserRole,
+} from '../../common/shared';
 import { buildAccountActiveStateData } from '../../common/helpers/account-active-state.helper';
+import {
+  formatDateOnly,
+  parseOptionalDateOnly,
+} from '../../common/helpers/date-only.helper';
 import { AuthTokenStoreService } from '../auth/jwt/auth-token-store';
+import { PASSWORD_SALT_ROUNDS } from '../auth/constants/password.constants';
+import { StudentAccountMailService } from '../mail/student-account-mail.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { GetAdminStudentsQueryDto } from './dto/get-admin-students-query.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
@@ -19,13 +29,14 @@ import {
 } from './selects/admin-student.select';
 import type { AdminStudentResponse } from './types/admin-student.types';
 
-const PASSWORD_SALT_ROUNDS = 12;
-
 @Injectable()
 export class AdminStudentsService {
+  private readonly logger = new Logger(AdminStudentsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly tokenStore: AuthTokenStoreService,
+    private readonly accountMailService: StudentAccountMailService,
   ) {}
 
   /**
@@ -140,9 +151,7 @@ export class AdminStudentsService {
             passwordHash,
             role: UserRole.student,
             phone: dto.phone,
-            dateOfBirth: dto.dateOfBirth
-              ? new Date(dto.dateOfBirth)
-              : undefined,
+            dateOfBirth: parseOptionalDateOnly(dto.dateOfBirth),
           },
           select: { id: true },
         });
@@ -161,7 +170,14 @@ export class AdminStudentsService {
         return student.id;
       });
 
-      return await this.findOne(studentId);
+      const response = await this.findOne(studentId);
+      const mailResult = await this.sendCreatedStudentEmail(dto);
+
+      return {
+        ...response,
+        accountEmailSent: mailResult.sent,
+        accountEmailError: mailResult.error,
+      };
     } catch (error) {
       this.handleKnownStudentError(error);
       throw error;
@@ -210,7 +226,7 @@ export class AdminStudentsService {
             }),
             ...(dto.phone !== undefined && { phone: dto.phone }),
             ...(dto.dateOfBirth !== undefined && {
-              dateOfBirth: new Date(dto.dateOfBirth),
+              dateOfBirth: parseOptionalDateOnly(dto.dateOfBirth),
             }),
             ...activeStateData,
           },
@@ -407,18 +423,43 @@ export class AdminStudentsService {
       throw new NotFoundException('Không tìm thấy hồ sơ sinh viên');
     }
   }
+
+  private async sendCreatedStudentEmail(
+    dto: CreateStudentDto,
+  ): Promise<{ sent: boolean; error: string | null }> {
+    if (!this.accountMailService.isConfigured()) {
+      return {
+        sent: false,
+        error:
+          'Chưa thiết lập chức năng gửi email nên tài khoản chưa được gửi đi',
+      };
+    }
+
+    try {
+      await this.accountMailService.sendStudentAccount({
+        email: normalizeEmail(dto.email),
+        fullName: dto.fullName.trim(),
+        username: dto.username,
+        password: dto.password,
+        studentCode: dto.studentCode ?? 'Chưa gán',
+      });
+
+      return { sent: true, error: null };
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Gửi email tài khoản thất bại';
+      this.logger.error(`Gửi email tài khoản sinh viên thất bại: ${message}`);
+
+      return {
+        sent: false,
+        error: 'Chưa gửi được email tài khoản, vui lòng kiểm tra lại sau',
+      };
+    }
+  }
 }
 
 function normalizeEmail(email: string): string {
   return email.toLowerCase().trim();
-}
-
-function formatDateOnly(date: Date | null): string | null {
-  if (!date) {
-    return null;
-  }
-
-  return date.toISOString().slice(0, 10);
 }
 
 function mapToAdminStudentResponse(
@@ -445,10 +486,18 @@ function mapToAdminStudentResponse(
     studentCode: enrollment?.studentCode ?? null,
     enrolledAt: enrollment?.enrolledAt ?? null,
     class: currentClass
-      ? { id: currentClass.id, code: currentClass.code, name: currentClass.name }
+      ? {
+          id: currentClass.id,
+          code: currentClass.code,
+          name: currentClass.name,
+        }
       : null,
     major: currentMajor
-      ? { id: currentMajor.id, code: currentMajor.code, name: currentMajor.name }
+      ? {
+          id: currentMajor.id,
+          code: currentMajor.code,
+          name: currentMajor.name,
+        }
       : null,
     faculty: currentFaculty
       ? {

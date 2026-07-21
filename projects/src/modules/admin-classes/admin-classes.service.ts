@@ -5,11 +5,23 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import ExcelJS from 'exceljs';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { read, utils } from 'xlsx';
+import {
+  normalizeUsername,
+  USERNAME_PATTERN,
+} from '../../common/helpers/username.helper';
+import {
+  formatDateOnly,
+  parseOptionalDateOnly,
+} from '../../common/helpers/date-only.helper';
 import { PrismaService } from '../../database/prisma.service';
 import { Prisma } from '../../generated/prisma/client';
 import { UserRole, type PaginatedResult } from '../../common/shared';
+import { PASSWORD_SALT_ROUNDS } from '../auth/constants/password.constants';
+import { StudentAccountMailService } from '../mail/student-account-mail.service';
 import { AddClassStudentDto } from './dto/add-class-student.dto';
 import { GetClassStudentsQueryDto } from './dto/get-class-students-query.dto';
 import {
@@ -18,6 +30,8 @@ import {
 } from './selects/admin-class-student.select';
 import type {
   AdminClassStudentResponse,
+  ImportClassStudentPreviewItem,
+  ImportClassStudentsPreviewResponse,
   ImportClassStudentsResult,
 } from './types/admin-class-student.types';
 
@@ -26,6 +40,10 @@ type ImportRow = {
   email?: string;
   studentId?: string;
   studentCode?: string;
+  username?: string;
+  fullName?: string;
+  phone?: string;
+  dateOfBirth?: Date | number | string;
   classCode?: string;
 };
 
@@ -36,15 +54,57 @@ type ManageableClassRecord = {
   major: { facultyId: string };
 };
 
+type ImportToCreate = {
+  row: ImportRow;
+  classId: string;
+  username: string;
+  studentCode: string;
+  plainPassword: string;
+};
+
+type ImportToEnroll = {
+  studentId: string;
+  classId: string;
+  studentCode: string;
+};
+
+type CachedImportPlan = {
+  userId: string;
+  role: UserRole;
+  expiresAt: number;
+  totalRows: number;
+  skippedCount: number;
+  toCreate: ImportToCreate[];
+  toEnroll: ImportToEnroll[];
+};
+
+type ImportStudentRecord = {
+  id: string;
+  email: string;
+  username: string;
+  fullName: string;
+  phone: string | null;
+  dateOfBirth: Date | null;
+};
+
 export type UploadedExcelFile = {
   originalname: string;
   mimetype: string;
   buffer: Buffer;
 };
 
+const IMPORT_GENERATED_PASSWORD_BYTES = 9;
+const IMPORT_TRANSACTION_TIMEOUT_MS = 60_000;
+const IMPORT_PREVIEW_TTL_MS = 10 * 60 * 1000;
+
 @Injectable()
 export class AdminClassesService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly importPreviewCache = new Map<string, CachedImportPlan>();
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly studentAccountMailService: StudentAccountMailService,
+  ) {}
 
   async findStudents(
     userId: string,
@@ -175,185 +235,705 @@ export class AdminClassesService {
     role: UserRole,
     classId: string,
     file: UploadedExcelFile | undefined,
-  ): Promise<ImportClassStudentsResult> {
+  ): Promise<ImportClassStudentsPreviewResponse> {
+    const timingId = createImportTimingId();
     const classRecord = await this.assertCanManageClass(userId, role, classId);
     const rows = parseUploadedImportFile(file);
 
-    return this.importParsedRows(rows, async (row) => {
-      if (
-        row.classCode &&
-        !isSameClassInImportFile(row.classCode, classRecord.code, classRecord.name)
-      ) {
-        throw new BadRequestException(
-          `Lớp trong file (${row.classCode}) không khớp với lớp đang import (${classRecord.code})`,
-        );
-      }
-
-      return classRecord;
-    });
+    return this.previewImportParsedRows(
+      userId,
+      role,
+      rows,
+      timingId,
+      classRecord,
+    );
   }
 
   async importStudentsFromTemplate(
     userId: string,
     role: UserRole,
     file: UploadedExcelFile | undefined,
-  ): Promise<ImportClassStudentsResult> {
+  ): Promise<ImportClassStudentsPreviewResponse> {
+    const timingId = createImportTimingId();
     const rows = parseUploadedImportFile(file);
 
-    return this.importParsedRows(rows, async (row, tx) => {
-      if (!row.classCode) {
-        throw new BadRequestException('Thiếu lớp');
-      }
+    return this.previewImportParsedRows(userId, role, rows, timingId);
+  }
 
-      const classRecord = await tx.class.findFirst({
-        where: {
-          OR: [
-            { code: { equals: row.classCode, mode: 'insensitive' } },
-            { name: { equals: row.classCode, mode: 'insensitive' } },
-          ],
-        },
-        select: {
-          id: true,
-          code: true,
-          name: true,
-          major: { select: { facultyId: true } },
-        },
-      });
+  async confirmImportStudents(
+    userId: string,
+    role: UserRole,
+    importToken: string,
+  ): Promise<ImportClassStudentsResult> {
+    const plan = this.importPreviewCache.get(importToken);
 
-      if (!classRecord) {
-        throw new BadRequestException(`Không tìm thấy lớp ${row.classCode}`);
-      }
+    if (!plan) {
+      throw new BadRequestException(
+        'Phiên import không tồn tại hoặc đã được xác nhận',
+      );
+    }
 
-      await this.assertCanManageClassRecord(userId, role, classRecord);
-      return classRecord;
-    });
+    if (plan.expiresAt <= Date.now()) {
+      this.importPreviewCache.delete(importToken);
+      throw new BadRequestException(
+        'Phiên import đã hết hạn, vui lòng tải lại file',
+      );
+    }
+
+    if (plan.userId !== userId || plan.role !== role) {
+      throw new ForbiddenException(
+        'Bạn không có quyền xác nhận phiên import này',
+      );
+    }
+
+    this.importPreviewCache.delete(importToken);
+    return this.commitImportPlan(plan, createImportTimingId());
   }
 
   async generateImportTemplate(): Promise<Buffer> {
     return this.buildImportTemplate('CNTT01');
   }
 
-  private async importParsedRows(
+  private async previewImportParsedRows(
+    userId: string,
+    role: UserRole,
     rows: ImportRow[],
-    resolveClass: (
-      row: ImportRow,
-      tx: Prisma.TransactionClient,
-    ) => Promise<ManageableClassRecord>,
-  ): Promise<ImportClassStudentsResult> {
+    timingId: string,
+    fixedClassRecord?: ManageableClassRecord,
+  ): Promise<ImportClassStudentsPreviewResponse> {
     const errors: ImportClassStudentsResult['errors'] = [];
-    let successCount = 0;
+    const createdAccounts: ImportClassStudentsResult['createdAccounts'] = [];
+    const preloadLabel = createImportTimingLabel(timingId, 'preload');
+    const loopInsertLabel = createImportTimingLabel(timingId, 'loop-insert');
+    let classes: ManageableClassRecord[] = [];
+    let existingStudents: ImportStudentRecord[] = [];
+    let existingGeneratedUsernames: string[] = [];
+    let existingEnrollments: Array<{
+      classId: string;
+      studentId: string;
+      studentCode: string;
+    }> = [];
+    let enrollmentsByCode: Array<{
+      classId: string;
+      studentId: string;
+      studentCode: string;
+    }> = [];
+
+    console.time(preloadLabel);
+    try {
+      classes = fixedClassRecord
+        ? [fixedClassRecord]
+        : await this.preloadImportClasses(rows);
+      if (fixedClassRecord) {
+        await this.assertCanManageClassRecord(userId, role, fixedClassRecord);
+      } else {
+        this.assertAdminRole(role);
+      }
+
+      existingStudents = await this.preloadImportStudents(rows);
+      existingGeneratedUsernames =
+        await this.preloadExistingGeneratedImportUsernames(rows);
+      const existingStudentIds = existingStudents.map((student) => student.id);
+
+      const studentCodesToCheck = collectImportStudentCodes(
+        rows,
+        existingStudents,
+      );
+
+      const [studentEnrollments, codeEnrollments] = await Promise.all([
+        existingStudentIds.length > 0
+          ? this.prisma.classStudent.findMany({
+              where: { studentId: { in: existingStudentIds } },
+              select: { classId: true, studentId: true, studentCode: true },
+            })
+          : Promise.resolve([]),
+        studentCodesToCheck.length > 0
+          ? this.prisma.classStudent.findMany({
+              where: { studentCode: { in: studentCodesToCheck } },
+              select: { classId: true, studentId: true, studentCode: true },
+            })
+          : Promise.resolve([]),
+      ]);
+
+      existingEnrollments = studentEnrollments;
+      enrollmentsByCode = codeEnrollments;
+    } finally {
+      console.timeEnd(preloadLabel);
+    }
+
+    const classByCode = new Map(
+      classes.map((classRecord) => [
+        normalizeComparableValue(classRecord.code),
+        classRecord,
+      ]),
+    );
+    const classByName = new Map(
+      classes.map((classRecord) => [
+        normalizeComparableValue(classRecord.name),
+        classRecord,
+      ]),
+    );
+    const studentByEmail = new Map(
+      existingStudents.map((student) => [student.email, student]),
+    );
+    const studentByUsername = new Map(
+      existingStudents.map((student) => [student.username, student]),
+    );
+    const studentById = new Map(
+      existingStudents.map((student) => [student.id, student]),
+    );
+    const enrollmentByStudentId = new Map(
+      existingEnrollments.map((enrollment) => [
+        enrollment.studentId,
+        enrollment,
+      ]),
+    );
+    const enrollmentByCode = new Map(
+      enrollmentsByCode.map((enrollment) => [
+        enrollment.studentCode,
+        enrollment,
+      ]),
+    );
+    const toCreate: ImportToCreate[] = [];
+    const toEnroll: ImportToEnroll[] = [];
+    const previewStudents: ImportClassStudentPreviewItem[] = [];
+    const seenStudentCodes = new Set<string>();
+    const seenStudentIds = new Set<string>();
+    const seenNewEmails = new Set<string>();
+    const seenNewUsernames = new Set<string>(existingGeneratedUsernames);
     let skippedCount = 0;
 
-    await this.prisma
-      .$transaction(async (tx) => {
-        for (const row of rows) {
-          try {
-            if (!row.studentId && !row.email) {
-              throw new BadRequestException(
-                'Thiếu mã sinh viên hệ thống hoặc email',
-              );
-            }
+    for (const row of rows) {
+      try {
+        if (!row.studentId && !row.email && !row.username) {
+          throw new BadRequestException(
+            'Thiếu mã sinh viên hệ thống, email hoặc tên đăng nhập',
+          );
+        }
 
-            const classRecord = await resolveClass(row, tx);
-            const student = await tx.user.findFirst({
-              where: {
-                role: 'student',
-                ...(row.studentId
-                  ? { id: row.studentId }
-                  : { email: row.email?.toLowerCase() }),
-              },
-              select: { id: true, email: true },
-            });
+        const classRecord = resolveImportClass(
+          row,
+          fixedClassRecord,
+          classByCode,
+          classByName,
+        );
 
-            if (!student) {
-              throw new BadRequestException(
-                'Không tìm thấy sinh viên có sẵn trong hệ thống',
-              );
-            }
+        const student =
+          (row.studentId ? studentById.get(row.studentId) : undefined) ??
+          (row.email
+            ? studentByEmail.get(normalizeEmail(row.email))
+            : undefined) ??
+          (row.username
+            ? studentByUsername.get(normalizeUsername(row.username))
+            : undefined);
 
-            const studentCode =
-              row.studentCode ?? deriveStudentCodeFromEmail(student.email);
-            if (!studentCode) {
-              throw new BadRequestException(
-                'Thiếu mã sinh viên. Vui lòng bổ sung cột "Mã sinh viên" hoặc dùng email có phần mã trước ký tự @ không quá 20 ký tự',
-              );
-            }
+        if (!student && row.studentId) {
+          throw new BadRequestException(
+            'Không tìm thấy sinh viên theo mã hệ thống trong file import',
+          );
+        }
 
-            const enrollmentByStudent = await tx.classStudent.findFirst({
-              where: { studentId: student.id },
-              select: { id: true, classId: true, studentCode: true },
-            });
-
-            if (
-              enrollmentByStudent &&
-              enrollmentByStudent.classId !== classRecord.id
-            ) {
-              throw new BadRequestException(
-                'Sinh viên đã thuộc lớp khác, vui lòng chuyển lớp thủ công trước khi import',
-              );
-            }
-
-            const enrollmentByCode = await tx.classStudent.findUnique({
-              where: { studentCode },
-              select: { id: true, classId: true, studentId: true },
-            });
-
-            if (enrollmentByCode && enrollmentByCode.studentId !== student.id) {
-              throw new BadRequestException(
-                'Mã sinh viên đã được sử dụng cho sinh viên khác',
-              );
-            }
-
-            if (enrollmentByCode && enrollmentByCode.classId !== classRecord.id) {
-              throw new BadRequestException(
-                'Mã sinh viên đang thuộc lớp khác, vui lòng kiểm tra lại file import',
-              );
-            }
-
-            if (enrollmentByStudent) {
-              skippedCount += 1;
-              continue;
-            }
-
-            await tx.classStudent.create({
-              data: {
-                classId: classRecord.id,
-                studentId: student.id,
-                studentCode,
-              },
-              select: { id: true },
-            });
-            successCount += 1;
-          } catch (error) {
-            errors.push({
-              row: row.rowNumber,
-              message:
-                error instanceof Error
-                  ? error.message
-                  : 'Dòng dữ liệu không hợp lệ',
-            });
+        if (!student) {
+          if (!row.email) {
+            throw new BadRequestException(
+              'Không tìm thấy sinh viên trong hệ thống và dòng import thiếu email để tạo tài khoản mới',
+            );
           }
+          if (!row.fullName) {
+            throw new BadRequestException(
+              'Không tìm thấy sinh viên trong hệ thống và dòng import thiếu họ tên để tạo tài khoản mới',
+            );
+          }
+
+          parseOptionalDateOnly(row.dateOfBirth);
+
+          const email = normalizeEmail(row.email);
+          const username = generateUniqueImportUsername(
+            row.fullName,
+            seenNewUsernames,
+          );
+          if (seenNewEmails.has(email)) {
+            throw new BadRequestException('Email bị trùng trong file import');
+          }
+          if (seenNewUsernames.has(username)) {
+            throw new BadRequestException(
+              'Tên đăng nhập bị trùng trong file import',
+            );
+          }
+
+          const studentCode =
+            row.studentCode ?? deriveStudentCodeFromEmail(email);
+          validateImportStudentCode(studentCode);
+          assertImportStudentCodeAvailable(
+            studentCode,
+            undefined,
+            classRecord.id,
+            enrollmentByCode,
+            seenStudentCodes,
+          );
+
+          const plainPassword = generateImportPassword();
+          seenNewEmails.add(email);
+          seenNewUsernames.add(username);
+          seenStudentCodes.add(studentCode);
+          toCreate.push({
+            row,
+            classId: classRecord.id,
+            username,
+            studentCode,
+            plainPassword,
+          });
+          previewStudents.push(
+            buildPreviewStudentItem({
+              row,
+              action: 'create',
+              studentId: null,
+              studentCode,
+              fullName: row.fullName,
+              email,
+              phone: row.phone ?? null,
+              dateOfBirth: formatDateOnly(
+                parseOptionalDateOnly(row.dateOfBirth) ?? null,
+              ),
+              username,
+              password: plainPassword,
+              classRecord,
+              note: 'Sẽ tạo tài khoản sinh viên mới khi xác nhận',
+            }),
+          );
+          continue;
         }
 
-        if (errors.length > 0) {
-          throw new ImportValidationError();
-        }
-      })
-      .catch((error) => {
-        if (error instanceof ImportValidationError) {
-          return;
+        if (seenStudentIds.has(student.id)) {
+          throw new BadRequestException('Sinh viên bị trùng trong file import');
         }
 
-        throw error;
+        const studentCode =
+          row.studentCode ??
+          deriveStudentCodeFromEmail(student.email) ??
+          deriveStudentCodeFromUsername(student.username);
+        validateImportStudentCode(studentCode);
+
+        const enrollmentByStudent = enrollmentByStudentId.get(student.id);
+        if (
+          enrollmentByStudent &&
+          enrollmentByStudent.classId !== classRecord.id
+        ) {
+          throw new BadRequestException(
+            'Sinh viên đã thuộc lớp khác, vui lòng chuyển lớp thủ công trước khi import',
+          );
+        }
+
+        assertImportStudentCodeAvailable(
+          studentCode,
+          student.id,
+          classRecord.id,
+          enrollmentByCode,
+          seenStudentCodes,
+        );
+
+        if (enrollmentByStudent) {
+          skippedCount += 1;
+          previewStudents.push(
+            buildPreviewStudentItem({
+              row,
+              action: 'skip',
+              studentId: student.id,
+              studentCode,
+              fullName: student.fullName,
+              email: student.email,
+              phone: student.phone,
+              dateOfBirth: formatDateOnly(student.dateOfBirth),
+              username: student.username,
+              password: null,
+              classRecord,
+              note: 'Sinh viên đã có trong lớp, bỏ qua khi xác nhận',
+            }),
+          );
+          continue;
+        }
+
+        seenStudentIds.add(student.id);
+        seenStudentCodes.add(studentCode);
+        toEnroll.push({
+          studentId: student.id,
+          classId: classRecord.id,
+          studentCode,
+        });
+        previewStudents.push(
+          buildPreviewStudentItem({
+            row,
+            action: 'enroll',
+            studentId: student.id,
+            studentCode,
+            fullName: student.fullName,
+            email: student.email,
+            phone: student.phone,
+            dateOfBirth: formatDateOnly(student.dateOfBirth),
+            username: student.username,
+            password: null,
+            classRecord,
+            note: 'Sẽ thêm sinh viên có sẵn vào lớp khi xác nhận',
+          }),
+        );
+      } catch (error) {
+        errors.push({
+          row: row.rowNumber,
+          message:
+            error instanceof Error
+              ? error.message
+              : 'Dòng dữ liệu không hợp lệ',
+        });
+      }
+    }
+
+    if (errors.length > 0) {
+      throw new BadRequestException({
+        message: 'Import file thất bại',
+        errors: errors.map((error) => ({
+          field: `row ${error.row}`,
+          error: error.message,
+        })),
       });
+    }
+
+    const importToken = randomUUID();
+    const expiresAt = new Date(Date.now() + IMPORT_PREVIEW_TTL_MS);
+    const previewCreatedAccounts = toCreate.map((item) => ({
+      username: item.username,
+      email: normalizeEmail(item.row.email ?? ''),
+      password: item.plainPassword,
+      studentCode: item.studentCode,
+      fullName: item.row.fullName?.trim() ?? '',
+    }));
+
+    this.importPreviewCache.set(importToken, {
+      userId,
+      role,
+      expiresAt: expiresAt.getTime(),
+      totalRows: rows.length,
+      skippedCount,
+      toCreate,
+      toEnroll,
+    });
 
     return {
+      importToken,
+      expiresAt,
       totalRows: rows.length,
-      successCount: errors.length > 0 ? 0 : successCount,
-      skippedCount: errors.length > 0 ? 0 : skippedCount,
-      failedCount: errors.length,
-      errors,
+      successCount: toCreate.length + toEnroll.length,
+      skippedCount,
+      createdAccountCount: previewCreatedAccounts.length,
+      createdAccounts: previewCreatedAccounts,
+      previewStudents,
+      failedCount: 0,
+      errors: [],
     };
+  }
+
+  private async commitImportPlan(
+    plan: CachedImportPlan,
+    timingId: string,
+  ): Promise<ImportClassStudentsResult> {
+    const createdAccounts: ImportClassStudentsResult['createdAccounts'] = [];
+    const preparePasswordsLabel = createImportTimingLabel(
+      timingId,
+      'prepare-passwords',
+    );
+    const loopInsertLabel = createImportTimingLabel(timingId, 'loop-insert');
+    console.time(preparePasswordsLabel);
+    const preparedCreates = await Promise.all(
+      plan.toCreate.map(async (item) => ({
+        ...item,
+        passwordHash: await bcrypt.hash(
+          item.plainPassword,
+          PASSWORD_SALT_ROUNDS,
+        ),
+      })),
+    );
+    console.timeEnd(preparePasswordsLabel);
+
+    const toEnroll = [...plan.toEnroll];
+    let successCount = 0;
+    console.time(loopInsertLabel);
+    try {
+      await this.prisma.$transaction(
+        async (tx) => {
+          for (const item of preparedCreates) {
+            const createdStudent = await this.createStudentFromImportRow(
+              item.row,
+              tx,
+              {
+                username: item.username,
+                plainPassword: item.plainPassword,
+                passwordHash: item.passwordHash,
+              },
+            );
+            createdAccounts.push({
+              username: createdStudent.student.username,
+              email: createdStudent.student.email,
+              password: createdStudent.plainPassword,
+              studentCode: item.studentCode,
+              fullName: item.row.fullName?.trim() ?? '',
+            });
+            toEnroll.push({
+              studentId: createdStudent.student.id,
+              classId: item.classId,
+              studentCode: item.studentCode,
+            });
+          }
+
+          if (toEnroll.length > 0) {
+            const result = await tx.classStudent.createMany({
+              data: toEnroll,
+              skipDuplicates: true,
+            });
+            successCount = result.count;
+          }
+        },
+        {
+          timeout: IMPORT_TRANSACTION_TIMEOUT_MS,
+        },
+      );
+    } finally {
+      console.timeEnd(loopInsertLabel);
+    }
+
+    const sendEmailsLabel = createImportTimingLabel(timingId, 'send-emails');
+    console.time(sendEmailsLabel);
+    let emailResult: {
+      sentCount: number;
+      errors: ImportClassStudentsResult['emailErrors'];
+    };
+
+    try {
+      emailResult = await this.sendCreatedAccountEmails(createdAccounts);
+    } finally {
+      console.timeEnd(sendEmailsLabel);
+    }
+
+    return {
+      totalRows: plan.totalRows,
+      successCount,
+      skippedCount: plan.skippedCount,
+      createdAccountCount: createdAccounts.length,
+      createdAccounts,
+      emailSentCount: emailResult.sentCount,
+      emailFailedCount: emailResult.errors.length,
+      emailErrors: emailResult.errors,
+      failedCount: 0,
+      errors: [],
+    };
+  }
+
+  private async sendCreatedAccountEmails(
+    accounts: ImportClassStudentsResult['createdAccounts'],
+  ): Promise<{
+    sentCount: number;
+    errors: ImportClassStudentsResult['emailErrors'];
+  }> {
+    if (accounts.length === 0) {
+      return { sentCount: 0, errors: [] };
+    }
+
+    if (!this.studentAccountMailService.isConfigured()) {
+      return {
+        sentCount: 0,
+        errors: accounts.map((account) => ({
+          email: account.email,
+          message:
+            'Chưa thiết lập chức năng gửi email nên tài khoản chưa được gửi đi',
+        })),
+      };
+    }
+
+    const results = await Promise.allSettled(
+      accounts.map((account) =>
+        this.studentAccountMailService.sendStudentAccount(account),
+      ),
+    );
+    const emailErrors: ImportClassStudentsResult['emailErrors'] = [];
+
+    results.forEach((result, index) => {
+      if (result.status === 'fulfilled') {
+        return;
+      }
+
+      const account = accounts[index];
+      if (!account) {
+        return;
+      }
+
+      emailErrors.push({
+        email: account.email,
+        message: 'Chưa gửi được email tài khoản, vui lòng kiểm tra lại sau',
+      });
+    });
+
+    return {
+      sentCount: accounts.length - emailErrors.length,
+      errors: emailErrors,
+    };
+  }
+
+  private async createStudentFromImportRow(
+    row: ImportRow,
+    tx: Prisma.TransactionClient,
+    preparedAccount?: {
+      username: string;
+      plainPassword: string;
+      passwordHash: string;
+    },
+  ): Promise<{
+    student: { id: string; email: string; username: string };
+    plainPassword: string;
+  }> {
+    if (!row.email) {
+      throw new BadRequestException(
+        'Không tìm thấy sinh viên trong hệ thống và dòng import thiếu email để tạo tài khoản mới',
+      );
+    }
+
+    if (!row.fullName) {
+      throw new BadRequestException(
+        'Không tìm thấy sinh viên trong hệ thống và dòng import thiếu họ tên để tạo tài khoản mới',
+      );
+    }
+
+    const username =
+      preparedAccount?.username ?? generateImportUsername(row.fullName);
+    validateImportUsername(username);
+    const password = preparedAccount?.plainPassword ?? generateImportPassword();
+    const passwordHash =
+      preparedAccount?.passwordHash ??
+      (await bcrypt.hash(password, PASSWORD_SALT_ROUNDS));
+
+    try {
+      const student = await tx.user.create({
+        data: {
+          username,
+          email: normalizeEmail(row.email),
+          fullName: row.fullName.trim(),
+          passwordHash,
+          role: 'student',
+          phone: row.phone ?? null,
+          dateOfBirth: parseOptionalDateOnly(row.dateOfBirth),
+        },
+        select: { id: true, email: true, username: true },
+      });
+
+      return { student, plainPassword: password };
+    } catch (error) {
+      handleImportUserCreateError(error);
+      throw error;
+    }
+  }
+
+  private async preloadImportClasses(
+    rows: ImportRow[],
+  ): Promise<ManageableClassRecord[]> {
+    const classCodes = [
+      ...new Set(rows.map((row) => row.classCode?.trim()).filter(Boolean)),
+    ] as string[];
+
+    if (classCodes.length === 0) {
+      return [];
+    }
+
+    return this.prisma.class.findMany({
+      where: {
+        OR: classCodes.flatMap((classCode) => [
+          { code: { equals: classCode, mode: 'insensitive' as const } },
+          { name: { equals: classCode, mode: 'insensitive' as const } },
+        ]),
+      },
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        major: { select: { facultyId: true } },
+      },
+    });
+  }
+
+  private async preloadImportStudents(
+    rows: ImportRow[],
+  ): Promise<ImportStudentRecord[]> {
+    const studentIds = [
+      ...new Set(rows.map((row) => row.studentId).filter(Boolean)),
+    ] as string[];
+    const emails = [
+      ...new Set(
+        rows
+          .map((row) => row.email && normalizeEmail(row.email))
+          .filter(Boolean),
+      ),
+    ] as string[];
+    const usernames = [
+      ...new Set(
+        rows
+          .map((row) =>
+            normalizeUsername(
+              row.username ?? row.studentCode ?? row.email?.split('@')[0] ?? '',
+            ),
+          )
+          .filter(Boolean),
+      ),
+    ] as string[];
+    const orConditions: Prisma.UserWhereInput[] = [
+      ...(studentIds.length > 0 ? [{ id: { in: studentIds } }] : []),
+      ...(emails.length > 0 ? [{ email: { in: emails } }] : []),
+      ...(usernames.length > 0 ? [{ username: { in: usernames } }] : []),
+    ];
+
+    if (orConditions.length === 0) {
+      return [];
+    }
+
+    return this.prisma.user.findMany({
+      where: {
+        role: 'student',
+        deletedAt: null,
+        OR: orConditions,
+      },
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        fullName: true,
+        phone: true,
+        dateOfBirth: true,
+      },
+    });
+  }
+
+  private async preloadExistingGeneratedImportUsernames(
+    rows: ImportRow[],
+  ): Promise<string[]> {
+    const usernamePrefixes = [
+      ...new Set(
+        rows
+          .map((row) =>
+            row.fullName ? buildImportUsernameBase(row.fullName) : undefined,
+          )
+          .filter(Boolean),
+      ),
+    ] as string[];
+
+    if (usernamePrefixes.length === 0) {
+      return [];
+    }
+
+    const users = await this.prisma.user.findMany({
+      where: {
+        OR: usernamePrefixes.map((usernamePrefix) => ({
+          username: { startsWith: usernamePrefix },
+        })),
+      },
+      select: { username: true },
+    });
+
+    return users.map((user) => user.username);
   }
 
   private async buildImportTemplate(classCode: string): Promise<Buffer> {
@@ -365,6 +945,7 @@ export class AdminClassesService {
       { header: 'Họ và tên', key: 'fullName', width: 25 },
       { header: 'Email', key: 'email', width: 30 },
       { header: 'Số điện thoại', key: 'phone', width: 18 },
+      { header: 'Ngày sinh', key: 'dateOfBirth', width: 15 },
       { header: 'Lớp', key: 'className', width: 15 },
     ];
 
@@ -382,6 +963,7 @@ export class AdminClassesService {
       fullName: 'Nguyễn Văn A',
       email: 'vana@example.com',
       phone: '0901234567',
+      dateOfBirth: '2004-01-01',
       className: classCode,
     });
 
@@ -423,19 +1005,30 @@ export class AdminClassesService {
       return;
     }
 
-    if (role !== UserRole.FacultyCouncil) {
+    if (role !== UserRole.ClassCouncil) {
       throw new ForbiddenException('Bạn không có quyền quản lý lớp học này');
     }
 
-    const assignmentCount = await this.prisma.facultyCouncilAssignment.count({
+    const assignment = await this.prisma.classCouncilAssignment.findUnique({
       where: {
-        userId,
-        facultyId: classRecord.major.facultyId,
+        userId_classId: {
+          userId,
+          classId: classRecord.id,
+        },
       },
+      select: { id: true },
     });
 
-    if (assignmentCount === 0) {
-      throw new ForbiddenException('Bạn không được phân công quản lý khoa này');
+    if (!assignment) {
+      throw new ForbiddenException(
+        'Bạn không được phân công phụ trách lớp này',
+      );
+    }
+  }
+
+  private assertAdminRole(role: UserRole): void {
+    if (role !== UserRole.Admin) {
+      throw new ForbiddenException('Bạn không có quyền quản lý lớp học này');
     }
   }
 
@@ -482,6 +1075,38 @@ function mapToAdminClassStudentResponse(
   };
 }
 
+function buildPreviewStudentItem(params: {
+  row: ImportRow;
+  action: ImportClassStudentPreviewItem['action'];
+  studentId: string | null;
+  studentCode: string;
+  fullName: string;
+  email: string;
+  phone: string | null;
+  dateOfBirth: string | null;
+  username: string;
+  password: string | null;
+  classRecord: ManageableClassRecord;
+  note: string | null;
+}): ImportClassStudentPreviewItem {
+  return {
+    row: params.row.rowNumber,
+    action: params.action,
+    studentId: params.studentId,
+    studentCode: params.studentCode,
+    fullName: params.fullName.trim(),
+    email: normalizeEmail(params.email),
+    phone: params.phone,
+    dateOfBirth: params.dateOfBirth,
+    username: params.username,
+    password: params.password,
+    classId: params.classRecord.id,
+    classCode: params.classRecord.code,
+    className: params.classRecord.name,
+    note: params.note,
+  };
+}
+
 function isExcelFile(file: UploadedExcelFile) {
   const fileName = file.originalname.toLowerCase();
   return (
@@ -499,7 +1124,9 @@ function parseUploadedImportFile(file: UploadedExcelFile | undefined) {
   }
 
   if (!isExcelFile(file)) {
-    throw new BadRequestException('File import phải có định dạng .xlsx hoặc .xls');
+    throw new BadRequestException(
+      'File import phải có định dạng .xlsx hoặc .xls',
+    );
   }
 
   const rows = parseImportRows(file.buffer);
@@ -520,7 +1147,9 @@ function parseImportRows(buffer: Buffer): ImportRow[] {
 
   const sheet = workbook.Sheets[sheetName];
   if (!sheet) {
-    throw new BadRequestException('Không đọc được sheet dữ liệu trong file Excel');
+    throw new BadRequestException(
+      'Không đọc được sheet dữ liệu trong file Excel',
+    );
   }
 
   const rows = utils.sheet_to_json<Record<string, unknown>>(sheet, {
@@ -540,6 +1169,23 @@ function parseImportRows(buffer: Buffer): ImportRow[] {
           'masinhvienhethong',
         ]),
         email: getCellValue(normalizedRow, ['email', 'mail', 'gmail']),
+        username: getCellValue(normalizedRow, [
+          'username',
+          'tendangnhap',
+          'taikhoan',
+        ]),
+        fullName: getCellValue(normalizedRow, [
+          'hovaten',
+          'hoten',
+          'fullname',
+          'name',
+        ]),
+        phone: getCellValue(normalizedRow, ['sodienthoai', 'phone']),
+        dateOfBirth: getRawCellValue(normalizedRow, [
+          'ngaysinh',
+          'dateofbirth',
+          'dob',
+        ]),
         studentCode: getCellValue(normalizedRow, [
           'studentcode',
           'student_code',
@@ -555,7 +1201,15 @@ function parseImportRows(buffer: Buffer): ImportRow[] {
         ]),
       };
     })
-    .filter((row) => row.studentId || row.email || row.studentCode || row.classCode);
+    .filter(
+      (row) =>
+        row.studentId ||
+        row.email ||
+        row.username ||
+        row.fullName ||
+        row.studentCode ||
+        row.classCode,
+    );
 }
 
 function getCellValue(row: Record<string, unknown>, keys: string[]) {
@@ -565,6 +1219,27 @@ function getCellValue(row: Record<string, unknown>, keys: string[]) {
     if (value !== undefined && value !== null && String(value).trim() !== '') {
       return String(value).trim();
     }
+  }
+
+  return undefined;
+}
+
+function getRawCellValue(
+  row: Record<string, unknown>,
+  keys: string[],
+): Date | number | string | undefined {
+  for (const key of keys) {
+    const value = row[key];
+
+    if (value === undefined || value === null || String(value).trim() === '') {
+      continue;
+    }
+
+    if (value instanceof Date || typeof value === 'number') {
+      return value;
+    }
+
+    return String(value).trim();
   }
 
   return undefined;
@@ -604,6 +1279,10 @@ function isSameClassInImportFile(
   );
 }
 
+function normalizeEmail(email: string): string {
+  return email.toLowerCase().trim();
+}
+
 function deriveStudentCodeFromEmail(email: string) {
   const localPart = email.split('@')[0]?.trim();
 
@@ -614,4 +1293,207 @@ function deriveStudentCodeFromEmail(email: string) {
   return localPart;
 }
 
-class ImportValidationError extends Error {}
+function deriveStudentCodeFromUsername(username: string) {
+  if (!username || username.length > 20) {
+    return undefined;
+  }
+
+  return username;
+}
+
+function buildImportUsernameBase(fullName: string): string {
+  const base = normalizeHeader(fullName).replace(/_/g, '').slice(0, 40);
+
+  return base || 'sinhvien';
+}
+
+function generateImportUsername(fullName = 'sinhvien'): string {
+  const suffix = randomBytes(2).readUInt16BE(0).toString().padStart(5, '0');
+  return `${buildImportUsernameBase(fullName)}${suffix}`;
+}
+
+function generateUniqueImportUsername(
+  fullName: string,
+  seenUsernames: Set<string>,
+): string {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const username = generateImportUsername(fullName);
+    if (!seenUsernames.has(username)) {
+      return username;
+    }
+  }
+
+  throw new BadRequestException('Không thể sinh tên đăng nhập ngẫu nhiên');
+}
+
+function validateImportUsername(username: string): void {
+  if (!username) {
+    throw new BadRequestException('Thiếu tên đăng nhập để tạo tài khoản mới');
+  }
+
+  if (!USERNAME_PATTERN.test(username)) {
+    throw new BadRequestException(
+      'Tên đăng nhập chỉ được chứa chữ thường, số, dấu chấm, gạch dưới hoặc gạch ngang, không chứa khoảng trắng',
+    );
+  }
+
+  if (username.length < 3 || username.length > 50) {
+    throw new BadRequestException('Tên đăng nhập phải có từ 3 đến 50 ký tự');
+  }
+}
+
+function handleImportUserCreateError(error: unknown): void {
+  if (!(error instanceof Prisma.PrismaClientKnownRequestError)) {
+    return;
+  }
+
+  if (error.code !== 'P2002') {
+    return;
+  }
+
+  const target = (error.meta?.target as string[] | undefined)?.join(',') ?? '';
+
+  if (target.includes('username')) {
+    throw new ConflictException('Tên đăng nhập đã tồn tại');
+  }
+
+  throw new ConflictException('Email đã tồn tại');
+}
+
+function generateImportPassword(): string {
+  return `Sv@${randomBytes(IMPORT_GENERATED_PASSWORD_BYTES).toString('base64url')}`;
+}
+
+function collectImportStudentCodes(
+  rows: ImportRow[],
+  existingStudents: Array<{ id: string; email: string; username: string }>,
+): string[] {
+  const studentByEmail = new Map(
+    existingStudents.map((student) => [student.email, student]),
+  );
+  const studentByUsername = new Map(
+    existingStudents.map((student) => [student.username, student]),
+  );
+  const studentById = new Map(
+    existingStudents.map((student) => [student.id, student]),
+  );
+  const studentCodes = new Set<string>();
+
+  for (const row of rows) {
+    if (row.studentCode) {
+      studentCodes.add(row.studentCode);
+      continue;
+    }
+
+    const student =
+      (row.studentId ? studentById.get(row.studentId) : undefined) ??
+      (row.email ? studentByEmail.get(normalizeEmail(row.email)) : undefined) ??
+      (row.username
+        ? studentByUsername.get(normalizeUsername(row.username))
+        : undefined);
+    const derivedCode = student
+      ? (deriveStudentCodeFromEmail(student.email) ??
+        deriveStudentCodeFromUsername(student.username))
+      : row.email
+        ? deriveStudentCodeFromEmail(normalizeEmail(row.email))
+        : undefined;
+
+    if (derivedCode) {
+      studentCodes.add(derivedCode);
+    }
+  }
+
+  return [...studentCodes];
+}
+
+function resolveImportClass(
+  row: ImportRow,
+  fixedClassRecord: ManageableClassRecord | undefined,
+  classByCode: Map<string, ManageableClassRecord>,
+  classByName: Map<string, ManageableClassRecord>,
+): ManageableClassRecord {
+  if (fixedClassRecord) {
+    if (
+      row.classCode &&
+      !isSameClassInImportFile(
+        row.classCode,
+        fixedClassRecord.code,
+        fixedClassRecord.name,
+      )
+    ) {
+      throw new BadRequestException(
+        `Lớp trong file (${row.classCode}) không khớp với lớp đang import (${fixedClassRecord.code})`,
+      );
+    }
+
+    return fixedClassRecord;
+  }
+
+  if (!row.classCode) {
+    throw new BadRequestException('Thiếu lớp');
+  }
+
+  const normalizedClass = normalizeComparableValue(row.classCode);
+  const classRecord =
+    classByCode.get(normalizedClass) ?? classByName.get(normalizedClass);
+
+  if (!classRecord) {
+    throw new BadRequestException(`Không tìm thấy lớp ${row.classCode}`);
+  }
+
+  return classRecord;
+}
+
+function validateImportStudentCode(
+  studentCode: string | undefined,
+): asserts studentCode is string {
+  if (!studentCode) {
+    throw new BadRequestException(
+      'Thiếu mã sinh viên. Vui lòng bổ sung cột "Mã sinh viên" hoặc dùng email/tên đăng nhập có phần mã không quá 20 ký tự',
+    );
+  }
+
+  if (studentCode.length > 20) {
+    throw new BadRequestException('Mã sinh viên không được vượt quá 20 ký tự');
+  }
+}
+
+function assertImportStudentCodeAvailable(
+  studentCode: string,
+  studentId: string | undefined,
+  classId: string,
+  enrollmentByCode: Map<
+    string,
+    { classId: string; studentId: string; studentCode: string }
+  >,
+  seenStudentCodes: Set<string>,
+): void {
+  if (seenStudentCodes.has(studentCode)) {
+    throw new BadRequestException('Mã sinh viên bị trùng trong file import');
+  }
+
+  const enrollment = enrollmentByCode.get(studentCode);
+  if (!enrollment) {
+    return;
+  }
+
+  if (!studentId || enrollment.studentId !== studentId) {
+    throw new BadRequestException(
+      'Mã sinh viên đã được sử dụng cho sinh viên khác',
+    );
+  }
+
+  if (enrollment.classId !== classId) {
+    throw new BadRequestException(
+      'Mã sinh viên đang thuộc lớp khác, vui lòng kiểm tra lại file import',
+    );
+  }
+}
+
+function createImportTimingId(): string {
+  return randomBytes(4).toString('hex');
+}
+
+function createImportTimingLabel(timingId: string, step: string): string {
+  return `admin-students-import:${timingId}:${step}`;
+}

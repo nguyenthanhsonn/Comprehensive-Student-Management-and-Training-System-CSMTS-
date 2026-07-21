@@ -880,7 +880,7 @@ export type $EvidencePayload<ExtArgs extends runtime.Types.Extensions.InternalAr
 export type EvidenceGetPayload<S extends boolean | null | undefined | EvidenceDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$EvidencePayload, S>
 
 export type EvidenceCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<EvidenceFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<EvidenceFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: EvidenceCountAggregateInputType | true
   }
 
@@ -1331,6 +1331,7 @@ export type EvidenceFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Filter, which Evidence to fetch.
    */
   where: Prisma.EvidenceWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1353,6 +1354,7 @@ export type EvidenceFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Extensio
    * Filter, which Evidence to fetch.
    */
   where: Prisma.EvidenceWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1405,6 +1407,7 @@ export type EvidenceFindFirstArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Filter by unique combinations of Evidences.
    */
   distinct?: Prisma.EvidenceScalarFieldEnum | Prisma.EvidenceScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1457,6 +1460,7 @@ export type EvidenceFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Extension
    * Filter by unique combinations of Evidences.
    */
   distinct?: Prisma.EvidenceScalarFieldEnum | Prisma.EvidenceScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1509,6 +1513,7 @@ export type EvidenceFindManyArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * Filter by unique combinations of Evidences.
    */
   distinct?: Prisma.EvidenceScalarFieldEnum | Prisma.EvidenceScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1531,6 +1536,7 @@ export type EvidenceCreateArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * The data needed to create a Evidence.
    */
   data: Prisma.XOR<Prisma.EvidenceCreateInput, Prisma.EvidenceUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1591,6 +1597,7 @@ export type EvidenceUpdateArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Choose, which Evidence to update.
    */
   where: Prisma.EvidenceWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1669,6 +1676,7 @@ export type EvidenceUpsertArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * In case the Evidence was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.EvidenceUpdateInput, Prisma.EvidenceUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1691,6 +1699,7 @@ export type EvidenceDeleteArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Filter which Evidence to delete.
    */
   where: Prisma.EvidenceWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

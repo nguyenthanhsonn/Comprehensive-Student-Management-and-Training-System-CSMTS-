@@ -191,7 +191,6 @@ export type FacultyWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"Faculty"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"Faculty"> | Date | string | null
   majors?: Prisma.MajorListRelationFilter
-  facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentListRelationFilter
 }
 
 export type FacultyOrderByWithRelationInput = {
@@ -202,7 +201,6 @@ export type FacultyOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   majors?: Prisma.MajorOrderByRelationAggregateInput
-  facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentOrderByRelationAggregateInput
 }
 
 export type FacultyWhereUniqueInput = Prisma.AtLeast<{
@@ -216,7 +214,6 @@ export type FacultyWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Faculty"> | Date | string
   deletedAt?: Prisma.DateTimeNullableFilter<"Faculty"> | Date | string | null
   majors?: Prisma.MajorListRelationFilter
-  facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentListRelationFilter
 }, "id" | "code">
 
 export type FacultyOrderByWithAggregationInput = {
@@ -251,7 +248,6 @@ export type FacultyCreateInput = {
   createdAt?: Date | string
   deletedAt?: Date | string | null
   majors?: Prisma.MajorCreateNestedManyWithoutFacultyInput
-  facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentCreateNestedManyWithoutFacultyInput
 }
 
 export type FacultyUncheckedCreateInput = {
@@ -262,7 +258,6 @@ export type FacultyUncheckedCreateInput = {
   createdAt?: Date | string
   deletedAt?: Date | string | null
   majors?: Prisma.MajorUncheckedCreateNestedManyWithoutFacultyInput
-  facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedCreateNestedManyWithoutFacultyInput
 }
 
 export type FacultyUpdateInput = {
@@ -273,7 +268,6 @@ export type FacultyUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   majors?: Prisma.MajorUpdateManyWithoutFacultyNestedInput
-  facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUpdateManyWithoutFacultyNestedInput
 }
 
 export type FacultyUncheckedUpdateInput = {
@@ -284,7 +278,6 @@ export type FacultyUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   majors?: Prisma.MajorUncheckedUpdateManyWithoutFacultyNestedInput
-  facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedUpdateManyWithoutFacultyNestedInput
 }
 
 export type FacultyCreateManyInput = {
@@ -360,20 +353,6 @@ export type FacultyUpdateOneRequiredWithoutMajorsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.FacultyUpdateToOneWithWhereWithoutMajorsInput, Prisma.FacultyUpdateWithoutMajorsInput>, Prisma.FacultyUncheckedUpdateWithoutMajorsInput>
 }
 
-export type FacultyCreateNestedOneWithoutFacultyCouncilAssignmentsInput = {
-  create?: Prisma.XOR<Prisma.FacultyCreateWithoutFacultyCouncilAssignmentsInput, Prisma.FacultyUncheckedCreateWithoutFacultyCouncilAssignmentsInput>
-  connectOrCreate?: Prisma.FacultyCreateOrConnectWithoutFacultyCouncilAssignmentsInput
-  connect?: Prisma.FacultyWhereUniqueInput
-}
-
-export type FacultyUpdateOneRequiredWithoutFacultyCouncilAssignmentsNestedInput = {
-  create?: Prisma.XOR<Prisma.FacultyCreateWithoutFacultyCouncilAssignmentsInput, Prisma.FacultyUncheckedCreateWithoutFacultyCouncilAssignmentsInput>
-  connectOrCreate?: Prisma.FacultyCreateOrConnectWithoutFacultyCouncilAssignmentsInput
-  upsert?: Prisma.FacultyUpsertWithoutFacultyCouncilAssignmentsInput
-  connect?: Prisma.FacultyWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.FacultyUpdateToOneWithWhereWithoutFacultyCouncilAssignmentsInput, Prisma.FacultyUpdateWithoutFacultyCouncilAssignmentsInput>, Prisma.FacultyUncheckedUpdateWithoutFacultyCouncilAssignmentsInput>
-}
-
 export type FacultyCreateWithoutMajorsInput = {
   id?: string
   code: string
@@ -381,7 +360,6 @@ export type FacultyCreateWithoutMajorsInput = {
   isActive?: boolean
   createdAt?: Date | string
   deletedAt?: Date | string | null
-  facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentCreateNestedManyWithoutFacultyInput
 }
 
 export type FacultyUncheckedCreateWithoutMajorsInput = {
@@ -391,7 +369,6 @@ export type FacultyUncheckedCreateWithoutMajorsInput = {
   isActive?: boolean
   createdAt?: Date | string
   deletedAt?: Date | string | null
-  facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedCreateNestedManyWithoutFacultyInput
 }
 
 export type FacultyCreateOrConnectWithoutMajorsInput = {
@@ -417,7 +394,6 @@ export type FacultyUpdateWithoutMajorsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUpdateManyWithoutFacultyNestedInput
 }
 
 export type FacultyUncheckedUpdateWithoutMajorsInput = {
@@ -427,63 +403,6 @@ export type FacultyUncheckedUpdateWithoutMajorsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  facultyCouncilAssignments?: Prisma.FacultyCouncilAssignmentUncheckedUpdateManyWithoutFacultyNestedInput
-}
-
-export type FacultyCreateWithoutFacultyCouncilAssignmentsInput = {
-  id?: string
-  code: string
-  name: string
-  isActive?: boolean
-  createdAt?: Date | string
-  deletedAt?: Date | string | null
-  majors?: Prisma.MajorCreateNestedManyWithoutFacultyInput
-}
-
-export type FacultyUncheckedCreateWithoutFacultyCouncilAssignmentsInput = {
-  id?: string
-  code: string
-  name: string
-  isActive?: boolean
-  createdAt?: Date | string
-  deletedAt?: Date | string | null
-  majors?: Prisma.MajorUncheckedCreateNestedManyWithoutFacultyInput
-}
-
-export type FacultyCreateOrConnectWithoutFacultyCouncilAssignmentsInput = {
-  where: Prisma.FacultyWhereUniqueInput
-  create: Prisma.XOR<Prisma.FacultyCreateWithoutFacultyCouncilAssignmentsInput, Prisma.FacultyUncheckedCreateWithoutFacultyCouncilAssignmentsInput>
-}
-
-export type FacultyUpsertWithoutFacultyCouncilAssignmentsInput = {
-  update: Prisma.XOR<Prisma.FacultyUpdateWithoutFacultyCouncilAssignmentsInput, Prisma.FacultyUncheckedUpdateWithoutFacultyCouncilAssignmentsInput>
-  create: Prisma.XOR<Prisma.FacultyCreateWithoutFacultyCouncilAssignmentsInput, Prisma.FacultyUncheckedCreateWithoutFacultyCouncilAssignmentsInput>
-  where?: Prisma.FacultyWhereInput
-}
-
-export type FacultyUpdateToOneWithWhereWithoutFacultyCouncilAssignmentsInput = {
-  where?: Prisma.FacultyWhereInput
-  data: Prisma.XOR<Prisma.FacultyUpdateWithoutFacultyCouncilAssignmentsInput, Prisma.FacultyUncheckedUpdateWithoutFacultyCouncilAssignmentsInput>
-}
-
-export type FacultyUpdateWithoutFacultyCouncilAssignmentsInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  code?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  majors?: Prisma.MajorUpdateManyWithoutFacultyNestedInput
-}
-
-export type FacultyUncheckedUpdateWithoutFacultyCouncilAssignmentsInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  code?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  majors?: Prisma.MajorUncheckedUpdateManyWithoutFacultyNestedInput
 }
 
 
@@ -493,12 +412,10 @@ export type FacultyUncheckedUpdateWithoutFacultyCouncilAssignmentsInput = {
 
 export type FacultyCountOutputType = {
   majors: number
-  facultyCouncilAssignments: number
 }
 
 export type FacultyCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   majors?: boolean | FacultyCountOutputTypeCountMajorsArgs
-  facultyCouncilAssignments?: boolean | FacultyCountOutputTypeCountFacultyCouncilAssignmentsArgs
 }
 
 /**
@@ -518,13 +435,6 @@ export type FacultyCountOutputTypeCountMajorsArgs<ExtArgs extends runtime.Types.
   where?: Prisma.MajorWhereInput
 }
 
-/**
- * FacultyCountOutputType without action
- */
-export type FacultyCountOutputTypeCountFacultyCouncilAssignmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.FacultyCouncilAssignmentWhereInput
-}
-
 
 export type FacultySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -534,7 +444,6 @@ export type FacultySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   createdAt?: boolean
   deletedAt?: boolean
   majors?: boolean | Prisma.Faculty$majorsArgs<ExtArgs>
-  facultyCouncilAssignments?: boolean | Prisma.Faculty$facultyCouncilAssignmentsArgs<ExtArgs>
   _count?: boolean | Prisma.FacultyCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["faculty"]>
 
@@ -568,7 +477,6 @@ export type FacultySelectScalar = {
 export type FacultyOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "code" | "name" | "isActive" | "createdAt" | "deletedAt", ExtArgs["result"]["faculty"]>
 export type FacultyInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   majors?: boolean | Prisma.Faculty$majorsArgs<ExtArgs>
-  facultyCouncilAssignments?: boolean | Prisma.Faculty$facultyCouncilAssignmentsArgs<ExtArgs>
   _count?: boolean | Prisma.FacultyCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type FacultyIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -578,7 +486,6 @@ export type $FacultyPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
   name: "Faculty"
   objects: {
     majors: Prisma.$MajorPayload<ExtArgs>[]
-    facultyCouncilAssignments: Prisma.$FacultyCouncilAssignmentPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -594,7 +501,7 @@ export type $FacultyPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
 export type FacultyGetPayload<S extends boolean | null | undefined | FacultyDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$FacultyPayload, S>
 
 export type FacultyCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<FacultyFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<FacultyFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: FacultyCountAggregateInputType | true
   }
 
@@ -982,7 +889,6 @@ readonly fields: FacultyFieldRefs;
 export interface Prisma__FacultyClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   majors<T extends Prisma.Faculty$majorsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Faculty$majorsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MajorPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  facultyCouncilAssignments<T extends Prisma.Faculty$facultyCouncilAssignmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Faculty$facultyCouncilAssignmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FacultyCouncilAssignmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1042,6 +948,7 @@ export type FacultyFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Filter, which Faculty to fetch.
    */
   where: Prisma.FacultyWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1064,6 +971,7 @@ export type FacultyFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Extension
    * Filter, which Faculty to fetch.
    */
   where: Prisma.FacultyWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1116,6 +1024,7 @@ export type FacultyFindFirstArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * Filter by unique combinations of Faculties.
    */
   distinct?: Prisma.FacultyScalarFieldEnum | Prisma.FacultyScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1168,6 +1077,7 @@ export type FacultyFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Extensions
    * Filter by unique combinations of Faculties.
    */
   distinct?: Prisma.FacultyScalarFieldEnum | Prisma.FacultyScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1220,6 +1130,7 @@ export type FacultyFindManyArgs<ExtArgs extends runtime.Types.Extensions.Interna
    * Filter by unique combinations of Faculties.
    */
   distinct?: Prisma.FacultyScalarFieldEnum | Prisma.FacultyScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1242,6 +1153,7 @@ export type FacultyCreateArgs<ExtArgs extends runtime.Types.Extensions.InternalA
    * The data needed to create a Faculty.
    */
   data: Prisma.XOR<Prisma.FacultyCreateInput, Prisma.FacultyUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1298,6 +1210,7 @@ export type FacultyUpdateArgs<ExtArgs extends runtime.Types.Extensions.InternalA
    * Choose, which Faculty to update.
    */
   where: Prisma.FacultyWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1372,6 +1285,7 @@ export type FacultyUpsertArgs<ExtArgs extends runtime.Types.Extensions.InternalA
    * In case the Faculty was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.FacultyUpdateInput, Prisma.FacultyUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1394,6 +1308,7 @@ export type FacultyDeleteArgs<ExtArgs extends runtime.Types.Extensions.InternalA
    * Filter which Faculty to delete.
    */
   where: Prisma.FacultyWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1432,30 +1347,6 @@ export type Faculty$majorsArgs<ExtArgs extends runtime.Types.Extensions.Internal
   take?: number
   skip?: number
   distinct?: Prisma.MajorScalarFieldEnum | Prisma.MajorScalarFieldEnum[]
-}
-
-/**
- * Faculty.facultyCouncilAssignments
- */
-export type Faculty$facultyCouncilAssignmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the FacultyCouncilAssignment
-   */
-  select?: Prisma.FacultyCouncilAssignmentSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the FacultyCouncilAssignment
-   */
-  omit?: Prisma.FacultyCouncilAssignmentOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.FacultyCouncilAssignmentInclude<ExtArgs> | null
-  where?: Prisma.FacultyCouncilAssignmentWhereInput
-  orderBy?: Prisma.FacultyCouncilAssignmentOrderByWithRelationInput | Prisma.FacultyCouncilAssignmentOrderByWithRelationInput[]
-  cursor?: Prisma.FacultyCouncilAssignmentWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.FacultyCouncilAssignmentScalarFieldEnum | Prisma.FacultyCouncilAssignmentScalarFieldEnum[]
 }
 
 /**

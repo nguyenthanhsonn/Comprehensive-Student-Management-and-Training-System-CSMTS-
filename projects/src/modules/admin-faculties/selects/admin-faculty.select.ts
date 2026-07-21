@@ -10,7 +10,6 @@ export const adminFacultySelect = {
   _count: {
     select: {
       majors: { where: { deletedAt: null } },
-      facultyCouncilAssignments: true,
     },
   },
 } satisfies Prisma.FacultySelect;

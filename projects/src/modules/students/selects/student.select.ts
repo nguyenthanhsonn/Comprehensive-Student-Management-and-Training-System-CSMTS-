@@ -9,6 +9,7 @@ export const studentProfileSelect = {
   dateOfBirth: true,
   isActive: true,
   classStudents: {
+    where: { deletedAt: null },
     orderBy: { enrolledAt: 'desc' },
     take: 1,
     select: {

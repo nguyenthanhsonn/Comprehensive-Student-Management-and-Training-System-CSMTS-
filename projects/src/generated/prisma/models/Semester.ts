@@ -648,7 +648,7 @@ export type $SemesterPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
 export type SemesterGetPayload<S extends boolean | null | undefined | SemesterDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$SemesterPayload, S>
 
 export type SemesterCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<SemesterFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<SemesterFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: SemesterCountAggregateInputType | true
   }
 
@@ -1098,6 +1098,7 @@ export type SemesterFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Filter, which Semester to fetch.
    */
   where: Prisma.SemesterWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1120,6 +1121,7 @@ export type SemesterFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Extensio
    * Filter, which Semester to fetch.
    */
   where: Prisma.SemesterWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1172,6 +1174,7 @@ export type SemesterFindFirstArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Filter by unique combinations of Semesters.
    */
   distinct?: Prisma.SemesterScalarFieldEnum | Prisma.SemesterScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1224,6 +1227,7 @@ export type SemesterFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Extension
    * Filter by unique combinations of Semesters.
    */
   distinct?: Prisma.SemesterScalarFieldEnum | Prisma.SemesterScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1276,6 +1280,7 @@ export type SemesterFindManyArgs<ExtArgs extends runtime.Types.Extensions.Intern
    * Filter by unique combinations of Semesters.
    */
   distinct?: Prisma.SemesterScalarFieldEnum | Prisma.SemesterScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1298,6 +1303,7 @@ export type SemesterCreateArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * The data needed to create a Semester.
    */
   data: Prisma.XOR<Prisma.SemesterCreateInput, Prisma.SemesterUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1354,6 +1360,7 @@ export type SemesterUpdateArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Choose, which Semester to update.
    */
   where: Prisma.SemesterWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1428,6 +1435,7 @@ export type SemesterUpsertArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * In case the Semester was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.SemesterUpdateInput, Prisma.SemesterUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1450,6 +1458,7 @@ export type SemesterDeleteArgs<ExtArgs extends runtime.Types.Extensions.Internal
    * Filter which Semester to delete.
    */
   where: Prisma.SemesterWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

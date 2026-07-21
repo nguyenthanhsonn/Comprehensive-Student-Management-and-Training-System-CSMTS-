@@ -538,7 +538,7 @@ export type $NotificationPayload<ExtArgs extends runtime.Types.Extensions.Intern
 export type NotificationGetPayload<S extends boolean | null | undefined | NotificationDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$NotificationPayload, S>
 
 export type NotificationCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<NotificationFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<NotificationFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: NotificationCountAggregateInputType | true
   }
 
@@ -985,6 +985,7 @@ export type NotificationFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.
    * Filter, which Notification to fetch.
    */
   where: Prisma.NotificationWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1007,6 +1008,7 @@ export type NotificationFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Exte
    * Filter, which Notification to fetch.
    */
   where: Prisma.NotificationWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1059,6 +1061,7 @@ export type NotificationFindFirstArgs<ExtArgs extends runtime.Types.Extensions.I
    * Filter by unique combinations of Notifications.
    */
   distinct?: Prisma.NotificationScalarFieldEnum | Prisma.NotificationScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1111,6 +1114,7 @@ export type NotificationFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Exten
    * Filter by unique combinations of Notifications.
    */
   distinct?: Prisma.NotificationScalarFieldEnum | Prisma.NotificationScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1163,6 +1167,7 @@ export type NotificationFindManyArgs<ExtArgs extends runtime.Types.Extensions.In
    * Filter by unique combinations of Notifications.
    */
   distinct?: Prisma.NotificationScalarFieldEnum | Prisma.NotificationScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1185,6 +1190,7 @@ export type NotificationCreateArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * The data needed to create a Notification.
    */
   data: Prisma.XOR<Prisma.NotificationCreateInput, Prisma.NotificationUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1245,6 +1251,7 @@ export type NotificationUpdateArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Choose, which Notification to update.
    */
   where: Prisma.NotificationWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1323,6 +1330,7 @@ export type NotificationUpsertArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * In case the Notification was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.NotificationUpdateInput, Prisma.NotificationUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1345,6 +1353,7 @@ export type NotificationDeleteArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Filter which Notification to delete.
    */
   where: Prisma.NotificationWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

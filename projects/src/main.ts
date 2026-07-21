@@ -32,7 +32,7 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api/v1');
   app.enableCors({
-    origin: configService.get<string>('app.frontendUrl'),
+    origin: configService.get<string[]>('app.frontendUrls'),
     credentials: true,
   });
   app.useGlobalPipes(

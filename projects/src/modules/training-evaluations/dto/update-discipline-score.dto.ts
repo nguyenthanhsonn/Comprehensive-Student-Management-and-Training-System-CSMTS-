@@ -3,6 +3,7 @@ import {
   ArrayMaxSize,
   IsArray,
   IsInt,
+  IsOptional,
   IsString,
   Matches,
   Max,
@@ -30,10 +31,11 @@ export class DisciplineViolationDto {
 
 export class UpdateDisciplineScoreDto {
   @IsInt()
-  @Min(25)
+  @Min(0)
   @Max(25)
   baseScore: number;
 
+  @IsOptional()
   @IsArray()
   @ArrayMaxSize(50)
   @ValidateNested({ each: true })

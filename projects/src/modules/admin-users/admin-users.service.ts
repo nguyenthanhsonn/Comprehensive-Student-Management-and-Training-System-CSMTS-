@@ -3,14 +3,21 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../database/prisma.service';
 import { Prisma } from '../../generated/prisma/client';
-import type { PaginatedResult, UserRole } from '../../common/shared';
+import { UserRole, type PaginatedResult } from '../../common/shared';
 import { buildAccountActiveStateData } from '../../common/helpers/account-active-state.helper';
+import {
+  formatDateOnly,
+  parseOptionalDateOnly,
+} from '../../common/helpers/date-only.helper';
 import { AuthTokenStoreService } from '../auth/jwt/auth-token-store';
+import { PASSWORD_SALT_ROUNDS } from '../auth/constants/password.constants';
+import { StudentAccountMailService } from '../mail/student-account-mail.service';
 import { CreateAdminUserDto } from './dto/create-admin-user.dto';
 import { GetAdminUsersQueryDto } from './dto/get-admin-users-query.dto';
 import { LockAdminUserDto } from './dto/lock-admin-user.dto';
@@ -21,13 +28,14 @@ import {
 } from './selects/admin-user.select';
 import type { AdminUserResponse } from './types/admin-user.types';
 
-const PASSWORD_SALT_ROUNDS = 12;
-
 @Injectable()
 export class AdminUsersService {
+  private readonly logger = new Logger(AdminUsersService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly tokenStore: AuthTokenStoreService,
+    private readonly accountMailService: StudentAccountMailService,
   ) {}
 
   /**
@@ -93,6 +101,11 @@ export class AdminUsersService {
 
   /** Tạo tài khoản mới - mật khẩu được hash bằng bcrypt trước khi lưu vào CSDL. */
   async create(dto: CreateAdminUserDto): Promise<AdminUserResponse> {
+    this.assertNotStudentRole(
+      dto.role,
+      'Vui lòng dùng API /admin/students để tạo sinh viên',
+    );
+
     const passwordHash = await bcrypt.hash(dto.password, PASSWORD_SALT_ROUNDS);
 
     try {
@@ -104,12 +117,19 @@ export class AdminUsersService {
           passwordHash,
           role: dto.role,
           phone: dto.phone,
-          dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : undefined,
+          dateOfBirth: parseOptionalDateOnly(dto.dateOfBirth),
         },
         select: adminUserSelect,
       });
 
-      return mapToAdminUserResponse(user);
+      const response = mapToAdminUserResponse(user);
+      const mailResult = await this.sendCreatedManagedUserEmail(dto);
+
+      return {
+        ...response,
+        accountEmailSent: mailResult.sent,
+        accountEmailError: mailResult.error,
+      };
     } catch (error) {
       this.handleKnownUserError(error);
       throw error;
@@ -132,12 +152,21 @@ export class AdminUsersService {
 
     await this.assertActiveExists(id);
 
+    if (dto.role !== undefined) {
+      this.assertNotStudentRole(
+        dto.role,
+        'Không thể đổi vai trò thành sinh viên qua API này. Vui lòng dùng /admin/students',
+      );
+    }
+
     if (dto.isActive === false) {
       this.assertNotSelf(id, currentUserId, 'khóa');
     }
 
     const activeStateData =
-      dto.isActive !== undefined ? buildAccountActiveStateData(dto.isActive) : {};
+      dto.isActive !== undefined
+        ? buildAccountActiveStateData(dto.isActive)
+        : {};
 
     try {
       const user = await this.prisma.user.update({
@@ -148,7 +177,7 @@ export class AdminUsersService {
           ...(dto.email !== undefined && { email: normalizeEmail(dto.email) }),
           ...(dto.phone !== undefined && { phone: dto.phone }),
           ...(dto.dateOfBirth !== undefined && {
-            dateOfBirth: new Date(dto.dateOfBirth),
+            dateOfBirth: parseOptionalDateOnly(dto.dateOfBirth),
           }),
           ...(dto.role !== undefined && { role: dto.role }),
           ...activeStateData,
@@ -197,29 +226,24 @@ export class AdminUsersService {
     return mapToAdminUserResponse(user);
   }
 
-  /**
-   * Xóa mềm tài khoản bằng cách cập nhật deletedAt - không xóa cứng khỏi CSDL.
-   * Đồng thời khóa tài khoản và thu hồi ngay phiên đăng nhập hiện tại.
-   */
+  /** Xóa cứng tài khoản khỏi CSDL và thu hồi phiên đăng nhập đang hoạt động. */
   async remove(id: string, currentUserId: string): Promise<AdminUserResponse> {
     await this.assertActiveExists(id);
     this.assertNotSelf(id, currentUserId, 'xóa');
 
-    const user = await this.prisma.user.update({
-      where: { id },
-      data: {
-        deletedAt: new Date(),
-        isActive: false,
-        lockedAt: new Date(),
-        refreshTokenHash: null,
-        refreshTokenExpiresAt: null,
-      },
-      select: adminUserSelect,
-    });
+    try {
+      const user = await this.prisma.user.delete({
+        where: { id },
+        select: adminUserSelect,
+      });
 
-    this.tokenStore.revokeUserTokensIssuedBefore(id);
+      this.tokenStore.revokeUserTokensIssuedBefore(id);
 
-    return mapToAdminUserResponse(user);
+      return mapToAdminUserResponse(user);
+    } catch (error) {
+      this.handleKnownUserError(error);
+      throw error;
+    }
   }
 
   /** Đảm bảo tài khoản tồn tại và chưa bị xóa mềm trước khi cho phép chỉnh sửa/khóa/xóa. */
@@ -245,6 +269,51 @@ export class AdminUsersService {
     }
   }
 
+  private assertNotStudentRole(role: UserRole, message: string): void {
+    if (role === UserRole.Student) {
+      throw new BadRequestException(message);
+    }
+  }
+
+  private async sendCreatedManagedUserEmail(
+    dto: CreateAdminUserDto,
+  ): Promise<{ sent: boolean; error: string | null }> {
+    if (dto.role !== UserRole.ClassCouncil) {
+      return { sent: false, error: null };
+    }
+
+    if (!this.accountMailService.isConfigured()) {
+      return {
+        sent: false,
+        error:
+          'Chưa thiết lập chức năng gửi email nên tài khoản chưa được gửi đi',
+      };
+    }
+
+    try {
+      await this.accountMailService.sendStaffAccount({
+        email: normalizeEmail(dto.email),
+        fullName: dto.fullName.trim(),
+        username: dto.username,
+        password: dto.password,
+        roleLabel: 'Lớp/CVHT',
+      });
+
+      return { sent: true, error: null };
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Gửi email tài khoản thất bại';
+      this.logger.error(
+        `Gửi email tài khoản class_council thất bại: ${message}`,
+      );
+
+      return {
+        sent: false,
+        error: 'Chưa gửi được email tài khoản, vui lòng kiểm tra lại sau',
+      };
+    }
+  }
+
   private handleKnownUserError(error: unknown): void {
     if (!(error instanceof Prisma.PrismaClientKnownRequestError)) {
       return;
@@ -264,19 +333,17 @@ export class AdminUsersService {
     if (error.code === 'P2025') {
       throw new NotFoundException('Không tìm thấy tài khoản');
     }
+
+    if (error.code === 'P2003') {
+      throw new ConflictException(
+        'Không thể xóa tài khoản này vì vẫn còn dữ liệu liên quan',
+      );
+    }
   }
 }
 
 function normalizeEmail(email: string): string {
   return email.toLowerCase().trim();
-}
-
-function formatDateOnly(date: Date | null): string | null {
-  if (!date) {
-    return null;
-  }
-
-  return date.toISOString().slice(0, 10);
 }
 
 function mapToAdminUserResponse(user: AdminUserRecord): AdminUserResponse {
@@ -293,5 +360,11 @@ function mapToAdminUserResponse(user: AdminUserRecord): AdminUserResponse {
     deletedAt: user.deletedAt,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
+    managedClasses: user.classCouncilAssignments.map((assignment) => ({
+      id: assignment.class.id,
+      code: assignment.class.code,
+      name: assignment.class.name,
+      assignedAt: assignment.assignedAt,
+    })),
   };
 }

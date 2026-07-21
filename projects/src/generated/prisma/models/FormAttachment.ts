@@ -871,7 +871,7 @@ export type $FormAttachmentPayload<ExtArgs extends runtime.Types.Extensions.Inte
 export type FormAttachmentGetPayload<S extends boolean | null | undefined | FormAttachmentDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$FormAttachmentPayload, S>
 
 export type FormAttachmentCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<FormAttachmentFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<FormAttachmentFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: FormAttachmentCountAggregateInputType | true
   }
 
@@ -1323,6 +1323,7 @@ export type FormAttachmentFindUniqueArgs<ExtArgs extends runtime.Types.Extension
    * Filter, which FormAttachment to fetch.
    */
   where: Prisma.FormAttachmentWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1345,6 +1346,7 @@ export type FormAttachmentFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Ex
    * Filter, which FormAttachment to fetch.
    */
   where: Prisma.FormAttachmentWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1397,6 +1399,7 @@ export type FormAttachmentFindFirstArgs<ExtArgs extends runtime.Types.Extensions
    * Filter by unique combinations of FormAttachments.
    */
   distinct?: Prisma.FormAttachmentScalarFieldEnum | Prisma.FormAttachmentScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1449,6 +1452,7 @@ export type FormAttachmentFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Ext
    * Filter by unique combinations of FormAttachments.
    */
   distinct?: Prisma.FormAttachmentScalarFieldEnum | Prisma.FormAttachmentScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1501,6 +1505,7 @@ export type FormAttachmentFindManyArgs<ExtArgs extends runtime.Types.Extensions.
    * Filter by unique combinations of FormAttachments.
    */
   distinct?: Prisma.FormAttachmentScalarFieldEnum | Prisma.FormAttachmentScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1523,6 +1528,7 @@ export type FormAttachmentCreateArgs<ExtArgs extends runtime.Types.Extensions.In
    * The data needed to create a FormAttachment.
    */
   data: Prisma.XOR<Prisma.FormAttachmentCreateInput, Prisma.FormAttachmentUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1583,6 +1589,7 @@ export type FormAttachmentUpdateArgs<ExtArgs extends runtime.Types.Extensions.In
    * Choose, which FormAttachment to update.
    */
   where: Prisma.FormAttachmentWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1661,6 +1668,7 @@ export type FormAttachmentUpsertArgs<ExtArgs extends runtime.Types.Extensions.In
    * In case the FormAttachment was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.FormAttachmentUpdateInput, Prisma.FormAttachmentUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1683,6 +1691,7 @@ export type FormAttachmentDeleteArgs<ExtArgs extends runtime.Types.Extensions.In
    * Filter which FormAttachment to delete.
    */
   where: Prisma.FormAttachmentWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

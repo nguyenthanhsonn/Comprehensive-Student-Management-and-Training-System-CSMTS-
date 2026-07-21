@@ -156,76 +156,98 @@ async function main() {
       },
     });
 
-    const facultyCouncil = await prisma.user.upsert({
-      where: { email: 'faculty.council@csmts.edu.vn' },
-      update: {
-        username: 'faculty.council',
-        fullName: 'Hội đồng Khoa Công nghệ thông tin',
-        passwordHash,
-        role: UserRole.faculty_council,
-        phone: '0945678901',
-        dateOfBirth: new Date('1988-08-30'),
-        isActive: true,
-        refreshTokenHash: null,
-        refreshTokenExpiresAt: null,
-      },
-      create: {
-        username: 'faculty.council',
-        email: 'faculty.council@csmts.edu.vn',
-        fullName: 'Hội đồng Khoa Công nghệ thông tin',
-        passwordHash,
-        role: UserRole.faculty_council,
-        phone: '0945678901',
-        dateOfBirth: new Date('1988-08-30'),
-        isActive: true,
-      },
-    });
-
     console.log('Đang seed khoa, ngành và lớp học...');
-    const faculty = await prisma.faculty.upsert({
-      where: { code: 'CNTT' },
-      update: {
-        name: 'Khoa Công nghệ thông tin',
-        isActive: true,
-      },
-      create: {
-        code: 'CNTT',
-        name: 'Khoa Công nghệ thông tin',
-        isActive: true,
-      },
-    });
+    const facultiesData = [
+      { code: 'CNTT', name: 'Khoa Công nghệ thông tin' },
+      { code: 'KTE', name: 'Khoa Kinh tế' },
+      { code: 'DTVT', name: 'Khoa Điện tử viễn thông' },
+      { code: 'NNA', name: 'Khoa Ngôn ngữ Anh' },
+    ];
 
-    const major = await prisma.major.upsert({
-      where: { code: 'KTPM' },
-      update: {
-        name: 'Kỹ thuật phần mềm',
-        facultyId: faculty.id,
-        isActive: true,
-      },
-      create: {
-        code: 'KTPM',
-        name: 'Kỹ thuật phần mềm',
-        facultyId: faculty.id,
-        isActive: true,
-      },
-    });
+    const faculties: Record<string, any> = {};
+    for (const f of facultiesData) {
+      faculties[f.code] = await prisma.faculty.upsert({
+        where: { code: f.code },
+        update: {
+          name: f.name,
+          isActive: true,
+        },
+        create: {
+          code: f.code,
+          name: f.name,
+          isActive: true,
+        },
+      });
+    }
 
-    const studentClass = await prisma.class.upsert({
-      where: { code: 'KTPM-K18A' },
-      update: {
-        name: 'Kỹ thuật phần mềm K18A',
-        majorId: major.id,
-        enrollmentYear: 2022,
-        isActive: true,
-      },
-      create: {
-        code: 'KTPM-K18A',
-        name: 'Kỹ thuật phần mềm K18A',
-        majorId: major.id,
-        enrollmentYear: 2022,
-        isActive: true,
-      },
-    });
+    const majorsData = [
+      { code: 'KTPM', name: 'Kỹ thuật phần mềm', facultyCode: 'CNTT' },
+      { code: 'KHMT', name: 'Khoa học máy tính', facultyCode: 'CNTT' },
+      { code: 'ATTT', name: 'An toàn thông tin', facultyCode: 'CNTT' },
+      { code: 'QTKD', name: 'Quản trị kinh doanh', facultyCode: 'KTE' },
+      { code: 'TCNH', name: 'Tài chính ngân hàng', facultyCode: 'KTE' },
+      { code: 'KT', name: 'Kế toán', facultyCode: 'KTE' },
+      { code: 'DTVT', name: 'Kỹ thuật Điện tử viễn thông', facultyCode: 'DTVT' },
+      { code: 'NNA', name: 'Ngôn ngữ Anh', facultyCode: 'NNA' },
+    ];
+
+    const majors: Record<string, any> = {};
+    for (const m of majorsData) {
+      const fac = faculties[m.facultyCode];
+      if (fac) {
+        majors[m.code] = await prisma.major.upsert({
+          where: { code: m.code },
+          update: {
+            name: m.name,
+            facultyId: fac.id,
+            isActive: true,
+          },
+          create: {
+            code: m.code,
+            name: m.name,
+            facultyId: fac.id,
+            isActive: true,
+          },
+        });
+      }
+    }
+
+    const classesData = [
+      { code: 'KTPM-K18A', name: 'Kỹ thuật phần mềm K18A', majorCode: 'KTPM', enrollmentYear: 2022 },
+      { code: 'KTPM-K18B', name: 'Kỹ thuật phần mềm K18B', majorCode: 'KTPM', enrollmentYear: 2022 },
+      { code: 'KHMT-K18A', name: 'Khoa học máy tính K18A', majorCode: 'KHMT', enrollmentYear: 2022 },
+      { code: 'ATTT-K18A', name: 'An toàn thông tin K18A', majorCode: 'ATTT', enrollmentYear: 2022 },
+      { code: 'QTKD-K18A', name: 'Quản trị kinh doanh K18A', majorCode: 'QTKD', enrollmentYear: 2022 },
+      { code: 'TCNH-K18A', name: 'Tài chính ngân hàng K18A', majorCode: 'TCNH', enrollmentYear: 2022 },
+      { code: 'KT-K18A', name: 'Kế toán K18A', majorCode: 'KT', enrollmentYear: 2022 },
+      { code: 'DTVT-K18A', name: 'Kỹ thuật Điện tử viễn thông K18A', majorCode: 'DTVT', enrollmentYear: 2022 },
+      { code: 'NNA-K18A', name: 'Ngôn ngữ Anh K18A', majorCode: 'NNA', enrollmentYear: 2022 },
+    ];
+
+    const classes: Record<string, any> = {};
+    for (const c of classesData) {
+      const maj = majors[c.majorCode];
+      if (maj) {
+        classes[c.code] = await prisma.class.upsert({
+          where: { code: c.code },
+          update: {
+            name: c.name,
+            majorId: maj.id,
+            enrollmentYear: c.enrollmentYear,
+            isActive: true,
+          },
+          create: {
+            code: c.code,
+            name: c.name,
+            majorId: maj.id,
+            enrollmentYear: c.enrollmentYear,
+            isActive: true,
+          },
+        });
+      }
+    }
+
+    const studentClass = classes['KTPM-K18A'];
 
     console.log('Đang seed danh sách lớp và phân công hội đồng...');
     const classStudents = [
@@ -264,20 +286,6 @@ async function main() {
       create: {
         userId: classCouncil.id,
         classId: studentClass.id,
-      },
-    });
-
-    await prisma.facultyCouncilAssignment.upsert({
-      where: {
-        userId_facultyId: {
-          userId: facultyCouncil.id,
-          facultyId: faculty.id,
-        },
-      },
-      update: {},
-      create: {
-        userId: facultyCouncil.id,
-        facultyId: faculty.id,
       },
     });
 

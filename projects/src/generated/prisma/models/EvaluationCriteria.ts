@@ -1180,7 +1180,7 @@ export type $EvaluationCriteriaPayload<ExtArgs extends runtime.Types.Extensions.
 export type EvaluationCriteriaGetPayload<S extends boolean | null | undefined | EvaluationCriteriaDefaultArgs> = runtime.Types.Result.GetResult<Prisma.$EvaluationCriteriaPayload, S>
 
 export type EvaluationCriteriaCountArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> =
-  Omit<EvaluationCriteriaFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+  Omit<EvaluationCriteriaFindManyArgs, 'select' | 'include' | 'distinct' | 'omit' | 'relationLoadStrategy'> & {
     select?: EvaluationCriteriaCountAggregateInputType | true
   }
 
@@ -1634,6 +1634,7 @@ export type EvaluationCriteriaFindUniqueArgs<ExtArgs extends runtime.Types.Exten
    * Filter, which EvaluationCriteria to fetch.
    */
   where: Prisma.EvaluationCriteriaWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1656,6 +1657,7 @@ export type EvaluationCriteriaFindUniqueOrThrowArgs<ExtArgs extends runtime.Type
    * Filter, which EvaluationCriteria to fetch.
    */
   where: Prisma.EvaluationCriteriaWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1708,6 +1710,7 @@ export type EvaluationCriteriaFindFirstArgs<ExtArgs extends runtime.Types.Extens
    * Filter by unique combinations of EvaluationCriteria.
    */
   distinct?: Prisma.EvaluationCriteriaScalarFieldEnum | Prisma.EvaluationCriteriaScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1760,6 +1763,7 @@ export type EvaluationCriteriaFindFirstOrThrowArgs<ExtArgs extends runtime.Types
    * Filter by unique combinations of EvaluationCriteria.
    */
   distinct?: Prisma.EvaluationCriteriaScalarFieldEnum | Prisma.EvaluationCriteriaScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1812,6 +1816,7 @@ export type EvaluationCriteriaFindManyArgs<ExtArgs extends runtime.Types.Extensi
    * Filter by unique combinations of EvaluationCriteria.
    */
   distinct?: Prisma.EvaluationCriteriaScalarFieldEnum | Prisma.EvaluationCriteriaScalarFieldEnum[]
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1834,6 +1839,7 @@ export type EvaluationCriteriaCreateArgs<ExtArgs extends runtime.Types.Extension
    * The data needed to create a EvaluationCriteria.
    */
   data: Prisma.XOR<Prisma.EvaluationCriteriaCreateInput, Prisma.EvaluationCriteriaUncheckedCreateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1894,6 +1900,7 @@ export type EvaluationCriteriaUpdateArgs<ExtArgs extends runtime.Types.Extension
    * Choose, which EvaluationCriteria to update.
    */
   where: Prisma.EvaluationCriteriaWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1972,6 +1979,7 @@ export type EvaluationCriteriaUpsertArgs<ExtArgs extends runtime.Types.Extension
    * In case the EvaluationCriteria was found with the provided `where` argument, update it with this data.
    */
   update: Prisma.XOR<Prisma.EvaluationCriteriaUpdateInput, Prisma.EvaluationCriteriaUncheckedUpdateInput>
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**
@@ -1994,6 +2002,7 @@ export type EvaluationCriteriaDeleteArgs<ExtArgs extends runtime.Types.Extension
    * Filter which EvaluationCriteria to delete.
    */
   where: Prisma.EvaluationCriteriaWhereUniqueInput
+  relationLoadStrategy?: Prisma.RelationLoadStrategy
 }
 
 /**

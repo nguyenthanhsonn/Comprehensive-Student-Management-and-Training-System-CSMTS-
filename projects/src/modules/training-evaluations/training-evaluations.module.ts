@@ -8,7 +8,10 @@ import { TrainingEvaluationsService } from './training-evaluations.service';
 
 @Module({
   imports: [PrismaModule, NotificationsModule],
-  controllers: [TrainingEvaluationsController, AdminTrainingEvaluationsController],
+  controllers: [
+    TrainingEvaluationsController,
+    AdminTrainingEvaluationsController,
+  ],
   providers: [TrainingEvaluationsService, AdminTrainingEvaluationsService],
 })
 export class TrainingEvaluationsModule {}
