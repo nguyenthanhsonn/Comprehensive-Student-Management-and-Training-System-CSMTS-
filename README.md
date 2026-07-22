@@ -108,7 +108,7 @@ JWT_REFRESH_EXPIRES_IN="7d"
 
 BACKEND_PORT=5050
 BACKEND_HOST="127.0.0.1"
-FRONTEND_URL=""
+FRONTEND_URL="http://localhost:3000,http://10.36.120.48:3000,http://10.36.120.223:3000,http://192.168.1.144:3000"
 STUDENT_PORTAL_URL="http://localhost:3000/login"
 
 PRISMA_CONNECT_ON_INIT=true
@@ -223,4 +223,3 @@ cd projects
 pnpm typecheck
 pnpm test
 ```
-
