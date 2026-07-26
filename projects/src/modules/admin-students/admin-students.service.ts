@@ -20,6 +20,12 @@ import {
 import { AuthTokenStoreService } from '../auth/jwt/auth-token-store';
 import { PASSWORD_SALT_ROUNDS } from '../auth/constants/password.constants';
 import { StudentAccountMailService } from '../mail/student-account-mail.service';
+import { mapToDetailResponse } from '../training-evaluations/helpers/evaluation.mapper';
+import {
+  evaluationDetailSelect,
+  type EvaluationDetailRecord,
+} from '../training-evaluations/selects/evaluation-form.select';
+import type { EvaluationDetailResponse } from '../training-evaluations/types/evaluation-form.types';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { GetAdminStudentsQueryDto } from './dto/get-admin-students-query.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
@@ -121,6 +127,26 @@ export class AdminStudentsService {
     }
 
     return mapToAdminStudentResponse(student);
+  }
+
+  /**
+   * Lấy toàn bộ phiếu đánh giá rèn luyện của một sinh viên cho màn chi tiết admin.
+   * Response dùng mapper chi tiết chung để luôn có đủ điểm 5 mục, trạng thái duyệt
+   * và minh chứng ảnh/file đính kèm sau khi sinh viên đánh giá.
+   */
+  async findEvaluations(id: string): Promise<EvaluationDetailResponse[]> {
+    await this.assertStudentExists(id);
+
+    const evaluations = await this.prisma.evaluationForm.findMany({
+      relationLoadStrategy: 'join',
+      where: { studentId: id },
+      select: evaluationDetailSelect,
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    });
+
+    return evaluations.map((evaluation: EvaluationDetailRecord) =>
+      mapToDetailResponse(evaluation),
+    );
   }
 
   /**
@@ -380,6 +406,18 @@ export class AdminStudentsService {
 
     if (existing && existing.studentId !== excludeStudentId) {
       throw new ConflictException('Mã sinh viên đã tồn tại');
+    }
+  }
+
+  /** Đảm bảo id truyền vào thật sự là sinh viên; cho phép xem lịch sử kể cả hồ sơ đã xóa mềm. */
+  private async assertStudentExists(id: string): Promise<void> {
+    const student = await this.prisma.user.findFirst({
+      where: { id, role: UserRole.student },
+      select: { id: true },
+    });
+
+    if (!student) {
+      throw new NotFoundException('Không tìm thấy hồ sơ sinh viên');
     }
   }
 

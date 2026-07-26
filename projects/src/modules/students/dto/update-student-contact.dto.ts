@@ -1,12 +1,8 @@
-import { IsEmail, IsOptional, IsString } from 'class-validator';
-
+import { IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class UpdateStudentContactDto {
   @IsOptional()
-  @IsEmail({}, { message: 'Địa chỉ thư điện tử không đúng định dạng' })
-  email?: string;
-
-  @IsOptional()
   @IsString()
+  @MaxLength(20)
   phone?: string;
 }
