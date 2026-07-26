@@ -311,27 +311,72 @@ function buildAccountText(payload: StudentAccountMailPayload, portalUrl: string)
 
 function buildAccountHtml(payload: StudentAccountMailPayload, portalUrl: string) {
   const loginLine = portalUrl
-    ? `<li>Địa chỉ đăng nhập: <a href="${escapeHtml(portalUrl)}">${escapeHtml(
+    ? `<li style="margin: 6px 0;">Địa chỉ đăng nhập: <a href="${escapeHtml(
+        portalUrl,
+      )}" style="color: #2563eb; text-decoration: underline;">${escapeHtml(
         portalUrl,
       )}</a></li>`
     : '';
+  const portalLabel = portalUrl ? 'cổng hệ thống' : 'hệ thống';
 
   return `
-    <div style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.6;">
-      <p><strong>Thông tin tài khoản sinh viên của bạn:</strong></p>
-      <ul>
-        <li>Mã sinh viên: ${escapeHtml(payload.studentCode)}</li>
-        <li>Họ và tên: ${escapeHtml(payload.fullName)}</li>
-        <li>Tên đăng nhập: <strong>${escapeHtml(payload.username)}</strong></li>
-        <li>Mật khẩu: <strong>${escapeHtml(payload.password)}</strong></li>
-        ${loginLine}
-      </ul>
-      <p><strong>Lưu ý:</strong></p>
-      <ul>
-        <li>Không chia sẻ tài khoản này cho bất kỳ ai.</li>
-        <li>Sau khi đăng nhập thành công, bạn nên đổi mật khẩu ngay.</li>
-        <li>Nếu quên mật khẩu, vui lòng liên hệ quản trị viên để được hỗ trợ.</li>
-      </ul>
+    <div style="margin: 0; padding: 0; background: #ffffff; font-family: Arial, Helvetica, sans-serif; color: #252525;">
+      <table role="presentation" cellpadding="0" cellspacing="0" style="width: 100%; max-width: 760px; margin: 0 auto; border: 18px solid #b9101a; border-collapse: collapse; background: #ffffff;">
+        <tr>
+          <td style="padding: 0;">
+            <div style="height: 118px; background: #ffffff; position: relative; overflow: hidden;">
+              <div style="height: 86px; border-bottom: 10px solid #b9101a; transform: skewY(-4deg); transform-origin: left bottom; box-shadow: 0 4px 8px rgba(0,0,0,0.2);"></div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td style="background: #eef3f1; padding: 28px 34px 34px 34px; font-size: 16px; line-height: 1.65;">
+            <p style="margin: 0 0 12px 0;">Chào bạn <strong>${escapeHtml(
+              payload.fullName,
+            )}</strong>,</p>
+
+            <p style="margin: 0 0 14px 0; color: #4f7faa; font-size: 20px; line-height: 1.45; font-weight: 700;">
+              CHÚC MỪNG bạn đã được tạo tài khoản sinh viên trên hệ thống quản lý sinh viên và đánh giá rèn luyện.
+            </p>
+
+            <p style="margin: 0 0 26px 0;">
+              Thông tin tài khoản của bạn được gửi bên dưới, vui lòng đăng nhập vào
+              <span style="background: #ffe69a; padding: 0 4px; font-weight: 700;">${escapeHtml(
+                portalLabel,
+              )}</span>
+              và trải nghiệm.
+            </p>
+
+            <p style="margin: 0 0 10px 0; font-size: 17px;"><strong>Thông tin sinh viên của bạn:</strong></p>
+            <ul style="margin: 0 0 28px 28px; padding: 0;">
+              <li style="margin: 6px 0;">Mã sinh viên: ${escapeHtml(
+                payload.studentCode,
+              )}</li>
+              <li style="margin: 6px 0;">Họ và tên: ${escapeHtml(
+                payload.fullName,
+              )}</li>
+            </ul>
+
+            <p style="margin: 0 0 10px 0; font-size: 17px;"><strong>Thông tin tài khoản của bạn:</strong></p>
+            <ul style="margin: 0 0 18px 28px; padding: 0;">
+              <li style="margin: 6px 0;">Tên đăng nhập: <strong>${escapeHtml(
+                payload.username,
+              )}</strong></li>
+              <li style="margin: 6px 0;">Mật khẩu: <strong>${escapeHtml(
+                payload.password,
+              )}</strong></li>
+              ${loginLine}
+              <li style="margin: 6px 0;"><em>Lưu ý:</em></li>
+            </ul>
+
+            <ul style="margin: 0 0 0 72px; padding: 0;">
+              <li style="margin: 6px 0;">Không chia sẻ tài khoản này cho bất kỳ ai.</li>
+              <li style="margin: 6px 0;">Sau khi đăng nhập thành công, bạn nên đổi mật khẩu ngay.</li>
+              <li style="margin: 6px 0;">Nếu quên mật khẩu, vui lòng liên hệ quản trị viên để được hỗ trợ.</li>
+            </ul>
+          </td>
+        </tr>
+      </table>
     </div>
   `;
 }

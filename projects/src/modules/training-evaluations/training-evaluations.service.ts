@@ -12,6 +12,7 @@ import {
   mapToNotificationResponse,
   NotificationsService,
 } from '../notifications/notifications.service';
+import { NotificationType } from '../notifications/enums/notification-type.enum';
 import { notificationSelect } from '../notifications/selects/notification.select';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { AdminListEvaluationsQueryDto } from './dto/admin-list-evaluations-query.dto';
@@ -376,7 +377,6 @@ export class TrainingEvaluationsService {
       UserRole.ClassCouncil,
       userId,
       form.classId,
-      '',
     );
 
     if (
@@ -478,7 +478,6 @@ export class TrainingEvaluationsService {
         status: true,
         classId: true,
         classScore: true,
-        class: { select: { major: { select: { facultyId: true } } } },
       },
     });
 
@@ -491,7 +490,6 @@ export class TrainingEvaluationsService {
       reviewer.role,
       reviewer.id,
       evaluation.classId,
-      evaluation.class.major.facultyId,
     );
 
     if (dto.action === 'reject') {
@@ -509,6 +507,7 @@ export class TrainingEvaluationsService {
           const notification = await tx.notification.create({
             data: {
               userId: evaluation.studentId,
+              type: NotificationType.EVALUATION_REJECTED,
               title: 'Phiếu đánh giá bị trả lại',
               content:
                 dto.comment ??
@@ -941,7 +940,6 @@ export class TrainingEvaluationsService {
     role: UserRole,
     reviewerId: string,
     classId: string,
-    _facultyId: string,
   ): Promise<void> {
     if (role === UserRole.Admin) {
       return;
@@ -989,7 +987,6 @@ export class TrainingEvaluationsService {
       UserRole.ClassCouncil,
       user.id,
       classId,
-      '',
     );
   }
 }

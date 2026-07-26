@@ -4,13 +4,15 @@ import { UserRole, type PaginatedResult } from '../../common/shared';
 import { PrismaService } from '../../database/prisma.service';
 import { NotificationsGateway } from '../gateways/notifications.gateway';
 import type { GetNotificationsQueryDto } from './dto/get-notifications-query.dto';
+import { NotificationType } from './enums/notification-type.enum';
 import {
   notificationSelect,
   type NotificationRecord,
 } from './selects/notification.select';
 import type { NotificationResponse } from './types/notification.types';
 
-const EVALUATION_REMINDER_TITLE = 'Nhắc nhở đánh giá rèn luyện';
+const EVALUATION_REMINDER_TITLE =
+  'Nhắc nhở: Bạn chưa nộp phiếu đánh giá rèn luyện';
 
 @Injectable()
 export class NotificationsService {
@@ -144,7 +146,7 @@ export class NotificationsService {
     const deadlineText = activeSemester.studentDeadline
       ? ` Hạn nộp: ${formatVietnamDate(activeSemester.studentDeadline)}.`
       : '';
-    const content = `Bạn chưa nộp phiếu đánh giá rèn luyện ${semesterLabel} năm học ${activeSemester.year}.${deadlineText} Vui lòng hoàn thành và nộp phiếu đúng hạn.`;
+    const content = `Bạn hiện chưa nộp phiếu đánh giá rèn luyện ${semesterLabel} năm học ${activeSemester.year}.${deadlineText} Việc hoàn thành đánh giá rèn luyện đúng hạn giúp bạn đảm bảo quyền lợi xét học bổng, khen thưởng, thi đua và các chế độ chính sách khác của nhà trường. Vui lòng truy cập hệ thống để hoàn thành phiếu tự đánh giá trước khi hết hạn.`;
 
     const existed = await this.prisma.notification.findFirst({
       where: {
@@ -162,6 +164,7 @@ export class NotificationsService {
     const notification = await this.prisma.notification.create({
       data: {
         userId,
+        type: NotificationType.NEW_EVALUATION_PERIOD,
         title: EVALUATION_REMINDER_TITLE,
         content,
       },
@@ -178,6 +181,7 @@ export function mapToNotificationResponse(
   return {
     id: notification.id,
     userId: notification.userId,
+    type: notification.type,
     title: notification.title,
     content: notification.content,
     isRead: notification.isRead,
@@ -185,7 +189,7 @@ export function mapToNotificationResponse(
   };
 }
 
-function toSemesterLabel(semester: SemesterNo) {
+export function toSemesterLabel(semester: SemesterNo) {
   const labels: Record<SemesterNo, string> = {
     [SemesterNo.SEMESTER_1]: 'học kỳ 1',
     [SemesterNo.SEMESTER_2]: 'học kỳ 2',

@@ -2,7 +2,11 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { formatDateOnly } from '../../common/helpers/date-only.helper';
 import { PrismaService } from '../../database/prisma.service';
 import { SemesterNo } from '../../generated/prisma/client';
-import type { SemesterResponse } from './types/semester.types';
+import { UserRole } from '../../common/shared';
+import type {
+  EvaluationPopupResponse,
+  SemesterResponse,
+} from './types/semester.types';
 import type { ApiSemester } from './types/api-semester.type';
 
 type SemesterRecord = {
@@ -57,6 +61,42 @@ export class SemestersService {
     }
 
     return mapToSemesterResponse(activeSemester);
+  }
+
+  async findEvaluationPopup(role: UserRole): Promise<EvaluationPopupResponse> {
+    if (role !== UserRole.Student) {
+      return emptyEvaluationPopup();
+    }
+
+    const today = new Date();
+    const semester = await this.prisma.semester.findFirst({
+      where: {
+        isActive: true,
+        startDate: { lte: today },
+        endDate: { gte: today },
+      },
+      select: semesterSelect,
+      orderBy: [{ year: 'desc' }, { semester: 'desc' }],
+    });
+
+    if (!semester) {
+      return emptyEvaluationPopup();
+    }
+
+    const label = toSemesterName(semester.semester);
+    const academicYear = `${semester.year}-${semester.year + 1}`;
+    const deadlineText = semester.studentDeadline
+      ? ` Hạn nộp: ${formatVietnamDate(semester.studentDeadline)}.`
+      : '';
+
+    return {
+      visible: true,
+      title: 'Mở đánh giá rèn luyện',
+      content: `${label} năm học ${academicYear} hiện đã được mở để thực hiện đánh giá rèn luyện.${deadlineText} Đây là bước quan trọng trong quá trình xét kết quả rèn luyện, ảnh hưởng trực tiếp đến quyền lợi học bổng, thi đua, khen thưởng và các chế độ khác của bạn tại trường. Vui lòng vào hệ thống để thực hiện tự đánh giá càng sớm càng tốt.`,
+      semesterId: semester.id,
+      startDate: formatDateOnly(semester.startDate),
+      endDate: formatDateOnly(semester.endDate),
+    };
   }
 }
 
@@ -121,4 +161,24 @@ export function toSemesterNo(semester: ApiSemester): SemesterNo {
   };
 
   return map[semester];
+}
+
+function emptyEvaluationPopup(): EvaluationPopupResponse {
+  return {
+    visible: false,
+    title: null,
+    content: null,
+    semesterId: null,
+    startDate: null,
+    endDate: null,
+  };
+}
+
+function formatVietnamDate(date: Date) {
+  return new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    timeZone: 'Asia/Ho_Chi_Minh',
+  }).format(date);
 }

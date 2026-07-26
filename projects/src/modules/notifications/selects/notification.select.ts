@@ -3,6 +3,7 @@ import { Prisma } from '../../../generated/prisma/client';
 export const notificationSelect = {
   id: true,
   userId: true,
+  type: true,
   title: true,
   content: true,
   isRead: true,

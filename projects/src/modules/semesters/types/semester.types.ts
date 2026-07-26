@@ -14,3 +14,12 @@ export type SemesterResponse = {
   facultyDeadline: Date | null;
   isActive: boolean;
 };
+
+export type EvaluationPopupResponse = {
+  visible: boolean;
+  title: string | null;
+  content: string | null;
+  semesterId: string | null;
+  startDate: string | null;
+  endDate: string | null;
+};

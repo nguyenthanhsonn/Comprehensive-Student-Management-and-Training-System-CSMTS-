@@ -1,4 +1,6 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import type { UserRole } from '../../common/shared';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SemestersService } from './semesters.service';
 
@@ -15,5 +17,10 @@ export class SemestersController {
   @Get('current')
   findCurrent() {
     return this.semestersService.findCurrent();
+  }
+
+  @Get('evaluation-popup')
+  findEvaluationPopup(@CurrentUser('role') role: UserRole) {
+    return this.semestersService.findEvaluationPopup(role);
   }
 }
