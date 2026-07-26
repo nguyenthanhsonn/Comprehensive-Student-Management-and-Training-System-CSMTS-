@@ -70,8 +70,14 @@ export class AuthService {
         DEFAULT_DUMMY_PASSWORD_HASH;
     const isPasswordValid = await bcrypt.compare(dto.password, hashToCompare);
 
-    if (!user || !isPasswordValid) {
-      throw new UnauthorizedException('Tên đăng nhập hoặc mật khẩu không đúng');
+    // Keep the dummy hash comparison above so a missing account still takes
+    // roughly the same path as a wrong password, then return the clearer FE message.
+    if (!user) {
+      throw new UnauthorizedException('Tài khoản không tồn tại');
+    }
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Mật khẩu không đúng');
     }
 
     if (!user.isActive) {

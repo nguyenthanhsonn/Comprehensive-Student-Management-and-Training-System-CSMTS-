@@ -299,6 +299,7 @@ export type EvidenceScalarFieldEnum = (typeof EvidenceScalarFieldEnum)[keyof typ
 export const NotificationScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
+  type: 'type',
   title: 'title',
   content: 'content',
   isRead: 'isRead',

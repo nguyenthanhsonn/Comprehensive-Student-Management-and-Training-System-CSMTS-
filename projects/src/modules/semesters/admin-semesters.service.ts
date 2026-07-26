@@ -14,11 +14,14 @@ import { parseOptionalDateOnly } from '../../common/helpers/date-only.helper';
 import { PrismaService } from '../../database/prisma.service';
 import type { PaginatedResult } from '../../common/shared';
 import { NotificationsGateway } from '../gateways/notifications.gateway';
+import { NotificationType } from '../notifications/enums/notification-type.enum';
+import { toSemesterLabel } from '../notifications/notifications.service';
 import { CreateSemesterDto } from './dto/create-semester.dto';
 import { GetSemestersQueryDto } from './dto/get-semesters-query.dto';
 import { UpdateSemesterDto } from './dto/update-semester.dto';
 import {
   mapToSemesterResponse,
+  toApiSemester,
   toSemesterNo,
   toSemesterName,
 } from './semesters.service';
@@ -86,6 +89,7 @@ export class AdminSemestersService {
       throw new BadRequestException('Ngày bắt đầu và ngày kết thúc là bắt buộc');
     }
 
+    await this.validateNoOverlap(startDate, endDate);
     await this.assertUniqueSemester(dto.year, semester);
 
     try {
@@ -146,6 +150,9 @@ export class AdminSemestersService {
 
     const nextData = this.buildSemesterData(dto, current);
     this.validateDateOrder(nextData);
+    if (dto.startDate !== undefined || dto.endDate !== undefined) {
+      await this.validateNoOverlap(nextData.startDate, nextData.endDate, id);
+    }
 
     try {
       let closedSemesters: SemesterNotificationRecord[] = [];
@@ -185,12 +192,21 @@ export class AdminSemestersService {
       });
 
       this.notifyStudentsAfterActiveChange(updated, {
-        opened: dto.isActive === true && !current.isActive,
+        opened: false,
         closedSemesters:
           dto.isActive === false && current.isActive
             ? [current]
             : closedSemesters,
       });
+
+      if (dto.isActive === true && !current.isActive) {
+        this.notifyStudentsSemesterOpened(updated).catch((err: unknown) =>
+          this.logger.error(
+            'Gửi thông báo mở kỳ đánh giá thất bại',
+            err instanceof Error ? err.stack : String(err),
+          ),
+        );
+      }
 
       return mapToSemesterResponse(updated);
     } catch (error) {
@@ -225,9 +241,18 @@ export class AdminSemestersService {
     });
 
     this.notifyStudentsAfterActiveChange(updated, {
-      opened: isActive && !target.isActive,
+      opened: false,
       closedSemesters: !isActive && target.isActive ? [target] : closedSemesters,
     });
+
+    if (isActive && !target.isActive) {
+      this.notifyStudentsSemesterOpened(updated).catch((err: unknown) =>
+        this.logger.error(
+          'Gửi thông báo mở kỳ đánh giá thất bại',
+          err instanceof Error ? err.stack : String(err),
+        ),
+      );
+    }
 
     return mapToSemesterResponse(updated);
   }
@@ -258,6 +283,39 @@ export class AdminSemestersService {
     if (existing && existing.id !== excludeId) {
       throw new ConflictException('Học kỳ này đã tồn tại trong hệ thống');
     }
+  }
+
+  private async validateNoOverlap(
+    startDate: Date | undefined,
+    endDate: Date | undefined,
+    excludeId?: string,
+  ): Promise<void> {
+    if (!startDate || !endDate) {
+      return;
+    }
+
+    const overlapping = await this.prisma.semester.findFirst({
+      where: {
+        ...(excludeId ? { id: { not: excludeId } } : {}),
+        startDate: { lte: endDate },
+        endDate: { gte: startDate },
+      },
+      select: {
+        id: true,
+        year: true,
+        semester: true,
+        startDate: true,
+        endDate: true,
+      },
+    });
+
+    if (!overlapping) {
+      return;
+    }
+
+    throw new BadRequestException(
+      `Khoảng ngày bị trùng với học kỳ ${overlapping.year} - ${toApiSemester(overlapping.semester)} (${formatVietnamDate(overlapping.startDate)} - ${formatVietnamDate(overlapping.endDate)})`,
+    );
   }
 
   private async hasEvaluationForms(semesterId: string): Promise<boolean> {
@@ -417,7 +475,7 @@ export class AdminSemestersService {
       closedSemesters: SemesterNotificationRecord[];
     },
   ): void {
-    if (!options.opened && options.closedSemesters.length === 0) {
+    if (options.closedSemesters.length === 0) {
       return;
     }
 
@@ -462,22 +520,7 @@ export class AdminSemestersService {
       notifications.push(
         ...students.map((student) => ({
           userId: student.id,
-          title,
-          content,
-        })),
-      );
-    }
-
-    if (options.opened) {
-      const deadlineText = openedSemester.studentDeadline
-        ? ` Hạn nộp: ${formatVietnamDate(openedSemester.studentDeadline)}.`
-        : '';
-      const title = `Mở đánh giá rèn luyện ${toSemesterName(openedSemester.semester)} ${openedSemester.year}-${openedSemester.year + 1}`;
-      const content = `Vui lòng vào hệ thống thực hiện tự đánh giá kết quả rèn luyện.${deadlineText}`;
-
-      notifications.push(
-        ...students.map((student) => ({
-          userId: student.id,
+          type: NotificationType.EVALUATION_PERIOD_CLOSED,
           title,
           content,
         })),
@@ -492,6 +535,47 @@ export class AdminSemestersService {
     this.emitNotificationRefreshInBatches(
       students.map((student) => student.id),
     );
+  }
+
+  private async notifyStudentsSemesterOpened(
+    semester: SemesterNotificationRecord,
+  ): Promise<void> {
+    const students = await this.prisma.user.findMany({
+      where: {
+        role: PrismaUserRole.student,
+        isActive: true,
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+
+    if (students.length === 0) {
+      return;
+    }
+
+    const label = toSemesterLabel(semester.semester);
+    const year = `${semester.year}-${semester.year + 1}`;
+    const deadlineText = semester.studentDeadline
+      ? `Hạn nộp: ${formatVietnamDate(semester.studentDeadline)}.`
+      : '';
+    const deadlinePart = deadlineText ? ` ${deadlineText}` : '';
+
+    const title = 'Mở đánh giá rèn luyện';
+    const content = `${label} năm học ${year} hiện đã được mở để thực hiện đánh giá rèn luyện.${deadlinePart} Đây là bước quan trọng trong quá trình xét kết quả rèn luyện, ảnh hưởng trực tiếp đến quyền lợi học bổng, thi đua, khen thưởng và các chế độ khác của bạn tại trường. Vui lòng vào hệ thống để thực hiện tự đánh giá càng sớm càng tốt.`;
+
+    const notifications = students.map((student) => ({
+      userId: student.id,
+      type: NotificationType.NEW_EVALUATION_PERIOD,
+      title,
+      content,
+    }));
+
+    await this.prisma.notification.createMany({ data: notifications });
+
+    // Loop through each student to emit socket refresh signal
+    for (const student of students) {
+      this.notificationsGateway.emitRefresh(student.id);
+    }
   }
 
   private emitNotificationRefreshInBatches(
