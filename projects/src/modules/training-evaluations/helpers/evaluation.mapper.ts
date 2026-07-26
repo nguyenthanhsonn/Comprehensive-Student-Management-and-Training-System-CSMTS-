@@ -94,6 +94,29 @@ export function mapToDetailResponse(
       community: mapToCommunityScoreResponse(evaluation),
       role: mapToRoleScoreResponse(evaluation),
     },
+    evidences: evaluation.evidences.map((evidence) => ({
+      id: evidence.id,
+      studentId: evidence.studentId,
+      evaluationFormId: evidence.evaluationFormId,
+      criterionId: evidence.criterionId,
+      criterion: evidence.criterion,
+      imageUrl: evidence.imageUrl,
+      publicId: evidence.publicId,
+      createdAt: evidence.createdAt,
+      updatedAt: evidence.updatedAt,
+    })),
+    attachments: evaluation.attachments.map((attachment) => ({
+      id: attachment.id,
+      criteriaId: attachment.criteriaId,
+      criterion: attachment.criteria,
+      originalName: attachment.originalName,
+      storageKey: attachment.storageKey,
+      mimeType: attachment.mimeType,
+      fileSizeBytes: attachment.fileSizeBytes,
+      isApproved: attachment.isApproved,
+      rejectReason: attachment.rejectReason,
+      uploadedAt: attachment.uploadedAt,
+    })),
   };
 }
 

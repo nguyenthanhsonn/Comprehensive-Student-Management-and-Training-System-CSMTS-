@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -62,8 +61,7 @@ export class StudentsService {
 
   async updateProfile(userId: string, dto: UpdateStudentContactDto): Promise<StudentProfile> {
     const updateData: Prisma.UserUpdateInput = {
-      ...(dto?.email !== undefined ? { email: dto.email } : {}),
-      ...(dto?.phone !== undefined ? { phone: dto.phone || null } : {}),
+      ...(dto?.phone !== undefined ? { phone: dto.phone.trim() || null } : {}),
     };
 
     if (Object.keys(updateData).length === 0) {
@@ -83,10 +81,6 @@ export class StudentsService {
       return profile;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === 'P2002') {
-          throw new ConflictException('Email đã tồn tại');
-        }
-
         if (error.code === 'P2025') {
           throw new NotFoundException('Không tìm thấy sinh viên');
         }

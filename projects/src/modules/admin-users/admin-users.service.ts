@@ -8,8 +8,11 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../database/prisma.service';
-import { Prisma } from '../../generated/prisma/client';
-import { UserRole, type PaginatedResult } from '../../common/shared';
+import { Prisma, UserRole as PrismaUserRole } from '../../generated/prisma/client';
+import {
+  UserRole as SharedUserRole,
+  type PaginatedResult,
+} from '../../common/shared';
 import { buildAccountActiveStateData } from '../../common/helpers/account-active-state.helper';
 import {
   formatDateOnly,
@@ -27,6 +30,11 @@ import {
   type AdminUserRecord,
 } from './selects/admin-user.select';
 import type { AdminUserResponse } from './types/admin-user.types';
+
+const MANAGED_PRISMA_USER_ROLES = [
+  PrismaUserRole.admin,
+  PrismaUserRole.class_council,
+];
 
 @Injectable()
 export class AdminUsersService {
@@ -51,8 +59,10 @@ export class AdminUsersService {
     const keyword = query.keyword?.trim();
 
     const where: Prisma.UserWhereInput = {
+      role: query.role
+        ? toPrismaManagedUserRole(query.role)
+        : { in: MANAGED_PRISMA_USER_ROLES },
       ...(query.includeDeleted ? {} : { deletedAt: null }),
-      ...(query.role ? { role: query.role } : {}),
       ...(query.isActive !== undefined ? { isActive: query.isActive } : {}),
       ...(keyword
         ? {
@@ -87,8 +97,8 @@ export class AdminUsersService {
 
   /** Xem chi tiết 1 tài khoản theo id - cho phép xem cả tài khoản đã xóa mềm để phục vụ tra cứu/audit. */
   async findOne(id: string): Promise<AdminUserResponse> {
-    const user = await this.prisma.user.findUnique({
-      where: { id },
+    const user = await this.prisma.user.findFirst({
+      where: { id, role: { in: MANAGED_PRISMA_USER_ROLES } },
       select: adminUserSelect,
     });
 
@@ -115,7 +125,7 @@ export class AdminUsersService {
           email: normalizeEmail(dto.email),
           fullName: dto.fullName.trim(),
           passwordHash,
-          role: dto.role,
+          role: toPrismaManagedUserRole(dto.role),
           phone: dto.phone,
           dateOfBirth: parseOptionalDateOnly(dto.dateOfBirth),
         },
@@ -150,7 +160,7 @@ export class AdminUsersService {
       throw new BadRequestException('Chưa cung cấp thông tin cần cập nhật');
     }
 
-    await this.assertActiveExists(id);
+    await this.assertManagedActiveExists(id);
 
     if (dto.role !== undefined) {
       this.assertNotStudentRole(
@@ -179,7 +189,9 @@ export class AdminUsersService {
           ...(dto.dateOfBirth !== undefined && {
             dateOfBirth: parseOptionalDateOnly(dto.dateOfBirth),
           }),
-          ...(dto.role !== undefined && { role: dto.role }),
+          ...(dto.role !== undefined && {
+            role: toPrismaManagedUserRole(dto.role),
+          }),
           ...activeStateData,
         },
         select: adminUserSelect,
@@ -226,15 +238,34 @@ export class AdminUsersService {
     return mapToAdminUserResponse(user);
   }
 
-  /** Xóa cứng tài khoản khỏi CSDL và thu hồi phiên đăng nhập đang hoạt động. */
+  /** Xóa mềm tài khoản khỏi hệ thống và thu hồi phiên đăng nhập đang hoạt động. */
   async remove(id: string, currentUserId: string): Promise<AdminUserResponse> {
     await this.assertActiveExists(id);
     this.assertNotSelf(id, currentUserId, 'xóa');
 
     try {
-      const user = await this.prisma.user.delete({
-        where: { id },
-        select: adminUserSelect,
+      const deletedAt = new Date();
+      const user = await this.prisma.$transaction(async (tx) => {
+        const deletedUser = await tx.user.update({
+          where: { id },
+          data: {
+            deletedAt,
+            isActive: false,
+            lockedAt: deletedAt,
+            refreshTokenHash: null,
+            refreshTokenExpiresAt: null,
+          },
+          select: adminUserSelect,
+        });
+
+        if (deletedUser.role === PrismaUserRole.student) {
+          await tx.classStudent.updateMany({
+            where: { studentId: id, deletedAt: null },
+            data: { deletedAt },
+          });
+        }
+
+        return deletedUser;
       });
 
       this.tokenStore.revokeUserTokensIssuedBefore(id);
@@ -246,10 +277,29 @@ export class AdminUsersService {
     }
   }
 
-  /** Đảm bảo tài khoản tồn tại và chưa bị xóa mềm trước khi cho phép chỉnh sửa/khóa/xóa. */
+  /** Đảm bảo tài khoản admin/class_council tồn tại và chưa bị xóa mềm trước khi cho phép chỉnh sửa thông tin. */
+  private async assertManagedActiveExists(id: string): Promise<void> {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        id,
+        deletedAt: null,
+        role: { in: MANAGED_PRISMA_USER_ROLES },
+      },
+      select: { id: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Không tìm thấy tài khoản');
+    }
+  }
+
+  /** Đảm bảo tài khoản bất kỳ role nào tồn tại và chưa bị xóa mềm trước khi khóa/xóa. */
   private async assertActiveExists(id: string): Promise<void> {
     const user = await this.prisma.user.findFirst({
-      where: { id, deletedAt: null },
+      where: {
+        id,
+        deletedAt: null,
+      },
       select: { id: true },
     });
 
@@ -269,8 +319,8 @@ export class AdminUsersService {
     }
   }
 
-  private assertNotStudentRole(role: UserRole, message: string): void {
-    if (role === UserRole.Student) {
+  private assertNotStudentRole(role: SharedUserRole, message: string): void {
+    if (role === SharedUserRole.Student) {
       throw new BadRequestException(message);
     }
   }
@@ -278,7 +328,7 @@ export class AdminUsersService {
   private async sendCreatedManagedUserEmail(
     dto: CreateAdminUserDto,
   ): Promise<{ sent: boolean; error: string | null }> {
-    if (dto.role !== UserRole.ClassCouncil) {
+    if (dto.role !== SharedUserRole.ClassCouncil) {
       return { sent: false, error: null };
     }
 
@@ -346,6 +396,20 @@ function normalizeEmail(email: string): string {
   return email.toLowerCase().trim();
 }
 
+function toPrismaManagedUserRole(role: SharedUserRole): PrismaUserRole {
+  if (role === SharedUserRole.Admin) {
+    return PrismaUserRole.admin;
+  }
+
+  if (role === SharedUserRole.ClassCouncil) {
+    return PrismaUserRole.class_council;
+  }
+
+  throw new BadRequestException(
+    'API /admin/users chỉ quản lý admin và class_council',
+  );
+}
+
 function mapToAdminUserResponse(user: AdminUserRecord): AdminUserResponse {
   return {
     id: user.id,
@@ -354,7 +418,7 @@ function mapToAdminUserResponse(user: AdminUserRecord): AdminUserResponse {
     fullName: user.fullName,
     phone: user.phone,
     dateOfBirth: formatDateOnly(user.dateOfBirth),
-    role: user.role as UserRole,
+    role: user.role as SharedUserRole,
     isActive: user.isActive,
     lockedAt: user.lockedAt,
     deletedAt: user.deletedAt,

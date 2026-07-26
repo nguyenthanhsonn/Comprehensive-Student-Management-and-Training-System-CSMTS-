@@ -44,6 +44,33 @@ export type EvaluationDetailResponse = EvaluationListResponse & {
     community: CommunityScoreResponse;
     role: RoleScoreResponse;
   };
+  evidences: EvaluationEvidenceResponse[];
+  attachments: EvaluationAttachmentResponse[];
+};
+
+export type EvaluationEvidenceResponse = {
+  id: string;
+  studentId: string;
+  evaluationFormId: string;
+  criterionId: string;
+  criterion: { id: string; code: string; title: string };
+  imageUrl: string;
+  publicId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type EvaluationAttachmentResponse = {
+  id: string;
+  criteriaId: string;
+  criterion: { id: string; code: string; title: string };
+  originalName: string;
+  storageKey: string;
+  mimeType: string;
+  fileSizeBytes: number;
+  isApproved: boolean | null;
+  rejectReason: string | null;
+  uploadedAt: Date;
 };
 
 // ─── Admin: danh sách toàn hệ thống ───────────────────────────────────────────

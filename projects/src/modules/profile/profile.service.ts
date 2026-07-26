@@ -3,7 +3,6 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { parseOptionalDateOnly } from 'src/common/helpers/date-only.helper';
 import { PrismaService } from '../../database/prisma.service';
 import { Prisma } from '../../generated/prisma/client';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -39,23 +38,8 @@ export class ProfileService {
   ): Promise<ProfileResponse> {
     const data: Prisma.UserUpdateInput = {};
 
-    if (dto.fullName !== undefined) {
-      const fullName = dto.fullName.trim();
-      if (!fullName) {
-        throw new BadRequestException('Họ tên không được để trống');
-      }
-      data.fullName = fullName;
-    }
-
     if (dto.phone !== undefined) {
       data.phone = dto.phone?.trim() || null;
-    }
-
-    if (dto.dateOfBirth !== undefined) {
-      data.dateOfBirth =
-        dto.dateOfBirth === null || dto.dateOfBirth === ''
-          ? null
-          : parseOptionalDateOnly(dto.dateOfBirth, 'Ngày sinh');
     }
 
     if (Object.keys(data).length === 0) {
