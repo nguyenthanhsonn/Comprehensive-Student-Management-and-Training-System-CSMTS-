@@ -242,6 +242,12 @@ export class AdminStudentsController {
     return this.adminStudentsService.findAll(query);
   }
 
+  @Get(':id/evaluations')
+  @Roles(UserRole.Admin)
+  findEvaluations(@Param('id', ParseUUIDPipe) id: string) {
+    return this.adminStudentsService.findEvaluations(id);
+  }
+
   @Get(':id')
   @Roles(UserRole.Admin)
   findOne(@Param('id', ParseUUIDPipe) id: string) {

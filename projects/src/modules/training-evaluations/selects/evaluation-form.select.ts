@@ -51,6 +51,37 @@ export const evaluationDetailSelect = {
   submittedAt: true,
   classReviewedAt: true,
   adminFinalizedAt: true,
+  // Minh chứng được FE upload lên cloud: trả imageUrl để admin xem ảnh trực tiếp.
+  evidences: {
+    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    select: {
+      id: true,
+      studentId: true,
+      evaluationFormId: true,
+      criterionId: true,
+      imageUrl: true,
+      publicId: true,
+      createdAt: true,
+      updatedAt: true,
+      criterion: { select: { id: true, code: true, title: true } },
+    },
+  },
+  // File đính kèm truyền thống nếu hệ thống có lưu qua bảng form_attachments.
+  attachments: {
+    orderBy: [{ uploadedAt: 'desc' }, { id: 'desc' }],
+    select: {
+      id: true,
+      criteriaId: true,
+      originalName: true,
+      storageKey: true,
+      mimeType: true,
+      fileSizeBytes: true,
+      isApproved: true,
+      rejectReason: true,
+      uploadedAt: true,
+      criteria: { select: { id: true, code: true, title: true } },
+    },
+  },
 } satisfies Prisma.EvaluationFormSelect;
 
 // ─── GET /admin/training-evaluations – danh sách cho admin (đa lớp/khoa) ──────

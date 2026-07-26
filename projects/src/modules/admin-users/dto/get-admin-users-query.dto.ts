@@ -1,6 +1,18 @@
 import { Transform, Type, type TransformFnParams } from 'class-transformer';
-import { IsBoolean, IsEnum, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 import { UserRole } from 'src/common/shared';
+
+const MANAGED_USER_ROLES = [UserRole.Admin, UserRole.ClassCouncil];
 
 /** Chuyển chuỗi "true"/"false" từ query string sang boolean thật (tránh Boolean("false") = true). */
 function toBoolean({ value }: TransformFnParams): unknown {
@@ -36,6 +48,9 @@ export class GetAdminUsersQueryDto {
 
   @IsOptional()
   @IsEnum(UserRole)
+  @IsIn(MANAGED_USER_ROLES, {
+    message: 'API /admin/users chỉ quản lý admin và class_council',
+  })
   role?: UserRole;
 
   @IsOptional()
