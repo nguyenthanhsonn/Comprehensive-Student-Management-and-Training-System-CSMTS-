@@ -1,6 +1,8 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -8,12 +10,16 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { User, UserRole } from 'src/common/shared';
 import * as bcrypt from 'bcrypt';
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { PrismaService } from '../../database/prisma.service';
+import { StudentAccountMailService } from '../mail/student-account-mail.service';
 import { UsersService } from '../users/users.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { CaptchaService } from './captcha.service';
 import { LoginDto } from './dto/login.dto';
 import { LogoutDto } from './dto/logout.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { AuthTokenStoreService } from './jwt/auth-token-store';
 import { mapAuthProfileToUser } from '../users/mappers/user.mapper';
@@ -35,6 +41,14 @@ type ChangePasswordResult = {
   requiresLogin: true;
 };
 
+type ForgotPasswordResult = {
+  message: string;
+};
+
+type ResetPasswordResult = {
+  message: string;
+};
+
 type CachedProfile = {
   user: User;
   expiresAt: number;
@@ -42,11 +56,17 @@ type CachedProfile = {
 
 const PROFILE_CACHE_TTL_MS = 30_000;
 const PROFILE_CACHE_MAX_SIZE = 1_000;
+const PASSWORD_RESET_TOKEN_BYTES = 32;
+const PASSWORD_RESET_TTL_MINUTES = 15;
+const PASSWORD_RESET_TTL_MS = PASSWORD_RESET_TTL_MINUTES * 60 * 1000;
+const FORGOT_PASSWORD_RESPONSE_MESSAGE =
+  'Vui lòng kiểm tra email của bạn để tiếp tục đặt lại mật khẩu.';
 const DEFAULT_DUMMY_PASSWORD_HASH =
   '$2b$12$DjZDTP1LMXJ6CGgi9sEmJO2AuIvrdOc4FFkSSI1U7oBRQl6np1Y5.';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   private readonly profileCache = new Map<string, CachedProfile>();
 
   constructor(
@@ -55,6 +75,8 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly tokenStore: AuthTokenStoreService,
     private readonly captchaService: CaptchaService,
+    private readonly prisma: PrismaService,
+    private readonly mailService: StudentAccountMailService,
   ) {}
 
   // đăng nhập bằng username + mật khẩu
@@ -66,8 +88,8 @@ export class AuthService {
     );
     const hashToCompare = user
       ? user.passwordHash
-      : this.configService.get<string>('DUMMY_PASSWORD_HASH') ??
-        DEFAULT_DUMMY_PASSWORD_HASH;
+      : (this.configService.get<string>('DUMMY_PASSWORD_HASH') ??
+        DEFAULT_DUMMY_PASSWORD_HASH);
     const isPasswordValid = await bcrypt.compare(dto.password, hashToCompare);
 
     // Keep the dummy hash comparison above so a missing account still takes
@@ -175,6 +197,131 @@ export class AuthService {
     return { loggedOut: true };
   }
 
+  async forgotPassword(dto: ForgotPasswordDto): Promise<ForgotPasswordResult> {
+    const identifier = dto.identifier.trim().toLowerCase();
+    const user = await this.prisma.user.findFirst({
+      where: {
+        deletedAt: null,
+        isActive: true,
+        OR: [{ username: identifier }, { email: identifier }],
+      },
+      select: { id: true, email: true, fullName: true },
+    });
+
+    // Không tiết lộ tài khoản có tồn tại hay không để tránh bị dò username/email.
+    if (!user) {
+      return { message: FORGOT_PASSWORD_RESPONSE_MESSAGE };
+    }
+
+    const rawToken = randomBytes(PASSWORD_RESET_TOKEN_BYTES).toString(
+      'base64url',
+    );
+    const tokenHash = this.hashPasswordResetToken(rawToken);
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + PASSWORD_RESET_TTL_MS);
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.passwordResetToken.updateMany({
+        where: { userId: user.id, usedAt: null },
+        data: { usedAt: now },
+      });
+
+      await tx.passwordResetToken.create({
+        data: { userId: user.id, tokenHash, expiresAt },
+      });
+    });
+
+    try {
+      await this.mailService.sendPasswordReset({
+        email: user.email,
+        fullName: user.fullName,
+        resetUrl: this.buildPasswordResetUrl(rawToken),
+        expiresInMinutes: PASSWORD_RESET_TTL_MINUTES,
+      });
+    } catch (error) {
+      await this.prisma.passwordResetToken.updateMany({
+        where: { tokenHash, usedAt: null },
+        data: { usedAt: new Date() },
+      });
+      this.logger.error(
+        `Không thể gửi email đặt lại mật khẩu cho userId=${user.id}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+      throw new InternalServerErrorException(
+        'Không thể gửi email đặt lại mật khẩu, vui lòng thử lại sau',
+      );
+    }
+
+    return { message: FORGOT_PASSWORD_RESPONSE_MESSAGE };
+  }
+
+  async resetPassword(dto: ResetPasswordDto): Promise<ResetPasswordResult> {
+    const tokenHash = this.hashPasswordResetToken(dto.token);
+    const resetToken = await this.prisma.passwordResetToken.findUnique({
+      where: { tokenHash },
+      include: {
+        user: {
+          select: {
+            id: true,
+            passwordHash: true,
+            deletedAt: true,
+          },
+        },
+      },
+    });
+
+    if (
+      !resetToken ||
+      resetToken.usedAt ||
+      resetToken.expiresAt.getTime() <= Date.now() ||
+      resetToken.user.deletedAt
+    ) {
+      throw new BadRequestException(
+        'Mã đặt lại mật khẩu không hợp lệ hoặc đã hết hạn',
+      );
+    }
+
+    if (await bcrypt.compare(dto.newPassword, resetToken.user.passwordHash)) {
+      throw new BadRequestException('Mật khẩu mới phải khác mật khẩu hiện tại');
+    }
+
+    const now = new Date();
+    const passwordHash = await bcrypt.hash(
+      dto.newPassword,
+      PASSWORD_SALT_ROUNDS,
+    );
+
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: resetToken.userId },
+        data: {
+          passwordHash,
+          refreshTokenHash: null,
+          refreshTokenExpiresAt: null,
+        },
+      }),
+      this.prisma.passwordResetToken.update({
+        where: { id: resetToken.id },
+        data: { usedAt: now },
+      }),
+      this.prisma.passwordResetToken.updateMany({
+        where: {
+          userId: resetToken.userId,
+          id: { not: resetToken.id },
+          usedAt: null,
+        },
+        data: { usedAt: now },
+      }),
+    ]);
+
+    this.profileCache.delete(resetToken.userId);
+
+    return {
+      message:
+        'Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới.',
+    };
+  }
+
   async changePassword(
     user: AuthenticatedUser,
     dto: ChangePasswordDto,
@@ -194,9 +341,7 @@ export class AuthService {
     }
 
     if (await bcrypt.compare(dto.newPassword, userWithPassword.passwordHash)) {
-      throw new BadRequestException(
-        'Mật khẩu mới phải khác mật khẩu hiện tại',
-      );
+      throw new BadRequestException('Mật khẩu mới phải khác mật khẩu hiện tại');
     }
 
     const passwordHash = await bcrypt.hash(
@@ -219,7 +364,8 @@ export class AuthService {
       this.signAccessToken(subject),
       this.signRefreshToken(subject),
     ]);
-    const refreshTokenPayload = this.jwtService.decode<JwtPayload>(refreshToken);
+    const refreshTokenPayload =
+      this.jwtService.decode<JwtPayload>(refreshToken);
     const refreshTokenExpiresAt = this.getTokenExpiresAt(refreshTokenPayload);
     const refreshTokenHash = this.hashRefreshToken(refreshToken);
 
@@ -234,7 +380,6 @@ export class AuthService {
       refreshToken,
     };
   }
-
 
   private signAccessToken(subject: TokenSubject): Promise<string> {
     const payload: JwtPayload = {
@@ -291,6 +436,44 @@ export class AuthService {
 
   private hashRefreshToken(refreshToken: string): string {
     return createHash('sha256').update(refreshToken).digest('hex');
+  }
+
+  private hashPasswordResetToken(token: string): string {
+    return createHash('sha256').update(token).digest('hex');
+  }
+
+  private buildPasswordResetUrl(token: string): string {
+    const explicitResetUrl = process.env.PASSWORD_RESET_URL?.trim();
+    const frontendUrls = (process.env.FRONTEND_URL ?? '')
+      .split(',')
+      .map((url) => url.trim())
+      .filter(Boolean);
+    const preferredFrontendUrl =
+      frontendUrls.find((url) => url.includes('10.36.120.223')) ??
+      frontendUrls.find((url) => !url.includes('localhost')) ??
+      frontendUrls[0];
+    const rawBaseUrl =
+      explicitResetUrl ??
+      preferredFrontendUrl ??
+      process.env.STUDENT_PORTAL_URL?.trim() ??
+      '';
+
+    if (!rawBaseUrl) {
+      return '';
+    }
+
+    try {
+      const baseUrl = new URL(rawBaseUrl);
+      if (!explicitResetUrl) {
+        baseUrl.pathname = '/reset-password';
+        baseUrl.search = '';
+        baseUrl.hash = '';
+      }
+      baseUrl.searchParams.set('token', token);
+      return baseUrl.toString();
+    } catch {
+      return '';
+    }
   }
 
   private async isRefreshTokenHashValid(

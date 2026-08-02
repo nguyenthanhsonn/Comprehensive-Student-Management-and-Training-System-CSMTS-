@@ -13,9 +13,7 @@ export const adminClassCatalogSelect = {
       id: true,
       code: true,
       name: true,
-      faculty: {
-        select: { id: true, code: true, name: true },
-      },
+      faculty: { select: { id: true, code: true, name: true } },
     },
   },
   _count: {
@@ -32,7 +30,24 @@ export type AdminClassCatalogRecord = Prisma.ClassGetPayload<{
 
 export const adminClassCatalogDetailSelect = {
   ...adminClassCatalogSelect,
-  classCouncilAssignments: {
+  classLeaderAssignments: {
+    select: {
+      id: true,
+      userId: true,
+      assignedAt: true,
+      user: {
+        select: {
+          id: true,
+          username: true,
+          fullName: true,
+          email: true,
+          isActive: true,
+        },
+      },
+    },
+    orderBy: { assignedAt: 'desc' },
+  },
+  advisorAssignments: {
     select: {
       id: true,
       userId: true,

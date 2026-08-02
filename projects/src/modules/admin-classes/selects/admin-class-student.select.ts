@@ -11,6 +11,7 @@ export const adminClassStudentSelect = {
       id: true,
       email: true,
       fullName: true,
+      role: true,
       phone: true,
       dateOfBirth: true,
       isActive: true,

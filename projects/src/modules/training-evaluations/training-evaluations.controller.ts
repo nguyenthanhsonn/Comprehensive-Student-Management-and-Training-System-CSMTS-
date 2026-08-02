@@ -26,9 +26,23 @@ import { UpdateRoleScoreDto } from './dto/update-role-score.dto';
 import { UpdateStudyScoreDto } from './dto/update-study-score.dto';
 import { UpdateTrainingEvaluationDraftDto } from './dto/update-training-evaluation-draft.dto';
 import { TrainingEvaluationsService } from './training-evaluations.service';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
-const ALL_ROLES = [UserRole.Student, UserRole.ClassCouncil, UserRole.Admin];
+const ALL_ROLES = [
+  UserRole.Student,
+  UserRole.Advisor,
+  UserRole.ClassLeader,
+  UserRole.Admin,
+];
 
+@ApiTags('Training Evaluations')
+@ApiBearerAuth('access-token')
+@ApiResponse({ status: 401, description: 'Thiếu hoặc sai access token.' })
 @Controller('training-evaluations')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class TrainingEvaluationsController {
@@ -36,6 +50,12 @@ export class TrainingEvaluationsController {
     private readonly trainingEvaluationsService: TrainingEvaluationsService,
   ) {}
 
+  @ApiOperation({
+    summary: 'Tạo/Xử lý dữ liệu',
+    description: 'Endpoint POST / trong nhóm Training Evaluations; xem schema DTO/query và response mẫu trực tiếp trong Swagger.',
+  })
+  @ApiResponse({ status: 201, description: 'Thao tác thành công.' })
+  @ApiResponse({ status: 400, description: 'Dữ liệu gửi lên không hợp lệ.' })
   @Post()
   @Roles(UserRole.Student)
   create(
@@ -45,8 +65,13 @@ export class TrainingEvaluationsController {
     return this.trainingEvaluationsService.create(userId, dto);
   }
 
+  @ApiOperation({
+    summary: 'Lấy dữ liệu',
+    description: 'Endpoint GET / trong nhóm Training Evaluations; xem schema DTO/query và response mẫu trực tiếp trong Swagger.',
+  })
+  @ApiResponse({ status: 200, description: 'Thao tác thành công.' })
   @Get()
-  @Roles(UserRole.ClassCouncil, UserRole.Admin)
+  @Roles(UserRole.Advisor, UserRole.ClassLeader, UserRole.Admin)
   findAll(
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: AdminListEvaluationsQueryDto,
@@ -54,12 +79,22 @@ export class TrainingEvaluationsController {
     return this.trainingEvaluationsService.findAll(user, query);
   }
 
+  @ApiOperation({
+    summary: 'Lấy dữ liệu',
+    description: 'Endpoint GET me trong nhóm Training Evaluations; xem schema DTO/query và response mẫu trực tiếp trong Swagger.',
+  })
+  @ApiResponse({ status: 200, description: 'Thao tác thành công.' })
   @Get('me')
   @Roles(UserRole.Student)
   findMine(@CurrentUser('id') userId: string) {
     return this.trainingEvaluationsService.findMine(userId);
   }
 
+  @ApiOperation({
+    summary: 'Lấy dữ liệu',
+    description: 'Endpoint GET :id/summary trong nhóm Training Evaluations; xem schema DTO/query và response mẫu trực tiếp trong Swagger.',
+  })
+  @ApiResponse({ status: 200, description: 'Thao tác thành công.' })
   @Get(':id/summary')
   @Roles(...ALL_ROLES)
   getSummary(
@@ -70,6 +105,11 @@ export class TrainingEvaluationsController {
     return this.trainingEvaluationsService.getSummary(userId, role, id);
   }
 
+  @ApiOperation({
+    summary: 'Lấy dữ liệu',
+    description: 'Endpoint GET :id/status trong nhóm Training Evaluations; xem schema DTO/query và response mẫu trực tiếp trong Swagger.',
+  })
+  @ApiResponse({ status: 200, description: 'Thao tác thành công.' })
   @Get(':id/status')
   @Roles(...ALL_ROLES)
   getStatus(
@@ -80,6 +120,12 @@ export class TrainingEvaluationsController {
     return this.trainingEvaluationsService.getStatus(userId, role, id);
   }
 
+  @ApiOperation({
+    summary: 'Cập nhật dữ liệu',
+    description: 'Endpoint PATCH :id/study-score trong nhóm Training Evaluations; xem schema DTO/query và response mẫu trực tiếp trong Swagger.',
+  })
+  @ApiResponse({ status: 200, description: 'Thao tác thành công.' })
+  @ApiResponse({ status: 400, description: 'Dữ liệu gửi lên không hợp lệ.' })
   @Patch(':id/study-score')
   @Roles(UserRole.Student)
   updateStudyScore(
@@ -90,6 +136,12 @@ export class TrainingEvaluationsController {
     return this.trainingEvaluationsService.updateStudyScore(userId, id, dto);
   }
 
+  @ApiOperation({
+    summary: 'Cập nhật dữ liệu',
+    description: 'Endpoint PATCH :id/discipline-score trong nhóm Training Evaluations; xem schema DTO/query và response mẫu trực tiếp trong Swagger.',
+  })
+  @ApiResponse({ status: 200, description: 'Thao tác thành công.' })
+  @ApiResponse({ status: 400, description: 'Dữ liệu gửi lên không hợp lệ.' })
   @Patch(':id/discipline-score')
   @Roles(UserRole.Student)
   updateDisciplineScore(
@@ -104,6 +156,12 @@ export class TrainingEvaluationsController {
     );
   }
 
+  @ApiOperation({
+    summary: 'Cập nhật dữ liệu',
+    description: 'Endpoint PATCH :id/activity-score trong nhóm Training Evaluations; xem schema DTO/query và response mẫu trực tiếp trong Swagger.',
+  })
+  @ApiResponse({ status: 200, description: 'Thao tác thành công.' })
+  @ApiResponse({ status: 400, description: 'Dữ liệu gửi lên không hợp lệ.' })
   @Patch(':id/activity-score')
   @Roles(UserRole.Student)
   updateActivityScore(
@@ -114,6 +172,12 @@ export class TrainingEvaluationsController {
     return this.trainingEvaluationsService.updateActivityScore(userId, id, dto);
   }
 
+  @ApiOperation({
+    summary: 'Cập nhật dữ liệu',
+    description: 'Endpoint PATCH :id/community-score trong nhóm Training Evaluations; xem schema DTO/query và response mẫu trực tiếp trong Swagger.',
+  })
+  @ApiResponse({ status: 200, description: 'Thao tác thành công.' })
+  @ApiResponse({ status: 400, description: 'Dữ liệu gửi lên không hợp lệ.' })
   @Patch(':id/community-score')
   @Roles(UserRole.Student)
   updateCommunityScore(
@@ -128,6 +192,12 @@ export class TrainingEvaluationsController {
     );
   }
 
+  @ApiOperation({
+    summary: 'Cập nhật dữ liệu',
+    description: 'Endpoint PATCH :id/role-score trong nhóm Training Evaluations; xem schema DTO/query và response mẫu trực tiếp trong Swagger.',
+  })
+  @ApiResponse({ status: 200, description: 'Thao tác thành công.' })
+  @ApiResponse({ status: 400, description: 'Dữ liệu gửi lên không hợp lệ.' })
   @Patch(':id/role-score')
   @Roles(UserRole.Student)
   updateRoleScore(
@@ -138,6 +208,12 @@ export class TrainingEvaluationsController {
     return this.trainingEvaluationsService.updateRoleScore(userId, id, dto);
   }
 
+  @ApiOperation({
+    summary: 'Tạo/Xử lý dữ liệu',
+    description: 'Endpoint POST :id/submit trong nhóm Training Evaluations; xem schema DTO/query và response mẫu trực tiếp trong Swagger.',
+  })
+  @ApiResponse({ status: 201, description: 'Thao tác thành công.' })
+  @ApiResponse({ status: 400, description: 'Dữ liệu gửi lên không hợp lệ.' })
   @Post(':id/submit')
   @Roles(UserRole.Student)
   submit(
@@ -147,18 +223,30 @@ export class TrainingEvaluationsController {
     return this.trainingEvaluationsService.submit(userId, id);
   }
 
+  @ApiOperation({
+    summary: 'Cập nhật dữ liệu',
+    description: 'Endpoint PATCH :id/review-scores trong nhóm Training Evaluations; xem schema DTO/query và response mẫu trực tiếp trong Swagger.',
+  })
+  @ApiResponse({ status: 200, description: 'Thao tác thành công.' })
+  @ApiResponse({ status: 400, description: 'Dữ liệu gửi lên không hợp lệ.' })
   @Patch(':id/review-scores')
-  @Roles(UserRole.ClassCouncil)
+  @Roles(UserRole.Advisor, UserRole.ClassLeader)
   reviewScores(
-    @CurrentUser('id') userId: string,
+    @CurrentUser() reviewer: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ReviewScoresDto,
   ) {
-    return this.trainingEvaluationsService.reviewScores(userId, id, dto);
+    return this.trainingEvaluationsService.reviewScores(reviewer, id, dto);
   }
 
+  @ApiOperation({
+    summary: 'Tạo/Xử lý dữ liệu',
+    description: 'Endpoint POST :id/review trong nhóm Training Evaluations; xem schema DTO/query và response mẫu trực tiếp trong Swagger.',
+  })
+  @ApiResponse({ status: 201, description: 'Thao tác thành công.' })
+  @ApiResponse({ status: 400, description: 'Dữ liệu gửi lên không hợp lệ.' })
   @Post(':id/review')
-  @Roles(UserRole.ClassCouncil, UserRole.Admin)
+  @Roles(UserRole.Advisor, UserRole.ClassLeader, UserRole.Admin)
   review(
     @CurrentUser() reviewer: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -167,6 +255,11 @@ export class TrainingEvaluationsController {
     return this.trainingEvaluationsService.review(reviewer, id, dto);
   }
 
+  @ApiOperation({
+    summary: 'Lấy dữ liệu',
+    description: 'Endpoint GET :id trong nhóm Training Evaluations; xem schema DTO/query và response mẫu trực tiếp trong Swagger.',
+  })
+  @ApiResponse({ status: 200, description: 'Thao tác thành công.' })
   @Get(':id')
   @Roles(...ALL_ROLES)
   findOne(
@@ -177,6 +270,12 @@ export class TrainingEvaluationsController {
     return this.trainingEvaluationsService.findOne(userId, role, id);
   }
 
+  @ApiOperation({
+    summary: 'Cập nhật dữ liệu',
+    description: 'Endpoint PATCH :id trong nhóm Training Evaluations; xem schema DTO/query và response mẫu trực tiếp trong Swagger.',
+  })
+  @ApiResponse({ status: 200, description: 'Thao tác thành công.' })
+  @ApiResponse({ status: 400, description: 'Dữ liệu gửi lên không hợp lệ.' })
   @Patch(':id')
   @Roles(UserRole.Student)
   updateDraft(

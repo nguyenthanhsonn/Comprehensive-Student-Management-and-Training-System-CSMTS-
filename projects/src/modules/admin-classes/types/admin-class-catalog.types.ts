@@ -20,7 +20,16 @@ export type AdminClassResponse = {
 };
 
 export type AdminClassDetailResponse = AdminClassResponse & {
-  councils: Array<{
+  classLeaders: Array<{
+    id: string;
+    userId: string;
+    username: string;
+    fullName: string;
+    email: string;
+    isActive: boolean;
+    assignedAt: Date;
+  }>;
+  advisors: Array<{
     id: string;
     userId: string;
     username: string;

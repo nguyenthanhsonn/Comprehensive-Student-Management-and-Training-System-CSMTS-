@@ -105,7 +105,7 @@ export function calculateAverage(sum: number | null, count: number): number | nu
 }
 
 /**
- * Gom nhóm số liệu theo lớp lên theo khoa (Class → Major → Faculty).
+ * Gom nhóm số liệu theo lớp lên theo khoa (Class -> Major -> Faculty).
  * Tính trực tiếp từ tổng điểm + số lượng thô (không phải trung bình của trung bình
  * đã làm tròn) để đảm bảo điểm trung bình cấp khoa chính xác.
  */

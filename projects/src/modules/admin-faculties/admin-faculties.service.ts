@@ -1,14 +1,17 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import ExcelJS from 'exceljs';
-import { randomUUID } from 'node:crypto';
-import { read, utils } from 'xlsx';
-import type { PaginatedResult } from '../../common/shared';
+import { UserRole, type PaginatedResult } from '../../common/shared';
 import { Prisma } from '../../generated/prisma/client';
+import { PrismaService } from '../../database/prisma.service';
+import { GetMajorsQueryDto } from '../admin-majors/dto/get-majors-query.dto';
+import { mapToAdminMajorResponse } from '../admin-majors/mappers/admin-major.mapper';
+import { adminMajorSelect } from '../admin-majors/selects/admin-major.select';
+import type { AdminMajorResponse } from '../admin-majors/types/admin-major.types';
 import { AdminFacultiesRepository } from './admin-faculties.repository';
 import { CreateFacultyDto } from './dto/create-faculty.dto';
 import { GetFacultiesQueryDto } from './dto/get-faculties-query.dto';
@@ -20,60 +23,12 @@ import {
 } from './mappers/admin-faculty.mapper';
 import type { AdminFacultyResponse } from './types/admin-faculty.types';
 
-type ImportFacultyRow = {
-  rowNumber: number;
-  code?: string;
-  name?: string;
-};
-
-export type UploadedFacultyExcelFile = {
-  originalname: string;
-  mimetype: string;
-  buffer: Buffer;
-};
-
-export type ImportFacultiesResult = {
-  totalRows: number;
-  successCount: number;
-  createdCount: number;
-  createdFaculties: AdminFacultyResponse[];
-  failedCount: number;
-  errors: Array<{ row: number; message: string }>;
-};
-
-export type ImportFacultiesPreviewResponse = {
-  importToken: string;
-  expiresAt: Date;
-  totalRows: number;
-  successCount: number;
-  previewCount: number;
-  previewFaculties: Array<{
-    row: number;
-    action: 'create';
-    code: string;
-    name: string;
-    note: string | null;
-  }>;
-  failedCount: number;
-  errors: Array<{ row: number; message: string }>;
-};
-
-type CachedFacultyImportPlan = {
-  expiresAt: number;
-  totalRows: number;
-  rows: Array<{ code: string; name: string }>;
-};
-
-const IMPORT_PREVIEW_TTL_MS = 10 * 60 * 1000;
-
 @Injectable()
 export class AdminFacultiesService {
-  private readonly importPreviewCache = new Map<
-    string,
-    CachedFacultyImportPlan
-  >();
-
-  constructor(private readonly repository: AdminFacultiesRepository) {}
+  constructor(
+    private readonly repository: AdminFacultiesRepository,
+    private readonly prisma: PrismaService,
+  ) {}
 
   /** Lấy danh sách khoa có phân trang, tìm kiếm và lọc. Mặc định chỉ lấy khoa chưa xóa mềm. */
   async findAll(
@@ -97,11 +52,7 @@ export class AdminFacultiesService {
         : {}),
     };
 
-    const { items, total } = await this.repository.findMany(
-      where,
-      skip,
-      limit,
-    );
+    const { items, total } = await this.repository.findMany(where, skip, limit);
 
     return {
       items: items.map(mapToAdminFacultyResponse),
@@ -109,6 +60,83 @@ export class AdminFacultiesService {
       limit,
       total,
     };
+  }
+
+  /** Lấy danh sách ngành thuộc một khoa, dùng cho UI chọn Khoa -> Ngành. */
+  async findMajors(
+    facultyId: string,
+    query: GetMajorsQueryDto,
+  ): Promise<PaginatedResult<AdminMajorResponse>> {
+    const faculty = await this.repository.findActiveById(facultyId);
+    if (!faculty) {
+      throw new NotFoundException('Không tìm thấy khoa');
+    }
+
+    const page = query.page;
+    const limit = query.limit;
+    const skip = (page - 1) * limit;
+    const search = query.search?.trim();
+    const where: Prisma.MajorWhereInput = {
+      facultyId,
+      ...(query.includeDeleted ? {} : { deletedAt: null }),
+      ...(query.isActive !== undefined ? { isActive: query.isActive } : {}),
+      ...(search
+        ? {
+            OR: [
+              { code: { contains: search, mode: 'insensitive' } },
+              { name: { contains: search, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
+
+    const [items, total] = await Promise.all([
+      this.prisma.major.findMany({
+        where,
+        select: adminMajorSelect,
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        skip,
+        take: limit,
+      }),
+      this.prisma.major.count({ where }),
+    ]);
+
+    return {
+      items: items.map(mapToAdminMajorResponse),
+      page,
+      limit,
+      total,
+    };
+  }
+
+  /**
+   * Endpoint /faculties/:id/majors dùng chung cho admin và khoa.
+   * Admin xem mọi khoa, role khoa chỉ xem đúng khoa được gán cho tài khoản.
+   */
+  async findMajorsForViewer(
+    userId: string,
+    role: UserRole,
+    facultyId: string,
+    query: GetMajorsQueryDto,
+  ): Promise<PaginatedResult<AdminMajorResponse>> {
+    if (role === UserRole.Admin) {
+      return this.findMajors(facultyId, query);
+    }
+
+    if (role === UserRole.Faculty) {
+      const assignment = await this.prisma.facultyAssignment.findUnique({
+        where: { userId },
+        select: { facultyId: true },
+      });
+
+      if (!assignment || assignment.facultyId !== facultyId) {
+        throw new ForbiddenException('Bạn không được quản lý khoa này');
+      }
+
+      return this.findMajors(facultyId, query);
+    }
+
+    throw new ForbiddenException('Không có quyền xem danh sách ngành của khoa này');
   }
 
   /** Xem chi tiết 1 khoa - cho phép xem cả khoa đã xóa mềm để phục vụ tra cứu/audit. */
@@ -133,174 +161,6 @@ export class AdminFacultiesService {
       });
 
       return mapToAdminFacultyResponse(faculty);
-    } catch (error) {
-      this.handleKnownFacultyError(error);
-      throw error;
-    }
-  }
-
-  async generateImportTemplate(): Promise<Buffer> {
-    const workbook = new ExcelJS.Workbook();
-    const sheet = workbook.addWorksheet('Danh sách khoa');
-
-    sheet.columns = [
-      { header: 'Mã khoa', key: 'code', width: 20 },
-      { header: 'Tên khoa', key: 'name', width: 35 },
-    ];
-
-    const headerRow = sheet.getRow(1);
-    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-    headerRow.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: '4472C4' },
-    };
-    headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
-
-    sheet.addRow({
-      code: 'CNTT',
-      name: 'Công nghệ thông tin',
-    });
-    sheet.addRow({
-      code: 'KT',
-      name: 'Kinh tế',
-    });
-    sheet.views = [{ state: 'frozen', ySplit: 1 }];
-
-    const buffer = await workbook.xlsx.writeBuffer();
-    return Buffer.from(buffer);
-  }
-
-  async importFromTemplate(
-    file: UploadedFacultyExcelFile | undefined,
-  ): Promise<ImportFacultiesPreviewResponse> {
-    const rows = parseUploadedFacultyFile(file);
-    const errors: ImportFacultiesResult['errors'] = [];
-    const seenCodes = new Map<string, number>();
-    const validRows: Array<{ rowNumber: number; code: string; name: string }> =
-      [];
-
-    for (const row of rows) {
-      try {
-        const code = normalizeFacultyCode(row.code ?? '');
-        const name = row.name?.trim() ?? '';
-
-        validateImportFacultyRow(row.rowNumber, code, name);
-
-        const duplicateRow = seenCodes.get(code);
-        if (duplicateRow !== undefined) {
-          throw new BadRequestException(
-            `Mã khoa bị trùng trong file với dòng ${duplicateRow}`,
-          );
-        }
-
-        seenCodes.set(code, row.rowNumber);
-        validRows.push({ rowNumber: row.rowNumber, code, name });
-      } catch (error) {
-        errors.push({
-          row: row.rowNumber,
-          message:
-            error instanceof Error ? error.message : 'Dòng dữ liệu không hợp lệ',
-        });
-      }
-    }
-
-    const existingFaculties =
-      validRows.length > 0
-        ? await this.repository.findByCodes(validRows.map((row) => row.code))
-        : [];
-    const existingByCode = new Map(
-      existingFaculties.map((faculty) => [faculty.code, faculty]),
-    );
-
-    for (const row of validRows) {
-      const existing = existingByCode.get(row.code);
-      if (!existing) {
-        continue;
-      }
-
-      errors.push({
-        row: row.rowNumber,
-        message: existing.deletedAt
-          ? 'Mã khoa này đã thuộc về một khoa đã bị xóa mềm trước đó. Vui lòng dùng mã khác.'
-          : 'Mã khoa đã tồn tại',
-      });
-    }
-
-    if (errors.length > 0) {
-      throw new BadRequestException({
-        message: 'Import file thất bại',
-        errors: errors.map((error) => ({
-          field: `row ${error.row}`,
-          error: error.message,
-        })),
-      });
-    }
-
-    const importToken = randomUUID();
-    const expiresAt = new Date(Date.now() + IMPORT_PREVIEW_TTL_MS);
-    const previewFaculties = validRows.map((row) => ({
-      row: row.rowNumber,
-      action: 'create' as const,
-      code: row.code,
-      name: row.name,
-      note: 'Sẽ tạo khoa mới khi xác nhận',
-    }));
-
-    this.importPreviewCache.set(importToken, {
-      expiresAt: expiresAt.getTime(),
-      totalRows: rows.length,
-      rows: validRows.map((row) => ({ code: row.code, name: row.name })),
-    });
-
-    return {
-      importToken,
-      expiresAt,
-      totalRows: rows.length,
-      successCount: previewFaculties.length,
-      previewCount: previewFaculties.length,
-      previewFaculties,
-      failedCount: 0,
-      errors: [],
-    };
-  }
-
-  async confirmImport(importToken: string): Promise<ImportFacultiesResult> {
-    const plan = this.importPreviewCache.get(importToken);
-
-    if (!plan) {
-      throw new BadRequestException('Phiên import không tồn tại hoặc đã được xác nhận');
-    }
-
-    if (plan.expiresAt <= Date.now()) {
-      this.importPreviewCache.delete(importToken);
-      throw new BadRequestException('Phiên import đã hết hạn, vui lòng tải lại file');
-    }
-
-    this.importPreviewCache.delete(importToken);
-
-    try {
-      await this.repository.createMany(plan.rows);
-
-      const createdRecords = await this.repository.findByCodes(
-        plan.rows.map((row) => row.code),
-      );
-      const createdByCode = new Map(
-        createdRecords.map((record) => [record.code, record]),
-      );
-      const createdFaculties = plan.rows
-        .map((row) => createdByCode.get(row.code))
-        .filter((record): record is NonNullable<typeof record> => Boolean(record))
-        .map(mapToAdminFacultyResponse);
-
-      return {
-        totalRows: plan.totalRows,
-        successCount: createdFaculties.length,
-        createdCount: createdFaculties.length,
-        createdFaculties,
-        failedCount: 0,
-        errors: [],
-      };
     } catch (error) {
       this.handleKnownFacultyError(error);
       throw error;
@@ -414,121 +274,5 @@ export class AdminFacultiesService {
     if (error.code === 'P2025') {
       throw new NotFoundException('Không tìm thấy khoa');
     }
-  }
-}
-
-function isExcelFile(file: UploadedFacultyExcelFile) {
-  const fileName = file.originalname.toLowerCase();
-  return (
-    fileName.endsWith('.xlsx') ||
-    fileName.endsWith('.xls') ||
-    file.mimetype ===
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
-    file.mimetype === 'application/vnd.ms-excel'
-  );
-}
-
-function parseUploadedFacultyFile(
-  file: UploadedFacultyExcelFile | undefined,
-): ImportFacultyRow[] {
-  if (!file) {
-    throw new BadRequestException('Vui lòng tải lên file Excel');
-  }
-
-  if (!isExcelFile(file)) {
-    throw new BadRequestException('File import phải có định dạng .xlsx hoặc .xls');
-  }
-
-  const rows = parseFacultyRows(file.buffer);
-  if (rows.length === 0) {
-    throw new BadRequestException('File Excel không có dữ liệu khoa');
-  }
-
-  return rows;
-}
-
-function parseFacultyRows(buffer: Buffer): ImportFacultyRow[] {
-  const workbook = read(buffer, { type: 'buffer' });
-  const sheetName = workbook.SheetNames[0];
-
-  if (!sheetName) {
-    throw new BadRequestException('File Excel không có sheet dữ liệu');
-  }
-
-  const sheet = workbook.Sheets[sheetName];
-  if (!sheet) {
-    throw new BadRequestException('Không đọc được sheet dữ liệu trong file Excel');
-  }
-
-  const rows = utils.sheet_to_json<Record<string, unknown>>(sheet, {
-    defval: '',
-  });
-
-  return rows
-    .map((row, index) => ({
-      rowNumber: index + 2,
-      ...normalizeImportFacultyRow(row),
-    }))
-    .filter((row) => row.code || row.name);
-}
-
-function normalizeImportFacultyRow(row: Record<string, unknown>) {
-  const normalized: { code?: string; name?: string } = {};
-
-  for (const [key, value] of Object.entries(row)) {
-    const normalizedKey = normalizeHeader(key);
-    const stringValue =
-      value === null || value === undefined ? '' : String(value).trim();
-
-    if (['ma_khoa', 'code', 'faculty_code'].includes(normalizedKey)) {
-      normalized.code = stringValue;
-      continue;
-    }
-
-    if (['ten_khoa', 'name', 'faculty_name'].includes(normalizedKey)) {
-      normalized.name = stringValue;
-    }
-  }
-
-  return normalized;
-}
-
-function normalizeHeader(header: string): string {
-  return header
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'D')
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '');
-}
-
-function validateImportFacultyRow(
-  rowNumber: number,
-  code: string,
-  name: string,
-): void {
-  if (!code) {
-    throw new BadRequestException('Mã khoa không được để trống');
-  }
-
-  if (code.length > 20) {
-    throw new BadRequestException('Mã khoa không được vượt quá 20 ký tự');
-  }
-
-  if (!/^[A-Z0-9_-]+$/.test(code)) {
-    throw new BadRequestException(
-      'Mã khoa chỉ được chứa chữ in hoa, số, dấu gạch dưới hoặc gạch ngang',
-    );
-  }
-
-  if (!name) {
-    throw new BadRequestException('Tên khoa không được để trống');
-  }
-
-  if (name.length > 255) {
-    throw new BadRequestException('Tên khoa không được vượt quá 255 ký tự');
   }
 }

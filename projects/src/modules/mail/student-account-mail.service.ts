@@ -18,6 +18,13 @@ type StaffAccountMailPayload = {
   roleLabel: string;
 };
 
+type PasswordResetMailPayload = {
+  email: string;
+  fullName: string;
+  resetUrl: string;
+  expiresInMinutes: number;
+};
+
 type MailMessage = {
   to: string;
   subject: string;
@@ -69,6 +76,18 @@ export class StudentAccountMailService {
     });
   }
 
+  async sendPasswordReset(payload: PasswordResetMailPayload): Promise<void> {
+    const config = this.getConfig();
+    const subject = 'Yêu cầu đặt lại mật khẩu CSMTS';
+
+    await this.sendMail(config, {
+      to: payload.email,
+      subject,
+      text: buildPasswordResetText(payload),
+      html: buildPasswordResetHtml(payload),
+    });
+  }
+
   private getConfig(): SmtpConfig {
     const host = process.env.SMTP_HOST;
     const from = process.env.SMTP_FROM;
@@ -86,7 +105,8 @@ export class StudentAccountMailService {
       pass: process.env.SMTP_PASS,
       from,
       fromName: process.env.SMTP_FROM_NAME ?? 'CSMTS',
-      portalUrl: process.env.STUDENT_PORTAL_URL ?? process.env.FRONTEND_URL ?? '',
+      portalUrl:
+        process.env.STUDENT_PORTAL_URL ?? process.env.FRONTEND_URL ?? '',
     };
   }
 
@@ -103,7 +123,12 @@ export class StudentAccountMailService {
       if (!config.secure && config.startTls) {
         activeSocket = await startTlsIfSupported(socket, reader, config);
         activeReader = new SmtpReader(activeSocket);
-        await command(activeSocket, activeReader, `EHLO ${getClientName()}`, 250);
+        await command(
+          activeSocket,
+          activeReader,
+          `EHLO ${getClientName()}`,
+          250,
+        );
       }
 
       if (config.user && config.pass) {
@@ -122,11 +147,18 @@ export class StudentAccountMailService {
         );
       }
 
-      await command(activeSocket, activeReader, `MAIL FROM:<${config.from}>`, 250);
-      await command(activeSocket, activeReader, `RCPT TO:<${message.to}>`, [
+      await command(
+        activeSocket,
+        activeReader,
+        `MAIL FROM:<${config.from}>`,
         250,
-        251,
-      ]);
+      );
+      await command(
+        activeSocket,
+        activeReader,
+        `RCPT TO:<${message.to}>`,
+        [250, 251],
+      );
       await command(activeSocket, activeReader, 'DATA', 354);
       activeSocket.write(buildMimeMessage(config, message));
       await activeReader.expect(250);
@@ -291,7 +323,10 @@ function buildMimeMessage(config: SmtpConfig, message: MailMessage) {
   return `${headers.join('\r\n')}\r\n\r\n${dotStuff(body.join('\r\n'))}\r\n.\r\n`;
 }
 
-function buildAccountText(payload: StudentAccountMailPayload, portalUrl: string) {
+function buildAccountText(
+  payload: StudentAccountMailPayload,
+  portalUrl: string,
+) {
   return [
     `Xin chào ${payload.fullName},`,
     '',
@@ -309,7 +344,10 @@ function buildAccountText(payload: StudentAccountMailPayload, portalUrl: string)
     .join('\n');
 }
 
-function buildAccountHtml(payload: StudentAccountMailPayload, portalUrl: string) {
+function buildAccountHtml(
+  payload: StudentAccountMailPayload,
+  portalUrl: string,
+) {
   const loginLine = portalUrl
     ? `<li style="margin: 6px 0;">Địa chỉ đăng nhập: <a href="${escapeHtml(
         portalUrl,
@@ -381,7 +419,10 @@ function buildAccountHtml(payload: StudentAccountMailPayload, portalUrl: string)
   `;
 }
 
-function buildStaffAccountText(payload: StaffAccountMailPayload, portalUrl: string) {
+function buildStaffAccountText(
+  payload: StaffAccountMailPayload,
+  portalUrl: string,
+) {
   return [
     `Xin chào ${payload.fullName},`,
     '',
@@ -399,7 +440,10 @@ function buildStaffAccountText(payload: StaffAccountMailPayload, portalUrl: stri
     .join('\n');
 }
 
-function buildStaffAccountHtml(payload: StaffAccountMailPayload, portalUrl: string) {
+function buildStaffAccountHtml(
+  payload: StaffAccountMailPayload,
+  portalUrl: string,
+) {
   const loginLine = portalUrl
     ? `<li>Địa chỉ đăng nhập: <a href="${escapeHtml(portalUrl)}">${escapeHtml(
         portalUrl,
@@ -422,6 +466,60 @@ function buildStaffAccountHtml(payload: StaffAccountMailPayload, portalUrl: stri
         <li>Sau khi đăng nhập thành công, bạn nên đổi mật khẩu ngay.</li>
         <li>Nếu quên mật khẩu, vui lòng liên hệ quản trị viên để được hỗ trợ.</li>
       </ul>
+    </div>
+  `;
+}
+
+function buildPasswordResetText(payload: PasswordResetMailPayload) {
+  return [
+    `Xin chào ${payload.fullName},`,
+    '',
+    'Hệ thống nhận được yêu cầu đặt lại mật khẩu cho tài khoản CSMTS của bạn.',
+    payload.resetUrl
+      ? `Vui lòng mở đường dẫn sau để tạo mật khẩu mới: ${payload.resetUrl}`
+      : 'Không tạo được đường dẫn đặt lại mật khẩu. Vui lòng liên hệ quản trị viên.',
+    `Đường dẫn này chỉ có hiệu lực trong ${payload.expiresInMinutes} phút và chỉ sử dụng được một lần.`,
+    '',
+    'Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.',
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
+function buildPasswordResetHtml(payload: PasswordResetMailPayload) {
+  const resetAction = payload.resetUrl
+    ? `<p style="margin: 22px 0;"><a href="${escapeHtml(
+        payload.resetUrl,
+      )}" style="display: inline-block; background: #b9101a; color: #ffffff; padding: 12px 18px; border-radius: 6px; text-decoration: none; font-weight: 700;">Đặt lại mật khẩu</a></p>
+         <p style="margin: 0 0 18px 0; color: #4b5563; word-break: break-all;">Hoặc copy đường dẫn: <a href="${escapeHtml(
+           payload.resetUrl,
+         )}" style="color: #2563eb;">${escapeHtml(payload.resetUrl)}</a></p>`
+    : '<p style="margin: 22px 0; color: #b9101a; font-weight: 700;">Không tạo được đường dẫn đặt lại mật khẩu. Vui lòng liên hệ quản trị viên.</p>';
+
+  return `
+    <div style="margin: 0; padding: 24px 0; background: #f3f4f6; font-family: Arial, Helvetica, sans-serif; color: #1f2937;">
+      <table role="presentation" cellpadding="0" cellspacing="0" style="width: 100%; max-width: 680px; margin: 0 auto; border-collapse: collapse; background: #ffffff; border: 1px solid #e5e7eb;">
+        <tr>
+          <td style="padding: 30px 34px; font-size: 16px; line-height: 1.65;">
+            <p style="margin: 0 0 12px 0;">Xin chào <strong>${escapeHtml(
+              payload.fullName,
+            )}</strong>,</p>
+            <p style="margin: 0 0 14px 0; font-size: 20px; line-height: 1.45; font-weight: 700; color: #b9101a;">
+              Yêu cầu đặt lại mật khẩu tài khoản CSMTS
+            </p>
+            <p style="margin: 0 0 12px 0;">
+              Hệ thống nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn. Vui lòng sử dụng nút bên dưới để tạo mật khẩu mới.
+            </p>
+            ${resetAction}
+            <p style="margin: 0 0 12px 0;">
+              Đường dẫn này chỉ có hiệu lực trong <strong>${payload.expiresInMinutes} phút</strong> và chỉ sử dụng được một lần.
+            </p>
+            <p style="margin: 0; color: #6b7280;">
+              Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.
+            </p>
+          </td>
+        </tr>
+      </table>
     </div>
   `;
 }

@@ -5,10 +5,16 @@ export type AdminClassStudentResponse = {
   studentCode: string;
   email: string;
   fullName: string;
+  role: string;
   phone: string | null;
   dateOfBirth: Date | null;
   isActive: boolean;
   enrolledAt: Date;
+  isClassLeader: boolean;
+  classLeaderAssignment: {
+    id: string;
+    assignedAt: Date;
+  } | null;
 };
 
 export type ImportClassStudentsResult = {
@@ -50,6 +56,9 @@ export type ImportClassStudentPreviewItem = {
   classId: string;
   classCode: string;
   className: string;
+  majorName: string | null;
+  enrollmentYear: number | null;
+  facultyName: string | null;
   note: string | null;
 };
 

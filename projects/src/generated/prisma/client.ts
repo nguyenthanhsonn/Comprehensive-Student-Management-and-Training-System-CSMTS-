@@ -45,10 +45,20 @@ export { Prisma }
  */
 export type User = Prisma.UserModel
 /**
+ * Model PasswordResetToken
+ * 
+ */
+export type PasswordResetToken = Prisma.PasswordResetTokenModel
+/**
  * Model Post
  * 
  */
 export type Post = Prisma.PostModel
+/**
+ * Model FacultyAssignment
+ * 
+ */
+export type FacultyAssignment = Prisma.FacultyAssignmentModel
 /**
  * Model Faculty
  * 
@@ -70,10 +80,15 @@ export type Class = Prisma.ClassModel
  */
 export type ClassStudent = Prisma.ClassStudentModel
 /**
- * Model ClassCouncilAssignment
+ * Model ClassLeaderAssignment
  * 
  */
-export type ClassCouncilAssignment = Prisma.ClassCouncilAssignmentModel
+export type ClassLeaderAssignment = Prisma.ClassLeaderAssignmentModel
+/**
+ * Model AdvisorAssignment
+ * 
+ */
+export type AdvisorAssignment = Prisma.AdvisorAssignmentModel
 /**
  * Model Semester
  * 

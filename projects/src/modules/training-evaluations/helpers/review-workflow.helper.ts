@@ -14,7 +14,12 @@ export type ReviewStageConfig = {
  * submitted → (lớp/CVHT) → class_approved → (admin) → finalized
  */
 const REVIEW_STAGES: Partial<Record<UserRole, ReviewStageConfig>> = {
-  [UserRole.ClassCouncil]: {
+  [UserRole.Advisor]: {
+    requiredStatus: FormStatus.submitted,
+    nextApprovedStatus: FormStatus.class_approved,
+    notePrefix: '[Lớp trả về]',
+  },
+  [UserRole.ClassLeader]: {
     requiredStatus: FormStatus.submitted,
     nextApprovedStatus: FormStatus.class_approved,
     notePrefix: '[Lớp trả về]',

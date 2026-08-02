@@ -33,7 +33,10 @@ import type { AdminUserResponse } from './types/admin-user.types';
 
 const MANAGED_PRISMA_USER_ROLES = [
   PrismaUserRole.admin,
-  PrismaUserRole.class_council,
+  PrismaUserRole.class_leader,
+  PrismaUserRole.advisor,
+  PrismaUserRole.faculty,
+  PrismaUserRole.training_department,
 ];
 
 @Injectable()
@@ -116,20 +119,69 @@ export class AdminUsersService {
       'Vui lòng dùng API /admin/students để tạo sinh viên',
     );
 
+    const role = toPrismaManagedUserRole(dto.role);
+    if (role === PrismaUserRole.faculty) {
+      await this.assertActiveFacultyExists(dto.facultyId);
+    } else if (dto.facultyId !== undefined) {
+      throw new BadRequestException('Chỉ tài khoản khoa mới được gán khoa quản lý');
+    }
+
+    if (role === PrismaUserRole.advisor || role === PrismaUserRole.class_leader) {
+      await this.assertActiveClassExists(dto.classId);
+    } else if (dto.classId !== undefined) {
+      throw new BadRequestException(
+        'Chỉ cố vấn học tập hoặc lớp trưởng mới được gán lớp phụ trách',
+      );
+    }
+
     const passwordHash = await bcrypt.hash(dto.password, PASSWORD_SALT_ROUNDS);
 
     try {
-      const user = await this.prisma.user.create({
-        data: {
-          username: dto.username,
-          email: normalizeEmail(dto.email),
-          fullName: dto.fullName.trim(),
-          passwordHash,
-          role: toPrismaManagedUserRole(dto.role),
-          phone: dto.phone,
-          dateOfBirth: parseOptionalDateOnly(dto.dateOfBirth),
-        },
-        select: adminUserSelect,
+      const user = await this.prisma.$transaction(async (tx) => {
+        const createdUser = await tx.user.create({
+          data: {
+            username: dto.username,
+            email: normalizeEmail(dto.email),
+            fullName: dto.fullName.trim(),
+            passwordHash,
+            role,
+            phone: dto.phone,
+            dateOfBirth: parseOptionalDateOnly(dto.dateOfBirth),
+          },
+          select: { id: true },
+        });
+
+        if (role === PrismaUserRole.faculty) {
+          await tx.facultyAssignment.create({
+            data: {
+              userId: createdUser.id,
+              facultyId: dto.facultyId as string,
+            },
+          });
+        }
+
+        if (role === PrismaUserRole.advisor) {
+          await tx.advisorAssignment.create({
+            data: {
+              userId: createdUser.id,
+              classId: dto.classId as string,
+            },
+          });
+        }
+
+        if (role === PrismaUserRole.class_leader) {
+          await tx.classLeaderAssignment.create({
+            data: {
+              userId: createdUser.id,
+              classId: dto.classId as string,
+            },
+          });
+        }
+
+        return tx.user.findUniqueOrThrow({
+          where: { id: createdUser.id },
+          select: adminUserSelect,
+        });
       });
 
       const response = mapToAdminUserResponse(user);
@@ -160,13 +212,31 @@ export class AdminUsersService {
       throw new BadRequestException('Chưa cung cấp thông tin cần cập nhật');
     }
 
-    await this.assertManagedActiveExists(id);
+    const existingUser = await this.assertManagedActiveExists(id);
 
     if (dto.role !== undefined) {
       this.assertNotStudentRole(
         dto.role,
         'Không thể đổi vai trò thành sinh viên qua API này. Vui lòng dùng /admin/students',
       );
+    }
+
+    const nextRole =
+      dto.role !== undefined
+        ? toPrismaManagedUserRole(dto.role)
+        : existingUser.role;
+
+    if (dto.facultyId !== undefined && nextRole !== PrismaUserRole.faculty) {
+      throw new BadRequestException('Chỉ tài khoản khoa mới được gán khoa quản lý');
+    }
+
+    const nextFacultyId =
+      nextRole === PrismaUserRole.faculty
+        ? dto.facultyId ?? existingUser.facultyAssignment?.facultyId
+        : undefined;
+
+    if (nextRole === PrismaUserRole.faculty) {
+      await this.assertActiveFacultyExists(nextFacultyId);
     }
 
     if (dto.isActive === false) {
@@ -179,22 +249,36 @@ export class AdminUsersService {
         : {};
 
     try {
-      const user = await this.prisma.user.update({
-        where: { id },
-        data: {
-          ...(dto.fullName !== undefined && { fullName: dto.fullName.trim() }),
-          ...(dto.username !== undefined && { username: dto.username }),
-          ...(dto.email !== undefined && { email: normalizeEmail(dto.email) }),
-          ...(dto.phone !== undefined && { phone: dto.phone }),
-          ...(dto.dateOfBirth !== undefined && {
-            dateOfBirth: parseOptionalDateOnly(dto.dateOfBirth),
-          }),
-          ...(dto.role !== undefined && {
-            role: toPrismaManagedUserRole(dto.role),
-          }),
-          ...activeStateData,
-        },
-        select: adminUserSelect,
+      const user = await this.prisma.$transaction(async (tx) => {
+        await tx.user.update({
+          where: { id },
+          data: {
+            ...(dto.fullName !== undefined && { fullName: dto.fullName.trim() }),
+            ...(dto.username !== undefined && { username: dto.username }),
+            ...(dto.email !== undefined && { email: normalizeEmail(dto.email) }),
+            ...(dto.phone !== undefined && { phone: dto.phone }),
+            ...(dto.dateOfBirth !== undefined && {
+              dateOfBirth: parseOptionalDateOnly(dto.dateOfBirth),
+            }),
+            ...(dto.role !== undefined && { role: nextRole }),
+            ...activeStateData,
+          },
+        });
+
+        if (nextRole === PrismaUserRole.faculty) {
+          await tx.facultyAssignment.upsert({
+            where: { userId: id },
+            update: { facultyId: nextFacultyId as string },
+            create: { userId: id, facultyId: nextFacultyId as string },
+          });
+        } else {
+          await tx.facultyAssignment.deleteMany({ where: { userId: id } });
+        }
+
+        return tx.user.findUniqueOrThrow({
+          where: { id },
+          select: adminUserSelect,
+        });
       });
 
       if (dto.isActive === false) {
@@ -277,19 +361,59 @@ export class AdminUsersService {
     }
   }
 
-  /** Đảm bảo tài khoản admin/class_council tồn tại và chưa bị xóa mềm trước khi cho phép chỉnh sửa thông tin. */
-  private async assertManagedActiveExists(id: string): Promise<void> {
+  /** Đảm bảo tài khoản nội bộ được quản lý tồn tại và chưa bị xóa mềm trước khi cho phép chỉnh sửa thông tin. */
+  private async assertManagedActiveExists(id: string): Promise<{
+    id: string;
+    role: PrismaUserRole;
+    facultyAssignment: { facultyId: string } | null;
+  }> {
     const user = await this.prisma.user.findFirst({
       where: {
         id,
         deletedAt: null,
         role: { in: MANAGED_PRISMA_USER_ROLES },
       },
-      select: { id: true },
+      select: {
+        id: true,
+        role: true,
+        facultyAssignment: { select: { facultyId: true } },
+      },
     });
 
     if (!user) {
       throw new NotFoundException('Không tìm thấy tài khoản');
+    }
+
+    return user;
+  }
+
+  private async assertActiveFacultyExists(facultyId?: string): Promise<void> {
+    if (!facultyId) {
+      throw new BadRequestException('Vui lòng chọn khoa quản lý');
+    }
+
+    const faculty = await this.prisma.faculty.findFirst({
+      where: { id: facultyId, isActive: true, deletedAt: null },
+      select: { id: true },
+    });
+
+    if (!faculty) {
+      throw new NotFoundException('Không tìm thấy khoa quản lý');
+    }
+  }
+
+  private async assertActiveClassExists(classId?: string): Promise<void> {
+    if (!classId) {
+      throw new BadRequestException('Vui lòng chọn lớp phụ trách');
+    }
+
+    const classRecord = await this.prisma.class.findFirst({
+      where: { id: classId, isActive: true, deletedAt: null },
+      select: { id: true },
+    });
+
+    if (!classRecord) {
+      throw new NotFoundException('Không tìm thấy lớp phụ trách');
     }
   }
 
@@ -328,10 +452,6 @@ export class AdminUsersService {
   private async sendCreatedManagedUserEmail(
     dto: CreateAdminUserDto,
   ): Promise<{ sent: boolean; error: string | null }> {
-    if (dto.role !== SharedUserRole.ClassCouncil) {
-      return { sent: false, error: null };
-    }
-
     if (!this.accountMailService.isConfigured()) {
       return {
         sent: false,
@@ -346,7 +466,7 @@ export class AdminUsersService {
         fullName: dto.fullName.trim(),
         username: dto.username,
         password: dto.password,
-        roleLabel: 'Lớp/CVHT',
+        roleLabel: getManagedUserRoleLabel(dto.role),
       });
 
       return { sent: true, error: null };
@@ -354,7 +474,7 @@ export class AdminUsersService {
       const message =
         error instanceof Error ? error.message : 'Gửi email tài khoản thất bại';
       this.logger.error(
-        `Gửi email tài khoản class_council thất bại: ${message}`,
+        `Gửi email tài khoản ${dto.role} thất bại: ${message}`,
       );
 
       return {
@@ -397,20 +517,54 @@ function normalizeEmail(email: string): string {
 }
 
 function toPrismaManagedUserRole(role: SharedUserRole): PrismaUserRole {
-  if (role === SharedUserRole.Admin) {
-    return PrismaUserRole.admin;
+  switch (role) {
+    case SharedUserRole.Admin:
+      return PrismaUserRole.admin;
+    case SharedUserRole.ClassLeader:
+      return PrismaUserRole.class_leader;
+    case SharedUserRole.Advisor:
+      return PrismaUserRole.advisor;
+    case SharedUserRole.Faculty:
+      return PrismaUserRole.faculty;
+    case SharedUserRole.TrainingDepartment:
+      return PrismaUserRole.training_department;
+    default:
+      throw new BadRequestException(
+        'API /admin/users chỉ quản lý admin, lớp trưởng, cố vấn học tập, khoa và phòng đào tạo',
+      );
   }
+}
 
-  if (role === SharedUserRole.ClassCouncil) {
-    return PrismaUserRole.class_council;
+function getManagedUserRoleLabel(role: SharedUserRole): string {
+  switch (role) {
+    case SharedUserRole.Admin:
+      return 'Admin';
+    case SharedUserRole.ClassLeader:
+      return 'Lớp trưởng';
+    case SharedUserRole.Advisor:
+      return 'Cố vấn học tập';
+    case SharedUserRole.Faculty:
+      return 'Khoa';
+    case SharedUserRole.TrainingDepartment:
+      return 'Phòng Đào tạo';
+    default:
+      return role;
   }
-
-  throw new BadRequestException(
-    'API /admin/users chỉ quản lý admin và class_council',
-  );
 }
 
 function mapToAdminUserResponse(user: AdminUserRecord): AdminUserResponse {
+  const managedClasses = [
+    ...user.advisorAssignments,
+    ...user.classLeaderAssignments,
+  ]
+    .sort((a, b) => b.assignedAt.getTime() - a.assignedAt.getTime())
+    .map((assignment) => ({
+      id: assignment.class.id,
+      code: assignment.class.code,
+      name: assignment.class.name,
+      assignedAt: assignment.assignedAt,
+    }));
+
   return {
     id: user.id,
     username: user.username,
@@ -424,11 +578,14 @@ function mapToAdminUserResponse(user: AdminUserRecord): AdminUserResponse {
     deletedAt: user.deletedAt,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
-    managedClasses: user.classCouncilAssignments.map((assignment) => ({
-      id: assignment.class.id,
-      code: assignment.class.code,
-      name: assignment.class.name,
-      assignedAt: assignment.assignedAt,
-    })),
+    managedClasses,
+    managedFaculty: user.facultyAssignment
+      ? {
+          id: user.facultyAssignment.faculty.id,
+          code: user.facultyAssignment.faculty.code,
+          name: user.facultyAssignment.faculty.name,
+          assignedAt: user.facultyAssignment.assignedAt,
+        }
+      : null,
   };
 }

@@ -53,12 +53,12 @@ export class GetClassesQueryDto {
   @IsOptional()
   @Transform(emptyToUndefined)
   @IsUUID()
-  facultyId?: string;
+  majorId?: string;
 
   @IsOptional()
   @Transform(emptyToUndefined)
   @IsUUID()
-  majorId?: string;
+  facultyId?: string;
 
   @IsOptional()
   @Transform(toBoolean)

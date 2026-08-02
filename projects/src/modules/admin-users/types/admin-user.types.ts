@@ -20,6 +20,12 @@ export type AdminUserResponse = {
     name: string;
     assignedAt: Date;
   }>;
+  managedFaculty: {
+    id: string;
+    code: string;
+    name: string;
+    assignedAt: Date;
+  } | null;
   accountEmailSent?: boolean;
   accountEmailError?: string | null;
 };
