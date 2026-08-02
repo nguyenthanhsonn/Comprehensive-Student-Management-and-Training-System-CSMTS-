@@ -14,6 +14,17 @@ export type AdminStudentResponse = {
   deletedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+  studentInfo: {
+    fullName: string;
+    dateOfBirth: string | null;
+    majorName: string | null;
+    phone: string | null;
+    email: string;
+    studentCode: string | null;
+    classCode: string | null;
+    enrollmentYear: number | null;
+    facultyName: string | null;
+  };
   studentCode: string | null;
   enrolledAt: Date | null;
   class: { id: string; code: string; name: string } | null;

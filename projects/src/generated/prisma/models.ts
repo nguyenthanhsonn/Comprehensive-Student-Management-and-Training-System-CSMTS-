@@ -9,12 +9,15 @@
  * 🟢 You can import this file directly.
  */
 export type * from './models/User'
+export type * from './models/PasswordResetToken'
 export type * from './models/Post'
+export type * from './models/FacultyAssignment'
 export type * from './models/Faculty'
 export type * from './models/Major'
 export type * from './models/Class'
 export type * from './models/ClassStudent'
-export type * from './models/ClassCouncilAssignment'
+export type * from './models/ClassLeaderAssignment'
+export type * from './models/AdvisorAssignment'
 export type * from './models/Semester'
 export type * from './models/EvaluationCriteria'
 export type * from './models/EvaluationForm'

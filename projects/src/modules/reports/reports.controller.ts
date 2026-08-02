@@ -9,7 +9,16 @@ import { ReportsExportQueryDto } from './dto/reports-export-query.dto';
 import { ExcelReportExportService } from './export/excel-report-export.service';
 import { PdfReportExportService } from './export/pdf-report-export.service';
 import { ReportsService } from './reports.service';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
+@ApiTags('Admin Reports')
+@ApiBearerAuth('access-token')
+@ApiResponse({ status: 401, description: 'Thiếu hoặc sai access token.' })
 @Controller('admin/reports')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.Admin)
@@ -20,21 +29,41 @@ export class ReportsController {
     private readonly pdfExportService: PdfReportExportService,
   ) {}
 
+  @ApiOperation({
+    summary: 'Lấy dữ liệu',
+    description: 'Endpoint GET overview trong nhóm Admin Reports; xem schema DTO/query và response mẫu trực tiếp trong Swagger.',
+  })
+  @ApiResponse({ status: 200, description: 'Thao tác thành công.' })
   @Get('overview')
   getOverview(@Query() query: ReportsAggregateQueryDto) {
     return this.reportsService.getOverview(query);
   }
 
+  @ApiOperation({
+    summary: 'Lấy dữ liệu',
+    description: 'Endpoint GET training-results trong nhóm Admin Reports; xem schema DTO/query và response mẫu trực tiếp trong Swagger.',
+  })
+  @ApiResponse({ status: 200, description: 'Thao tác thành công.' })
   @Get('training-results')
   getTrainingResults(@Query() query: ReportsAggregateQueryDto) {
     return this.reportsService.getTrainingResults(query);
   }
 
+  @ApiOperation({
+    summary: 'Lấy dữ liệu',
+    description: 'Endpoint GET by-class trong nhóm Admin Reports; xem schema DTO/query và response mẫu trực tiếp trong Swagger.',
+  })
+  @ApiResponse({ status: 200, description: 'Thao tác thành công.' })
   @Get('by-class')
   getByClass(@Query() query: ReportsAggregateQueryDto) {
     return this.reportsService.getByClass(query);
   }
 
+  @ApiOperation({
+    summary: 'Lấy dữ liệu',
+    description: 'Endpoint GET by-faculty trong nhóm Admin Reports; xem schema DTO/query và response mẫu trực tiếp trong Swagger.',
+  })
+  @ApiResponse({ status: 200, description: 'Thao tác thành công.' })
   @Get('by-faculty')
   getByFaculty(@Query() query: ReportsAggregateQueryDto) {
     return this.reportsService.getByFaculty(query);
@@ -44,6 +73,11 @@ export class ReportsController {
    * Xuất file Excel — dùng @Res() (không passthrough) để tự kiểm soát toàn bộ response,
    * bỏ qua ResponseInterceptor toàn cục (interceptor đó bọc JSON, sẽ phá hỏng file nhị phân).
    */
+  @ApiOperation({
+    summary: 'Lấy dữ liệu',
+    description: 'Endpoint GET export-excel trong nhóm Admin Reports; xem schema DTO/query và response mẫu trực tiếp trong Swagger.',
+  })
+  @ApiResponse({ status: 200, description: 'Thao tác thành công.' })
   @Get('export-excel')
   async exportExcel(
     @Query() query: ReportsExportQueryDto,
@@ -58,6 +92,11 @@ export class ReportsController {
   }
 
   /** Xuất file PDF — cùng lý do dùng @Res() như export-excel. */
+  @ApiOperation({
+    summary: 'Lấy dữ liệu',
+    description: 'Endpoint GET export-pdf trong nhóm Admin Reports; xem schema DTO/query và response mẫu trực tiếp trong Swagger.',
+  })
+  @ApiResponse({ status: 200, description: 'Thao tác thành công.' })
   @Get('export-pdf')
   async exportPdf(
     @Query() query: ReportsExportQueryDto,

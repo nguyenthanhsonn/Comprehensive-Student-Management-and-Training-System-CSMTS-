@@ -19,7 +19,10 @@ import {
   parseOptionalDateOnly,
 } from '../../common/helpers/date-only.helper';
 import { PrismaService } from '../../database/prisma.service';
-import { Prisma, UserRole as PrismaUserRole } from '../../generated/prisma/client';
+import {
+  Prisma,
+  UserRole as PrismaUserRole,
+} from '../../generated/prisma/client';
 import {
   UserRole as SharedUserRole,
   type PaginatedResult,
@@ -51,6 +54,9 @@ type ImportRow = {
   fullName?: string;
   phone?: string;
   dateOfBirth?: Date | number | string;
+  majorName?: string;
+  enrollmentYear?: string;
+  facultyName?: string;
   classCode?: string;
 };
 
@@ -58,7 +64,14 @@ type ManageableClassRecord = {
   id: string;
   code: string;
   name: string;
-  major: { facultyId: string };
+  enrollmentYear: number;
+  major: {
+    id: string;
+    code: string;
+    name: string;
+    facultyId: string;
+    faculty: { id: string; code: string; name: string };
+  };
 };
 
 type ImportToCreate = {
@@ -77,7 +90,8 @@ type ImportToEnroll = {
 
 type ImportProfileUpdate = {
   studentId: string;
-  phone: string;
+  phone?: string;
+  dateOfBirth?: Date | null;
 };
 
 type CachedImportPlan = {
@@ -143,7 +157,7 @@ export class AdminClassesService {
     classId: string,
     query: GetClassStudentsQueryDto,
   ): Promise<PaginatedResult<AdminClassStudentResponse>> {
-    await this.assertCanManageClass(userId, role, classId);
+    await this.assertCanViewClassStudents(userId, role, classId);
 
     const page = query.page;
     const limit = query.limit;
@@ -167,7 +181,7 @@ export class AdminClassesService {
         : {}),
     };
 
-    const [students, total] = await Promise.all([
+    const [students, total, classLeaderAssignments] = await Promise.all([
       this.prisma.classStudent.findMany({
         where,
         select: adminClassStudentSelect,
@@ -176,10 +190,25 @@ export class AdminClassesService {
         take: limit,
       }),
       this.prisma.classStudent.count({ where }),
+      this.prisma.classLeaderAssignment.findMany({
+        where: { classId },
+        select: { id: true, userId: true, assignedAt: true },
+      }),
     ]);
+    const classLeaderAssignmentByUserId = new Map(
+      classLeaderAssignments.map((assignment) => [
+        assignment.userId,
+        assignment,
+      ]),
+    );
 
     return {
-      items: students.map(mapToAdminClassStudentResponse),
+      items: students.map((student) =>
+        mapToAdminClassStudentResponse(
+          student,
+          classLeaderAssignmentByUserId.get(student.studentId) ?? null,
+        ),
+      ),
       page,
       limit,
       total,
@@ -412,7 +441,7 @@ export class AdminClassesService {
   }
 
   async generateImportTemplate(): Promise<Buffer> {
-    return this.buildImportTemplate('CNTT01');
+    return this.buildImportTemplate();
   }
 
   private async previewImportParsedRows(
@@ -536,9 +565,9 @@ export class AdminClassesService {
 
     for (const row of rows) {
       try {
-        if (!row.studentId && !row.email && !row.username) {
+        if (!row.studentId && !row.email && !row.username && !row.studentCode) {
           throw new BadRequestException(
-            'Thiếu mã sinh viên hệ thống, email hoặc tên đăng nhập',
+            'Thiếu mã sinh viên, email hoặc tên đăng nhập',
           );
         }
 
@@ -548,6 +577,7 @@ export class AdminClassesService {
           classByCode,
           classByName,
         );
+        assertImportAcademicInfoMatchesClass(row, classRecord);
 
         const student =
           (row.studentId ? studentById.get(row.studentId) : undefined) ??
@@ -565,24 +595,24 @@ export class AdminClassesService {
         }
 
         if (!student) {
-          if (!row.email) {
-            throw new BadRequestException(
-              'Không tìm thấy sinh viên trong hệ thống và dòng import thiếu email để tạo tài khoản mới',
-            );
-          }
           if (!row.fullName) {
             throw new BadRequestException(
               'Không tìm thấy sinh viên trong hệ thống và dòng import thiếu họ tên để tạo tài khoản mới',
             );
           }
 
-          parseOptionalDateOnly(row.dateOfBirth);
+          const parsedDateOfBirth = parseOptionalDateOnly(row.dateOfBirth);
 
-          const email = normalizeEmail(row.email);
-          const username = generateUniqueImportUsername(
-            row.fullName,
-            seenNewUsernames,
-          );
+          const studentCode =
+            row.studentCode ??
+            (row.email
+              ? deriveStudentCodeFromEmail(normalizeEmail(row.email))
+              : undefined);
+          validateImportStudentCode(studentCode);
+          const email = row.email
+            ? normalizeEmail(row.email)
+            : buildInternalStudentEmail(studentCode);
+          const username = generateUniqueImportUsername(row, seenNewUsernames);
           if (seenNewEmails.has(email)) {
             throw new BadRequestException('Email bị trùng trong file import');
           }
@@ -592,9 +622,6 @@ export class AdminClassesService {
             );
           }
 
-          const studentCode =
-            row.studentCode ?? deriveStudentCodeFromEmail(email);
-          validateImportStudentCode(studentCode);
           assertImportStudentCodeAvailable(
             studentCode,
             undefined,
@@ -623,9 +650,7 @@ export class AdminClassesService {
               fullName: row.fullName,
               email,
               phone: row.phone ?? null,
-              dateOfBirth: formatDateOnly(
-                parseOptionalDateOnly(row.dateOfBirth) ?? null,
-              ),
+              dateOfBirth: formatDateOnly(parsedDateOfBirth ?? null),
               username,
               password: plainPassword,
               classRecord,
@@ -664,10 +689,22 @@ export class AdminClassesService {
         );
 
         const importedPhone = row.phone?.trim();
-        if (importedPhone && importedPhone !== student.phone) {
+        const importedDateOfBirth = parseOptionalDateOnly(row.dateOfBirth);
+        const shouldUpdatePhone = Boolean(
+          importedPhone && importedPhone !== student.phone,
+        );
+        const shouldUpdateDateOfBirth = Boolean(
+          importedDateOfBirth &&
+          importedDateOfBirth.getTime() !==
+            (student.dateOfBirth?.getTime() ?? 0),
+        );
+        if (shouldUpdatePhone || shouldUpdateDateOfBirth) {
           profileUpdates.push({
             studentId: student.id,
-            phone: importedPhone,
+            ...(shouldUpdatePhone ? { phone: importedPhone } : {}),
+            ...(shouldUpdateDateOfBirth
+              ? { dateOfBirth: importedDateOfBirth }
+              : {}),
           });
         }
 
@@ -686,9 +723,10 @@ export class AdminClassesService {
               username: student.username,
               password: null,
               classRecord,
-              note: importedPhone
-                ? 'Sinh viên đã có trong lớp, sẽ cập nhật số điện thoại khi xác nhận'
-                : 'Sinh viên đã có trong lớp, bỏ qua khi xác nhận',
+              note:
+                shouldUpdatePhone || shouldUpdateDateOfBirth
+                  ? 'Sinh viên đã có trong lớp, sẽ cập nhật thông tin cá nhân khi xác nhận'
+                  : 'Sinh viên đã có trong lớp, bỏ qua khi xác nhận',
             }),
           );
           continue;
@@ -714,9 +752,10 @@ export class AdminClassesService {
             username: student.username,
             password: null,
             classRecord,
-            note: importedPhone
-              ? 'Sẽ thêm sinh viên có sẵn vào lớp và cập nhật số điện thoại khi xác nhận'
-              : 'Sẽ thêm sinh viên có sẵn vào lớp khi xác nhận',
+            note:
+              shouldUpdatePhone || shouldUpdateDateOfBirth
+                ? 'Sẽ thêm sinh viên có sẵn vào lớp và cập nhật thông tin cá nhân khi xác nhận'
+                : 'Sẽ thêm sinh viên có sẵn vào lớp khi xác nhận',
           }),
         );
       } catch (error) {
@@ -744,7 +783,9 @@ export class AdminClassesService {
     const expiresAt = new Date(Date.now() + IMPORT_PREVIEW_TTL_MS);
     const previewCreatedAccounts = toCreate.map((item) => ({
       username: item.username,
-      email: normalizeEmail(item.row.email ?? ''),
+      email: item.row.email
+        ? normalizeEmail(item.row.email)
+        : buildInternalStudentEmail(item.studentCode),
       password: item.plainPassword,
       studentCode: item.studentCode,
       fullName: item.row.fullName?.trim() ?? '',
@@ -814,9 +855,14 @@ export class AdminClassesService {
       })),
     );
     console.timeEnd(preparePasswordsLabel);
-    this.logImportTiming(timingId, 'prepare-passwords', preparePasswordsStartedAt, {
-      createCount: plan.toCreate.length,
-    });
+    this.logImportTiming(
+      timingId,
+      'prepare-passwords',
+      preparePasswordsStartedAt,
+      {
+        createCount: plan.toCreate.length,
+      },
+    );
 
     const toEnroll = [...plan.toEnroll];
     const profileUpdateByStudentId = new Map(
@@ -831,12 +877,6 @@ export class AdminClassesService {
           const createUsersStartedAt = Date.now();
           if (preparedCreates.length > 0) {
             const usersToCreate = preparedCreates.map((item) => {
-              if (!item.row.email) {
-                throw new BadRequestException(
-                  'Không tìm thấy sinh viên trong hệ thống và dòng import thiếu email để tạo tài khoản mới',
-                );
-              }
-
               if (!item.row.fullName) {
                 throw new BadRequestException(
                   'Không tìm thấy sinh viên trong hệ thống và dòng import thiếu họ tên để tạo tài khoản mới',
@@ -847,7 +887,9 @@ export class AdminClassesService {
 
               return {
                 username: item.username,
-                email: normalizeEmail(item.row.email),
+                email: item.row.email
+                  ? normalizeEmail(item.row.email)
+                  : buildInternalStudentEmail(item.studentCode),
                 fullName: item.row.fullName.trim(),
                 passwordHash: item.passwordHash,
                 role: PrismaUserRole.student,
@@ -921,7 +963,12 @@ export class AdminClassesService {
           for (const update of profileUpdateByStudentId.values()) {
             await tx.user.update({
               where: { id: update.studentId },
-              data: { phone: update.phone },
+              data: {
+                ...(update.phone !== undefined ? { phone: update.phone } : {}),
+                ...(update.dateOfBirth !== undefined
+                  ? { dateOfBirth: update.dateOfBirth }
+                  : {}),
+              },
               select: { id: true },
             });
           }
@@ -1016,10 +1063,24 @@ export class AdminClassesService {
       return { sentCount: 0, errors: [] };
     }
 
+    const deliverableAccounts = accounts.filter(
+      (account) => !isInternalStudentEmail(account.email),
+    );
+    const skippedEmailErrors = accounts
+      .filter((account) => isInternalStudentEmail(account.email))
+      .map((account) => ({
+        email: account.email,
+        message: 'File import không có email nên chưa gửi được tài khoản',
+      }));
+
+    if (deliverableAccounts.length === 0) {
+      return { sentCount: 0, errors: skippedEmailErrors };
+    }
+
     if (!this.studentAccountMailService.isConfigured()) {
       return {
         sentCount: 0,
-        errors: accounts.map((account) => ({
+        errors: deliverableAccounts.map((account) => ({
           email: account.email,
           message:
             'Chưa thiết lập chức năng gửi email nên tài khoản chưa được gửi đi',
@@ -1027,14 +1088,19 @@ export class AdminClassesService {
       };
     }
 
-    const emailErrors: ImportClassStudentsResult['emailErrors'] = [];
+    const emailErrors: ImportClassStudentsResult['emailErrors'] = [
+      ...skippedEmailErrors,
+    ];
 
     for (
       let index = 0;
-      index < accounts.length;
+      index < deliverableAccounts.length;
       index += IMPORT_EMAIL_BATCH_SIZE
     ) {
-      const batch = accounts.slice(index, index + IMPORT_EMAIL_BATCH_SIZE);
+      const batch = deliverableAccounts.slice(
+        index,
+        index + IMPORT_EMAIL_BATCH_SIZE,
+      );
       const results = await Promise.allSettled(
         batch.map((account) =>
           this.studentAccountMailService.sendStudentAccount(account),
@@ -1057,7 +1123,7 @@ export class AdminClassesService {
         });
       });
 
-      if (index + IMPORT_EMAIL_BATCH_SIZE < accounts.length) {
+      if (index + IMPORT_EMAIL_BATCH_SIZE < deliverableAccounts.length) {
         // Keep the current API contract, but throttle SMTP bursts so providers
         // are less likely to rate-limit a 100-student import.
         await sleep(IMPORT_EMAIL_BATCH_DELAY_MS);
@@ -1065,7 +1131,9 @@ export class AdminClassesService {
     }
 
     return {
-      sentCount: accounts.length - emailErrors.length,
+      sentCount:
+        deliverableAccounts.length -
+        (emailErrors.length - skippedEmailErrors.length),
       errors: emailErrors,
     };
   }
@@ -1092,7 +1160,16 @@ export class AdminClassesService {
         id: true,
         code: true,
         name: true,
-        major: { select: { facultyId: true } },
+        enrollmentYear: true,
+        major: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            facultyId: true,
+            faculty: { select: { id: true, code: true, name: true } },
+          },
+        },
       },
     });
   }
@@ -1177,41 +1254,128 @@ export class AdminClassesService {
     return users.map((user) => user.username);
   }
 
-  private async buildImportTemplate(classCode: string): Promise<Buffer> {
+  private async buildImportTemplate(): Promise<Buffer> {
     const workbook = new ExcelJS.Workbook();
-    const sheet = workbook.addWorksheet('Danh sách');
+    const sheet = workbook.addWorksheet('Thông tin sinh viên');
 
     sheet.columns = [
-      { header: 'Mã sinh viên', key: 'studentCode', width: 15 },
-      { header: 'Họ và tên', key: 'fullName', width: 25 },
-      { header: 'Email', key: 'email', width: 30 },
+      { header: 'Họ và tên', key: 'fullName', width: 18 },
+      { header: 'Ngày sinh', key: 'dateOfBirth', width: 18 },
+      { header: 'Ngành / Chuyên ngành', key: 'majorName', width: 22 },
       { header: 'Số điện thoại', key: 'phone', width: 18 },
-      { header: 'Ngày sinh', key: 'dateOfBirth', width: 15 },
-      { header: 'Lớp', key: 'className', width: 15 },
+      { header: 'Email', key: 'email', width: 18 },
+      { header: 'Mã sinh viên', key: 'studentCode', width: 18 },
+      { header: 'Lớp', key: 'className', width: 18 },
+      { header: 'Năm trúng tuyển', key: 'enrollmentYear', width: 18 },
+      { header: 'Khoa (đơn vị quản lý)', key: 'facultyName', width: 23 },
     ];
 
     const headerRow = sheet.getRow(1);
-    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-    headerRow.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: '4472C4' },
-    };
-    headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+    headerRow.font = { name: 'Arial', bold: true, size: 11 };
+    headerRow.alignment = { horizontal: 'center' };
 
     sheet.addRow({
-      studentCode: 'SV001',
-      fullName: 'Nguyễn Văn A',
-      email: 'vana@example.com',
-      phone: '0901234567',
-      dateOfBirth: '2004-01-01',
-      className: classCode,
+      fullName: 'Hoàng Lâm Bảo Toàn',
+      dateOfBirth: '2005-02-18',
+      majorName: '—',
+      phone: '0788631727',
+      email: '—',
+      studentCode: 'HLBAOT',
+      className: '2405LHOG',
+      enrollmentYear: '—',
+      facultyName: '—',
     });
 
-    sheet.views = [{ state: 'frozen', ySplit: 1 }];
+    const border = { style: 'thin' as const, color: { argb: '00B0B0B0' } };
+    sheet.eachRow((row, rowNumber) => {
+      row.eachCell((cell) => {
+        cell.font =
+          rowNumber === 1
+            ? { name: 'Arial', bold: true, size: 11 }
+            : { name: 'Arial', size: 11 };
+        cell.alignment = { horizontal: 'center' };
+        cell.border = {
+          left: border,
+          right: border,
+          top: border,
+          bottom: border,
+        };
+
+        if (rowNumber === 1) {
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: '00D9E1F2' },
+            bgColor: { argb: '00D9E1F2' },
+          };
+        }
+      });
+    });
 
     const buffer = await workbook.xlsx.writeBuffer();
     return Buffer.from(buffer);
+  }
+
+  private async assertCanViewClassStudents(
+    userId: string,
+    role: SharedUserRole,
+    classId: string,
+  ) {
+    const classRecord = await this.prisma.class.findUnique({
+      where: { id: classId },
+      select: {
+        id: true,
+        major: { select: { facultyId: true } },
+      },
+    });
+
+    if (!classRecord) {
+      throw new NotFoundException('Không tìm thấy lớp học');
+    }
+
+    if (role === SharedUserRole.Admin) {
+      return;
+    }
+
+    if (role === SharedUserRole.Advisor) {
+      const assignment = await this.prisma.advisorAssignment.findUnique({
+        where: { userId_classId: { userId, classId } },
+        select: { id: true },
+      });
+
+      if (!assignment) {
+        throw new ForbiddenException('Bạn không phụ trách lớp này');
+      }
+      return;
+    }
+
+    if (role === SharedUserRole.ClassLeader) {
+      const assignment = await this.prisma.classLeaderAssignment.findFirst({
+        where: { userId, classId },
+        select: { id: true },
+      });
+
+      if (!assignment) {
+        throw new ForbiddenException('Bạn không phải lớp trưởng của lớp này');
+      }
+      return;
+    }
+
+    if (role === SharedUserRole.Faculty) {
+      const assignment = await this.prisma.facultyAssignment.findUnique({
+        where: { userId },
+        select: { facultyId: true },
+      });
+
+      if (!assignment || assignment.facultyId !== classRecord.major.facultyId) {
+        throw new ForbiddenException(
+          'Bạn không phụ trách khoa quản lý lớp này',
+        );
+      }
+      return;
+    }
+
+    throw new ForbiddenException('Không có quyền truy cập');
   }
 
   private async assertCanManageClass(
@@ -1225,7 +1389,16 @@ export class AdminClassesService {
         id: true,
         code: true,
         name: true,
-        major: { select: { facultyId: true } },
+        enrollmentYear: true,
+        major: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
+            facultyId: true,
+            faculty: { select: { id: true, code: true, name: true } },
+          },
+        },
       },
     });
 
@@ -1246,23 +1419,37 @@ export class AdminClassesService {
       return;
     }
 
-    if (role !== SharedUserRole.ClassCouncil) {
+    if (
+      role !== SharedUserRole.Advisor &&
+      role !== SharedUserRole.ClassLeader
+    ) {
       throw new ForbiddenException('Bạn không có quyền quản lý lớp học này');
     }
 
-    const assignment = await this.prisma.classCouncilAssignment.findUnique({
-      where: {
-        userId_classId: {
-          userId,
-          classId: classRecord.id,
-        },
-      },
-      select: { id: true },
-    });
+    const assignment =
+      role === SharedUserRole.Advisor
+        ? await this.prisma.advisorAssignment.findUnique({
+            where: {
+              userId_classId: {
+                userId,
+                classId: classRecord.id,
+              },
+            },
+            select: { id: true },
+          })
+        : await this.prisma.classLeaderAssignment.findFirst({
+            where: {
+              userId,
+              classId: classRecord.id,
+            },
+            select: { id: true },
+          });
 
     if (!assignment) {
       throw new ForbiddenException(
-        'Bạn không được phân công phụ trách lớp này',
+        role === SharedUserRole.Advisor
+          ? 'Bạn không được phân công phụ trách lớp này'
+          : 'Bạn không phải lớp trưởng của lớp này',
       );
     }
   }
@@ -1301,6 +1488,7 @@ export class AdminClassesService {
 
 function mapToAdminClassStudentResponse(
   record: AdminClassStudentRecord,
+  classLeaderAssignment: { id: string; assignedAt: Date } | null = null,
 ): AdminClassStudentResponse {
   return {
     id: record.id,
@@ -1309,10 +1497,13 @@ function mapToAdminClassStudentResponse(
     studentCode: record.studentCode,
     email: record.student.email,
     fullName: record.student.fullName,
+    role: record.student.role,
     phone: record.student.phone,
     dateOfBirth: record.student.dateOfBirth,
     isActive: record.student.isActive,
     enrolledAt: record.enrolledAt,
+    isClassLeader: Boolean(classLeaderAssignment),
+    classLeaderAssignment,
   };
 }
 
@@ -1344,6 +1535,9 @@ function buildPreviewStudentItem(params: {
     classId: params.classRecord.id,
     classCode: params.classRecord.code,
     className: params.classRecord.name,
+    majorName: params.classRecord.major.name,
+    enrollmentYear: params.classRecord.enrollmentYear,
+    facultyName: params.classRecord.major.faculty.name,
     note: params.note,
   };
 }
@@ -1427,6 +1621,13 @@ function parseImportRows(buffer: Buffer): ImportRow[] {
           'dateofbirth',
           'dob',
         ]),
+        majorName: getCellValue(normalizedRow, [
+          'nganhchuyennganh',
+          'nganh',
+          'chuyennganh',
+          'major',
+          'majorname',
+        ]),
         studentCode: getCellValue(normalizedRow, [
           'studentcode',
           'student_code',
@@ -1440,6 +1641,18 @@ function parseImportRows(buffer: Buffer): ImportRow[] {
           'classcode',
           'malop',
         ]),
+        enrollmentYear: getCellValue(normalizedRow, [
+          'namtrungtuyen',
+          'namentrungtuyen',
+          'enrollmentyear',
+          'admissionyear',
+        ]),
+        facultyName: getCellValue(normalizedRow, [
+          'khoadonviquanly',
+          'khoa',
+          'faculty',
+          'facultyname',
+        ]),
       };
     })
     .filter(
@@ -1449,7 +1662,10 @@ function parseImportRows(buffer: Buffer): ImportRow[] {
         row.username ||
         row.fullName ||
         row.studentCode ||
-        row.classCode,
+        row.classCode ||
+        row.majorName ||
+        row.enrollmentYear ||
+        row.facultyName,
     );
 }
 
@@ -1457,7 +1673,7 @@ function getCellValue(row: Record<string, unknown>, keys: string[]) {
   for (const key of keys) {
     const value = row[key];
 
-    if (value !== undefined && value !== null && String(value).trim() !== '') {
+    if (!isBlankImportValue(value)) {
       return String(value).trim();
     }
   }
@@ -1472,7 +1688,7 @@ function getRawCellValue(
   for (const key of keys) {
     const value = row[key];
 
-    if (value === undefined || value === null || String(value).trim() === '') {
+    if (isBlankImportValue(value)) {
       continue;
     }
 
@@ -1496,8 +1712,18 @@ function normalizeImportRow(row: Record<string, unknown>) {
   );
 }
 
+function isBlankImportValue(value: unknown): boolean {
+  if (value === undefined || value === null) {
+    return true;
+  }
+
+  const text = String(value).trim();
+  return text === '' || text === '-' || text === '—';
+}
+
 function normalizeHeader(value: string) {
   return value
+    .replace(/[Đđ]/g, 'd')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
@@ -1542,8 +1768,8 @@ function deriveStudentCodeFromUsername(username: string) {
   return username;
 }
 
-function buildImportUsernameBase(fullName: string): string {
-  const base = normalizeHeader(fullName).replace(/_/g, '').slice(0, 40);
+function buildImportUsernameBase(value: string): string {
+  const base = normalizeHeader(value).replace(/_/g, '').slice(0, 40);
 
   return base || 'sinhvien';
 }
@@ -1554,17 +1780,32 @@ function generateImportUsername(fullName = 'sinhvien'): string {
 }
 
 function generateUniqueImportUsername(
-  fullName: string,
+  row: ImportRow,
   seenUsernames: Set<string>,
 ): string {
+  const preferredUsername = normalizeUsername(
+    row.username ?? row.studentCode ?? '',
+  );
+  if (preferredUsername && !seenUsernames.has(preferredUsername)) {
+    return preferredUsername;
+  }
+
   for (let attempt = 0; attempt < 20; attempt += 1) {
-    const username = generateImportUsername(fullName);
+    const username = generateImportUsername(row.fullName);
     if (!seenUsernames.has(username)) {
       return username;
     }
   }
 
   throw new BadRequestException('Không thể sinh tên đăng nhập ngẫu nhiên');
+}
+
+function buildInternalStudentEmail(studentCode: string): string {
+  return `${normalizeHeader(studentCode).replace(/_/g, '')}@no-email.csmts.local`;
+}
+
+function isInternalStudentEmail(email: string): boolean {
+  return email.endsWith('@no-email.csmts.local');
 }
 
 function validateImportUsername(username: string): void {
@@ -1687,6 +1928,49 @@ function resolveImportClass(
   }
 
   return classRecord;
+}
+
+function assertImportAcademicInfoMatchesClass(
+  row: ImportRow,
+  classRecord: ManageableClassRecord,
+): void {
+  if (
+    row.majorName &&
+    !['—', '-'].includes(row.majorName.trim()) &&
+    normalizeComparableValue(row.majorName) !==
+      normalizeComparableValue(classRecord.major.name) &&
+    normalizeComparableValue(row.majorName) !==
+      normalizeComparableValue(classRecord.major.code)
+  ) {
+    throw new BadRequestException(
+      `Ngành trong file (${row.majorName}) không khớp với lớp ${classRecord.code}`,
+    );
+  }
+
+  if (
+    row.facultyName &&
+    !['—', '-'].includes(row.facultyName.trim()) &&
+    normalizeComparableValue(row.facultyName) !==
+      normalizeComparableValue(classRecord.major.faculty.name) &&
+    normalizeComparableValue(row.facultyName) !==
+      normalizeComparableValue(classRecord.major.faculty.code)
+  ) {
+    throw new BadRequestException(
+      `Khoa trong file (${row.facultyName}) không khớp với lớp ${classRecord.code}`,
+    );
+  }
+
+  if (row.enrollmentYear && !['—', '-'].includes(row.enrollmentYear.trim())) {
+    const enrollmentYear = Number(row.enrollmentYear);
+    if (
+      !Number.isInteger(enrollmentYear) ||
+      enrollmentYear !== classRecord.enrollmentYear
+    ) {
+      throw new BadRequestException(
+        `Năm trúng tuyển trong file (${row.enrollmentYear}) không khớp với lớp ${classRecord.code}`,
+      );
+    }
+  }
 }
 
 function validateImportStudentCode(

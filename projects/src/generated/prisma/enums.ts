@@ -10,9 +10,12 @@
 */
 
 export const UserRole = {
-  admin: 'admin',
   student: 'student',
-  class_council: 'class_council'
+  class_leader: 'class_leader',
+  advisor: 'advisor',
+  faculty: 'faculty',
+  training_department: 'training_department',
+  admin: 'admin'
 } as const
 
 export type UserRole = (typeof UserRole)[keyof typeof UserRole]

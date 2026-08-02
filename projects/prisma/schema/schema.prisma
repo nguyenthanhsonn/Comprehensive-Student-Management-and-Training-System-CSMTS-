@@ -14,9 +14,12 @@ generator client {
 // ============================================================
 
 enum UserRole {
-  admin // Hội đồng cấp Học viện / Phòng Công tác SV
-  student // Sinh viên tự đánh giá
-  class_council // BCS lớp + Cố vấn học tập - chấm điểm lớp, duyệt minh chứng
+  student
+  class_leader
+  advisor
+  faculty
+  training_department
+  admin
 }
 
 enum FormStatus {
@@ -74,19 +77,38 @@ model User {
   deletedAt             DateTime? @map("deleted_at") @db.Timestamptz // Xóa mềm - null nghĩa là tài khoản còn hoạt động
 
   // Relations
-  classStudents             ClassStudent[]
-  classCouncilAssignments   ClassCouncilAssignment[]
-  evaluationForms           EvaluationForm[]           @relation("StudentForms")
-  classReviewedForms        EvaluationForm[]           @relation("ClassReviewer")
-  adminFinalizedForms       EvaluationForm[]           @relation("AdminFinalizer")
-  posts                     Post[]
-  evidences                 Evidence[]
-  notifications             Notification[]
+  classStudents          ClassStudent[]
+  advisorAssignments     AdvisorAssignment[]
+  classLeaderAssignments ClassLeaderAssignment[]
+  evaluationForms        EvaluationForm[]        @relation("StudentForms")
+  classReviewedForms     EvaluationForm[]        @relation("ClassReviewer")
+  adminFinalizedForms    EvaluationForm[]        @relation("AdminFinalizer")
+  posts                  Post[]
+  evidences              Evidence[]
+  notifications          Notification[]
+  passwordResetTokens    PasswordResetToken[]
+  facultyAssignment      FacultyAssignment?
 
   // username đã @unique nên tự có index - đây là cột dùng để đăng nhập siêu nhanh.
   // Giữ nguyên index email cho các tra cứu liên hệ/báo cáo khác (ngoài phạm vi đổi login).
   @@index([email])
   @@map("users")
+}
+
+// Token quên mật khẩu chỉ lưu hash, không lưu token gốc đã gửi qua email.
+model PasswordResetToken {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash") @db.VarChar(64)
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz
+  usedAt    DateTime? @map("used_at") @db.Timestamptz
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
 }
 
 model Post {
@@ -103,6 +125,20 @@ model Post {
   @@map("posts")
 }
 
+// Phân quyền tài khoản khoa cho một khoa cụ thể.
+model FacultyAssignment {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String   @unique @map("user_id") @db.Uuid // role = faculty
+  facultyId  String   @map("faculty_id") @db.Uuid
+  assignedAt DateTime @default(now()) @map("assigned_at") @db.Timestamptz
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  faculty Faculty @relation(fields: [facultyId], references: [id], onDelete: Cascade)
+
+  @@index([facultyId])
+  @@map("faculty_assignments")
+}
+
 // 2. Khoa
 model Faculty {
   id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -113,7 +149,9 @@ model Faculty {
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz // Xóa mềm - null nghĩa là khoa còn hoạt động
 
   // Relations
-  majors                    Major[]
+  majors             Major[]
+  facultyAssignments FacultyAssignment[]
+
   @@map("faculties")
 }
 
@@ -132,7 +170,7 @@ model Major {
   classes Class[]
 
   // Indexes
-  @@index([facultyId]) // Tối ưu khi lọc phiếu đánh giá theo Khoa (join qua Class → Major → Faculty)
+  @@index([facultyId]) // Tối ưu khi lọc phiếu đánh giá theo Khoa (join qua Class -> Major -> Faculty)
   @@map("majors")
 }
 
@@ -148,10 +186,11 @@ model Class {
   deletedAt      DateTime? @map("deleted_at") @db.Timestamptz // Xóa mềm - null nghĩa là lớp còn hoạt động
 
   // Relations
-  major                   Major                    @relation(fields: [majorId], references: [id], onDelete: Cascade)
-  classStudents           ClassStudent[]
-  classCouncilAssignments ClassCouncilAssignment[]
-  evaluationForms         EvaluationForm[]
+  major                  Major                   @relation(fields: [majorId], references: [id], onDelete: Cascade)
+  classStudents          ClassStudent[]
+  advisorAssignments     AdvisorAssignment[]
+  classLeaderAssignments ClassLeaderAssignment[]
+  evaluationForms        EvaluationForm[]
 
   // Indexes
   @@index([majorId]) // Tối ưu khi tìm kiếm các lớp thuộc một Ngành học
@@ -160,11 +199,11 @@ model Class {
 
 // 5. Danh sách lớp - sinh viên thuộc lớp nào
 model ClassStudent {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  classId     String   @map("class_id") @db.Uuid
-  studentId   String   @unique @map("student_id") @db.Uuid
-  studentCode String   @unique @map("student_code") @db.VarChar(20)
-  enrolledAt  DateTime @default(now()) @map("enrolled_at") @db.Timestamptz
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  classId     String    @map("class_id") @db.Uuid
+  studentId   String    @unique @map("student_id") @db.Uuid
+  studentCode String    @unique @map("student_code") @db.VarChar(20)
+  enrolledAt  DateTime  @default(now()) @map("enrolled_at") @db.Timestamptz
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz // Xóa mềm hồ sơ sinh viên - không đụng tới User
 
   // Relations
@@ -176,10 +215,25 @@ model ClassStudent {
   @@map("class_students")
 }
 
-// 6. Phân quyền class_council cho lớp cụ thể
-model ClassCouncilAssignment {
+// 6. Phân quyền lớp trưởng cho lớp cụ thể - mỗi lớp trưởng chỉ phụ trách 1 lớp.
+model ClassLeaderAssignment {
   id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId     String   @map("user_id") @db.Uuid // role = class_council
+  userId     String   @unique @map("user_id") @db.Uuid // role = class_leader
+  classId    String   @map("class_id") @db.Uuid
+  assignedAt DateTime @default(now()) @map("assigned_at") @db.Timestamptz
+
+  // Relations
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  class Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@index([classId])
+  @@map("class_leader_assignments")
+}
+
+// 6. Phân quyền advisor cho lớp cụ thể
+model AdvisorAssignment {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid // role = advisor
   classId    String   @map("class_id") @db.Uuid
   assignedAt DateTime @default(now()) @map("assigned_at") @db.Timestamptz
 
@@ -188,7 +242,7 @@ model ClassCouncilAssignment {
   class Class @relation(fields: [classId], references: [id], onDelete: Cascade)
 
   @@unique([userId, classId])
-  @@map("class_council_assignments")
+  @@map("advisor_assignments")
 }
 
 // 8. Học kỳ
@@ -260,11 +314,11 @@ model EvaluationForm {
   roleData            Json    @default("{}") @map("role_data")
 
   // Audit trail - ai duyệt ở từng bước
-  classReviewedBy   String? @map("class_reviewed_by") @db.Uuid // class_council duyệt
-  adminFinalizedBy  String? @map("admin_finalized_by") @db.Uuid // admin phê duyệt cuối
+  classReviewedBy  String? @map("class_reviewed_by") @db.Uuid // advisor duyệt
+  adminFinalizedBy String? @map("admin_finalized_by") @db.Uuid // admin phê duyệt cuối
 
-  classReviewedAt   DateTime? @map("class_reviewed_at") @db.Timestamptz
-  adminFinalizedAt  DateTime? @map("admin_finalized_at") @db.Timestamptz
+  classReviewedAt  DateTime? @map("class_reviewed_at") @db.Timestamptz
+  adminFinalizedAt DateTime? @map("admin_finalized_at") @db.Timestamptz
 
   submittedAt DateTime? @map("submitted_at") @db.Timestamptz
   isLocked    Boolean   @default(false) @map("is_locked")
@@ -274,14 +328,14 @@ model EvaluationForm {
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz // BỎ @default(now())
 
   // Relations
-  student         User                @relation("StudentForms", fields: [studentId], references: [id], onDelete: Cascade)
-  class           Class               @relation(fields: [classId], references: [id], onDelete: Cascade)
-  semester        Semester            @relation(fields: [semesterId], references: [id], onDelete: Cascade)
-  classReviewer   User?               @relation("ClassReviewer", fields: [classReviewedBy], references: [id], onDelete: SetNull)
-  adminFinalizer  User?               @relation("AdminFinalizer", fields: [adminFinalizedBy], references: [id], onDelete: SetNull)
-  criteriaScores  FormCriteriaScore[]
-  attachments     FormAttachment[]
-  evidences       Evidence[]
+  student        User                @relation("StudentForms", fields: [studentId], references: [id], onDelete: Cascade)
+  class          Class               @relation(fields: [classId], references: [id], onDelete: Cascade)
+  semester       Semester            @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+  classReviewer  User?               @relation("ClassReviewer", fields: [classReviewedBy], references: [id], onDelete: SetNull)
+  adminFinalizer User?               @relation("AdminFinalizer", fields: [adminFinalizedBy], references: [id], onDelete: SetNull)
+  criteriaScores FormCriteriaScore[]
+  attachments    FormAttachment[]
+  evidences      Evidence[]
 
   // Constraints & Indexes
   @@unique([studentId, semesterId])
@@ -340,14 +394,14 @@ model FormAttachment {
 
 // 13. Minh chứng ảnh do sinh viên upload lên cloud ở FE, BE chỉ lưu URL
 model Evidence {
-  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  studentId        String           @map("student_id") @db.Uuid
-  evaluationFormId String           @map("evaluation_form_id") @db.Uuid
-  criterionId      String           @map("criterion_id") @db.Uuid
-  imageUrl         String           @map("image_url") @db.VarChar(1000)
-  publicId         String?          @map("public_id") @db.VarChar(500)
-  createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt        DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId        String   @map("student_id") @db.Uuid
+  evaluationFormId String   @map("evaluation_form_id") @db.Uuid
+  criterionId      String   @map("criterion_id") @db.Uuid
+  imageUrl         String   @map("image_url") @db.VarChar(1000)
+  publicId         String?  @map("public_id") @db.VarChar(500)
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   // Relations
   student        User               @relation(fields: [studentId], references: [id], onDelete: Cascade)

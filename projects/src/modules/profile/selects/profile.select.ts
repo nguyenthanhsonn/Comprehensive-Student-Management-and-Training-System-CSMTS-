@@ -40,7 +40,7 @@ export const profileSelect = {
       },
     },
   },
-  classCouncilAssignments: {
+  advisorAssignments: {
     select: {
       assignedAt: true,
       class: {
@@ -73,6 +73,53 @@ export const profileSelect = {
     },
     orderBy: {
       assignedAt: 'desc',
+    },
+  },
+  classLeaderAssignments: {
+    select: {
+      assignedAt: true,
+      class: {
+        select: {
+          id: true,
+          code: true,
+          name: true,
+          enrollmentYear: true,
+          _count: {
+            select: {
+              classStudents: true,
+            },
+          },
+          major: {
+            select: {
+              id: true,
+              code: true,
+              name: true,
+              faculty: {
+                select: {
+                  id: true,
+                  code: true,
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    orderBy: {
+      assignedAt: 'desc',
+    },
+  },
+  facultyAssignment: {
+    select: {
+      assignedAt: true,
+      faculty: {
+        select: {
+          id: true,
+          code: true,
+          name: true,
+        },
+      },
     },
   },
 } satisfies Prisma.UserSelect;

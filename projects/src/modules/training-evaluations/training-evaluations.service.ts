@@ -351,10 +351,10 @@ export class TrainingEvaluationsService {
 
   /**
    * Lớp trưởng/CVHT cập nhật điểm thẩm định theo từng tiêu chí.
-   * Chỉ class_council được phân công đúng lớp của phiếu mới được thao tác.
+   * Chỉ người được phân công đúng lớp của phiếu mới được thao tác.
    */
   async reviewScores(
-    userId: string,
+    reviewer: AuthenticatedUser,
     id: string,
     dto: ReviewScoresDto,
   ): Promise<EvaluationScoreSummaryResponse> {
@@ -374,8 +374,8 @@ export class TrainingEvaluationsService {
 
     assertNotLocked(form);
     await this.assertReviewerAssigned(
-      UserRole.ClassCouncil,
-      userId,
+      reviewer.role,
+      reviewer.id,
       form.classId,
     );
 
@@ -531,7 +531,7 @@ export class TrainingEvaluationsService {
       status: stage.nextApprovedStatus,
     };
 
-    if (reviewer.role === UserRole.ClassCouncil) {
+    if (isClassReviewRole(reviewer.role)) {
       if (dto.classScore === undefined) {
         throw new BadRequestException(
           'classScore là bắt buộc khi lớp/CVHT duyệt phiếu',
@@ -891,7 +891,7 @@ export class TrainingEvaluationsService {
 
   /**
    * Query phiếu để đọc với phân quyền theo role.
-   * Student chỉ xem phiếu của mình; ClassCouncil/Admin xem phiếu theo quyền.
+   * Student chỉ xem phiếu của mình; Advisor/ClassLeader/Admin xem phiếu theo quyền.
    */
   private async findOwned<TSelect extends Prisma.EvaluationFormSelect, TResult>(
     userId: string,
@@ -911,6 +911,19 @@ export class TrainingEvaluationsService {
 
     if (!evaluation) {
       throw new NotFoundException('Không tìm thấy phiếu đánh giá');
+    }
+
+    if (isClassReviewRole(role)) {
+      const assignmentScope = await this.prisma.evaluationForm.findUnique({
+        where: { id },
+        select: { classId: true },
+      });
+
+      if (!assignmentScope) {
+        throw new NotFoundException('Không tìm thấy phiếu đánh giá');
+      }
+
+      await this.assertReviewerAssigned(role, userId, assignmentScope.classId);
     }
 
     return evaluation as TResult;
@@ -945,8 +958,8 @@ export class TrainingEvaluationsService {
       return;
     }
 
-    if (role === UserRole.ClassCouncil) {
-      const assignment = await this.prisma.classCouncilAssignment.findUnique({
+    if (role === UserRole.Advisor) {
+      const assignment = await this.prisma.advisorAssignment.findUnique({
         where: { userId_classId: { userId: reviewerId, classId } },
         select: { id: true },
       });
@@ -955,6 +968,19 @@ export class TrainingEvaluationsService {
         throw new ForbiddenException(
           'Bạn không được phân công phụ trách lớp này',
         );
+      }
+
+      return;
+    }
+
+    if (role === UserRole.ClassLeader) {
+      const assignment = await this.prisma.classLeaderAssignment.findFirst({
+        where: { userId: reviewerId, classId },
+        select: { id: true },
+      });
+
+      if (!assignment) {
+        throw new ForbiddenException('Bạn không phải lớp trưởng của lớp này');
       }
 
       return;
@@ -973,7 +999,7 @@ export class TrainingEvaluationsService {
       return;
     }
 
-    if (user.role !== UserRole.ClassCouncil) {
+    if (!isClassReviewRole(user.role)) {
       throw new ForbiddenException(
         'Bạn không có quyền xem danh sách phiếu này',
       );
@@ -984,9 +1010,13 @@ export class TrainingEvaluationsService {
     }
 
     await this.assertReviewerAssigned(
-      UserRole.ClassCouncil,
+      user.role,
       user.id,
       classId,
     );
   }
+}
+
+function isClassReviewRole(role: UserRole): boolean {
+  return role === UserRole.Advisor || role === UserRole.ClassLeader;
 }

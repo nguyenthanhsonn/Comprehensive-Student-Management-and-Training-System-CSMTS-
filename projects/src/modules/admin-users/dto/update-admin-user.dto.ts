@@ -6,9 +6,11 @@ import {
   IsIn,
   IsOptional,
   IsString,
+  IsUUID,
   Length,
   Matches,
   MaxLength,
+  ValidateIf,
 } from 'class-validator';
 import { UserRole } from 'src/common/shared';
 import {
@@ -23,7 +25,10 @@ import {
 
 const MANAGED_USER_ROLES = [
   UserRole.Admin,
-  UserRole.ClassCouncil,
+  UserRole.ClassLeader,
+  UserRole.Advisor,
+  UserRole.Faculty,
+  UserRole.TrainingDepartment,
 ];
 
 /**
@@ -71,4 +76,8 @@ export class UpdateAdminUserDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @ValidateIf((dto: UpdateAdminUserDto) => dto.role === UserRole.Faculty || dto.facultyId !== undefined)
+  @IsUUID('4', { message: 'Vui lòng chọn khoa quản lý' })
+  facultyId?: string;
 }
