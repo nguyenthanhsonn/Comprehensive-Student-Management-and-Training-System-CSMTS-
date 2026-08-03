@@ -19,7 +19,11 @@ export function mapToAdminClassResponse(
     isActive: record.isActive,
     createdAt: record.createdAt,
     deletedAt: record.deletedAt,
-    major: record.major,
+    major: {
+      id: record.major.id,
+      code: record.major.code,
+      name: record.major.name,
+    },
     faculty: record.major.faculty,
     studentCount: record._count.classStudents,
   };
@@ -31,15 +35,6 @@ export function mapToAdminClassDetailResponse(
   return {
     ...mapToAdminClassResponse(record),
     classLeaders: record.classLeaderAssignments.map((assignment) => ({
-      id: assignment.id,
-      userId: assignment.userId,
-      username: assignment.user.username,
-      fullName: assignment.user.fullName,
-      email: assignment.user.email,
-      isActive: assignment.user.isActive,
-      assignedAt: assignment.assignedAt,
-    })),
-    advisors: record.advisorAssignments.map((assignment) => ({
       id: assignment.id,
       userId: assignment.userId,
       username: assignment.user.username,

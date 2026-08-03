@@ -55,7 +55,7 @@ export class GetAdminUsersQueryDto {
   @IsOptional()
   @IsEnum(UserRole)
   @IsIn(MANAGED_USER_ROLES, {
-    message: 'API /admin/users chỉ quản lý admin, lớp trưởng, cố vấn học tập, khoa và phòng đào tạo',
+    message: 'API /admin/users chỉ quản lý tài khoản nhân sự',
   })
   role?: UserRole;
 

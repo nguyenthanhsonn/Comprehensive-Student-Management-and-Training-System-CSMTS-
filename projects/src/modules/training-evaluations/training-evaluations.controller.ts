@@ -16,6 +16,7 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { AdminListEvaluationsQueryDto } from './dto/admin-list-evaluations-query.dto';
+import { ConfirmReviewDto } from './dto/confirm-review.dto';
 import { CreateTrainingEvaluationDto } from './dto/create-training-evaluation.dto';
 import { ReturnEvaluationToStudentDto } from './dto/return-evaluation-to-student.dto';
 import { ReviewScoresDto } from './dto/review-scores.dto';
@@ -30,8 +31,18 @@ import { UpdateRoleScoreDto } from './dto/update-role-score.dto';
 import { UpdateStudyScoreDto } from './dto/update-study-score.dto';
 import { UpdateTrainingEvaluationDraftDto } from './dto/update-training-evaluation-draft.dto';
 import { TrainingEvaluationsService } from './training-evaluations.service';
+import {
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 
-const ALL_ROLES = [UserRole.Student, UserRole.ClassCouncil, UserRole.Admin];
+const ALL_ROLES = [
+  UserRole.Student,
+  UserRole.ClassLeader,
+  UserRole.Advisor,
+  UserRole.Faculty,
+  UserRole.Admin,
+];
 
 @Controller('training-evaluations')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -50,7 +61,7 @@ export class TrainingEvaluationsController {
   }
 
   @Get()
-  @Roles(UserRole.ClassCouncil, UserRole.Admin)
+  @Roles(UserRole.Advisor, UserRole.ClassLeader, UserRole.Faculty, UserRole.Admin)
   findAll(
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: AdminListEvaluationsQueryDto,
@@ -215,13 +226,30 @@ export class TrainingEvaluationsController {
   }
 
   @Patch(':id/review-scores')
-  @Roles(UserRole.ClassCouncil)
+  @Roles(UserRole.ClassLeader, UserRole.Advisor)
   reviewScores(
-    @CurrentUser('id') userId: string,
+    @CurrentUser() reviewer: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ReviewScoresDto,
   ) {
-    return this.trainingEvaluationsService.reviewScores(userId, id, dto);
+    return this.trainingEvaluationsService.reviewScores(reviewer, id, dto);
+  }
+
+  @ApiOperation({
+    summary: 'Xác nhận đã đánh giá phiếu',
+    description:
+      'Lớp trưởng/CVHT xác nhận đã hoàn tất cột điểm đánh giá cho một sinh viên. API chỉ ghi nhận người xác nhận và thời điểm xác nhận, chưa chuyển phiếu lên cấp tiếp theo.',
+  })
+  @ApiResponse({ status: 201, description: 'Xác nhận đánh giá thành công.' })
+  @ApiResponse({ status: 400, description: 'Dữ liệu gửi lên không hợp lệ.' })
+  @Post(':id/confirm-review')
+  @Roles(UserRole.ClassLeader, UserRole.Advisor)
+  confirmReview(
+    @CurrentUser() reviewer: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ConfirmReviewDto,
+  ) {
+    return this.trainingEvaluationsService.confirmReview(reviewer, id, dto);
   }
 
   @ApiOperation({
@@ -231,7 +259,7 @@ export class TrainingEvaluationsController {
   @ApiResponse({ status: 201, description: 'Thao tác thành công.' })
   @ApiResponse({ status: 400, description: 'Dữ liệu gửi lên không hợp lệ.' })
   @Post(':id/review')
-  @Roles(UserRole.Advisor, UserRole.ClassLeader, UserRole.Admin)
+  @Roles(UserRole.Admin)
   review(
     @CurrentUser() reviewer: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,

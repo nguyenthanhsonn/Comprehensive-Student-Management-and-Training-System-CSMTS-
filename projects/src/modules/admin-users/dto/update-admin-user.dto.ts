@@ -10,7 +10,6 @@ import {
   Length,
   Matches,
   MaxLength,
-  ValidateIf,
 } from 'class-validator';
 import { UserRole } from 'src/common/shared';
 import {
@@ -77,7 +76,7 @@ export class UpdateAdminUserDto {
   @IsBoolean()
   isActive?: boolean;
 
-  @ValidateIf((dto: UpdateAdminUserDto) => dto.role === UserRole.Faculty || dto.facultyId !== undefined)
-  @IsUUID('4', { message: 'Vui lòng chọn khoa quản lý' })
-  facultyId?: string;
+  @IsOptional()
+  @IsUUID('4')
+  classId?: string;
 }

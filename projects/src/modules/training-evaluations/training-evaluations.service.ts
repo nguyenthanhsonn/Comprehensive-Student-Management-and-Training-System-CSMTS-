@@ -16,6 +16,7 @@ import { NotificationType } from '../notifications/enums/notification-type.enum'
 import { notificationSelect } from '../notifications/selects/notification.select';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { AdminListEvaluationsQueryDto } from './dto/admin-list-evaluations-query.dto';
+import { ConfirmReviewDto } from './dto/confirm-review.dto';
 import { CreateTrainingEvaluationDto } from './dto/create-training-evaluation.dto';
 import { ReturnEvaluationToStudentDto } from './dto/return-evaluation-to-student.dto';
 import { ReviewTrainingEvaluationDto } from './dto/review-training-evaluation.dto';
@@ -913,23 +914,33 @@ export class TrainingEvaluationsService {
       roleScore: current.roleScore,
     });
 
-    const evaluation = await this.prisma.evaluationForm.update({
-      where: { id },
-      data: {
-        status: FormStatus.submitted,
-        submittedAt: new Date(),
-        studentScore: scoreResult.totalScore,
-        rank: scoreResult.rank,
-        classScore: null,
-        finalScore: null,
-        classLeaderReviewedBy: null,
-        classLeaderReviewedAt: null,
-        classReviewedBy: null,
-        classReviewedAt: null,
-        adminFinalizedBy: null,
-        adminFinalizedAt: null,
-      },
-      select: evaluationScoreSummarySelect,
+    const evaluation = await this.prisma.$transaction(async (tx) => {
+      await tx.formCriteriaScore.updateMany({
+        where: { formId: id },
+        data: {
+          classScore: null,
+          note: null,
+        },
+      });
+
+      return tx.evaluationForm.update({
+        where: { id },
+        data: {
+          status: FormStatus.submitted,
+          submittedAt: new Date(),
+          studentScore: scoreResult.totalScore,
+          rank: scoreResult.rank,
+          classScore: null,
+          finalScore: null,
+          classLeaderReviewedBy: null,
+          classLeaderReviewedAt: null,
+          classReviewedBy: null,
+          classReviewedAt: null,
+          adminFinalizedBy: null,
+          adminFinalizedAt: null,
+        },
+        select: evaluationScoreSummarySelect,
+      });
     });
 
     return mapToScoreSummaryResponse(evaluation);
@@ -965,14 +976,14 @@ export class TrainingEvaluationsService {
       form.classId,
     );
 
-    const expectedStatus =
+    const editableStatuses: FormStatus[] =
       reviewer.role === UserRole.ClassLeader
-        ? FormStatus.submitted
-        : FormStatus.class_leader_approved;
+        ? [FormStatus.submitted]
+        : [FormStatus.class_leader_approved];
 
-    if (form.status !== expectedStatus) {
+    if (!editableStatuses.includes(form.status)) {
       throw new ConflictException(
-        `Điểm thẩm định chỉ được cập nhật khi phiếu ở trạng thái ${expectedStatus}`,
+        `Điểm thẩm định chỉ được cập nhật khi phiếu ở trạng thái ${editableStatuses.join(' hoặc ')}`,
       );
     }
 
@@ -1038,7 +1049,8 @@ export class TrainingEvaluationsService {
       );
 
       const confirmationResetData =
-        reviewer.role === UserRole.ClassLeader
+        reviewer.role === UserRole.ClassLeader &&
+        form.status === FormStatus.submitted
           ? {
               classLeaderReviewedBy: null,
               classLeaderReviewedAt: null,
@@ -1066,7 +1078,12 @@ export class TrainingEvaluationsService {
   async confirmReview(
     reviewer: AuthenticatedUser,
     id: string,
+    dto: ConfirmReviewDto = {},
   ): Promise<EvaluationScoreSummaryResponse> {
+    if (dto.scores?.length) {
+      await this.reviewScores(reviewer, id, { scores: dto.scores });
+    }
+
     const form = await this.prisma.evaluationForm.findUnique({
       where: { id },
       select: {
@@ -1098,7 +1115,7 @@ export class TrainingEvaluationsService {
     if (reviewer.role === UserRole.ClassLeader) {
       if (form.status !== FormStatus.submitted) {
         throw new ConflictException(
-          'Lớp trưởng chỉ xác nhận được phiếu đang chờ lớp trưởng đánh giá',
+          'Lớp trưởng chỉ xác nhận được phiếu trước khi gửi lên CVHT',
         );
       }
 
@@ -1174,11 +1191,27 @@ export class TrainingEvaluationsService {
     if (dto.action === 'reject') {
       const { rejected, notification } = await this.prisma.$transaction(
         async (tx) => {
+          await tx.formCriteriaScore.updateMany({
+            where: { formId: id },
+            data: {
+              classScore: null,
+              note: null,
+            },
+          });
+
           const rejected = await tx.evaluationForm.update({
             where: { id },
             data: {
               status: FormStatus.rejected,
               note: `${stage.notePrefix} ${dto.comment}`,
+              classScore: null,
+              finalScore: null,
+              classLeaderReviewedBy: null,
+              classLeaderReviewedAt: null,
+              classReviewedBy: null,
+              classReviewedAt: null,
+              adminFinalizedBy: null,
+              adminFinalizedAt: null,
             },
             select: evaluationScoreSummarySelect,
           });

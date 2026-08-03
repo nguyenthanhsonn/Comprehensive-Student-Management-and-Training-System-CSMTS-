@@ -7,6 +7,7 @@ import {
   type AdminClassCatalogDetailRecord,
   type AdminClassCatalogRecord,
 } from './selects/admin-class-catalog.select';
+import { UserRole } from '../../common/shared';
 
 export type CreateClassData = {
   code: string;
@@ -153,6 +154,37 @@ export class AdminClassCatalogRepository {
 
   createMany(data: CreateClassData[]): Promise<Prisma.BatchPayload> {
     return this.prisma.class.createMany({ data });
+  }
+
+  findAssignableClassLeaderUsers(
+    userIds: string[],
+  ): Promise<Array<{ id: string }>> {
+    return this.prisma.user.findMany({
+      where: {
+        id: { in: userIds },
+        role: UserRole.ClassLeader,
+        isActive: true,
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+  }
+
+  async replaceClassLeaders(
+    classId: string,
+    userIds: string[],
+  ): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      await tx.classLeaderAssignment.deleteMany({ where: { classId } });
+
+      if (userIds.length === 0) {
+        return;
+      }
+
+      await tx.classLeaderAssignment.createMany({
+        data: userIds.map((userId) => ({ classId, userId })),
+      });
+    });
   }
 
   update(id: string, data: UpdateClassData): Promise<AdminClassCatalogRecord> {

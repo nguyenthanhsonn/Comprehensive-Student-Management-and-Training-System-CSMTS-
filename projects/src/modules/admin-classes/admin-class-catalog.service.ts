@@ -8,13 +8,13 @@ import {
 import ExcelJS from 'exceljs';
 import { randomUUID } from 'node:crypto';
 import { read, utils } from 'xlsx';
-import { UserRole, type PaginatedResult } from '../../common/shared';
+import type { PaginatedResult } from '../../common/shared';
 import { Prisma } from '../../generated/prisma/client';
-import { PrismaService } from '../../database/prisma.service';
 import { AdminClassCatalogRepository } from './admin-class-catalog.repository';
 import { CreateClassDto } from './dto/create-class.dto';
 import { GetClassesQueryDto } from './dto/get-classes-query.dto';
 import { UpdateClassDto } from './dto/update-class.dto';
+import { UpdateClassLeadersDto } from './dto/update-class-leaders.dto';
 import {
   mapToAdminClassDetailResponse,
   mapToAdminClassResponse,
@@ -80,6 +80,10 @@ type CachedClassImportPlan = {
 
 const IMPORT_PREVIEW_TTL_MS = 10 * 60 * 1000;
 
+/**
+ * Service quản lý danh mục lớp (CRUD) cho Task 4.2 - tách biệt hoàn toàn với
+ * AdminClassesService (quản lý sinh viên trong lớp/import Excel).
+ */
 @Injectable()
 export class AdminClassCatalogService {
   private readonly importPreviewCache = new Map<
@@ -87,12 +91,9 @@ export class AdminClassCatalogService {
     CachedClassImportPlan
   >();
 
-  constructor(
-    private readonly repository: AdminClassCatalogRepository,
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly repository: AdminClassCatalogRepository) {}
 
-  /** Lấy danh sách lớp có phân trang, tìm kiếm và lọc theo ngành/khoa. */
+  /** Lấy danh sách lớp có phân trang, tìm kiếm và lọc theo ngành/khoa. Mặc định chỉ lấy lớp chưa xóa mềm. */
   async findAll(
     query: GetClassesQueryDto,
   ): Promise<PaginatedResult<AdminClassResponse>> {
@@ -132,6 +133,7 @@ export class AdminClassCatalogService {
     };
   }
 
+  /** Xem chi tiết 1 lớp - cho phép xem cả lớp đã xóa mềm để phục vụ tra cứu/audit. */
   async findOne(id: string): Promise<AdminClassDetailResponse> {
     const classRecord = await this.repository.findDetailById(id);
 
@@ -142,68 +144,7 @@ export class AdminClassCatalogService {
     return mapToAdminClassDetailResponse(classRecord);
   }
 
-  /**
-   * Endpoint /classes/:id dùng chung cho các role có nhu cầu xem chi tiết lớp.
-   * Mỗi role được giới hạn theo phạm vi quản lý của mình để FE không phải gọi nhiều path khác nhau.
-   */
-  async findOneForViewer(
-    userId: string,
-    role: UserRole,
-    id: string,
-  ): Promise<AdminClassDetailResponse> {
-    const classRecord = await this.repository.findDetailById(id);
-
-    if (!classRecord || classRecord.deletedAt) {
-      throw new NotFoundException('Không tìm thấy lớp học');
-    }
-
-    if (role === UserRole.Admin) {
-      return mapToAdminClassDetailResponse(classRecord);
-    }
-
-    if (role === UserRole.Advisor) {
-      const isAssigned = classRecord.advisorAssignments.some(
-        (assignment) => assignment.userId === userId,
-      );
-
-      if (!isAssigned) {
-        throw new ForbiddenException(
-          'Bạn không được phân công phụ trách lớp này',
-        );
-      }
-
-      return mapToAdminClassDetailResponse(classRecord);
-    }
-
-    if (role === UserRole.ClassLeader) {
-      const isAssigned = classRecord.classLeaderAssignments.some(
-        (assignment) => assignment.userId === userId,
-      );
-
-      if (!isAssigned) {
-        throw new ForbiddenException('Bạn không phải lớp trưởng của lớp này');
-      }
-
-      return mapToAdminClassDetailResponse(classRecord);
-    }
-
-    if (role === UserRole.Faculty) {
-      const assignment = await this.prisma.facultyAssignment.findUnique({
-        where: { userId },
-        select: { facultyId: true },
-      });
-
-      if (!assignment || assignment.facultyId !== classRecord.major.faculty.id) {
-        throw new ForbiddenException('Bạn không được quản lý lớp này');
-      }
-
-      return mapToAdminClassDetailResponse(classRecord);
-    }
-
-    throw new ForbiddenException('Không có quyền xem lớp này');
-  }
-
-  async findOneForAdvisor(
+  async findOneForClassLeader(
     userId: string,
     id: string,
   ): Promise<AdminClassDetailResponse> {
@@ -213,9 +154,10 @@ export class AdminClassCatalogService {
       throw new NotFoundException('Không tìm thấy lớp học');
     }
 
-    const isAssigned = classRecord.advisorAssignments.some(
-      (assignment) => assignment.userId === userId,
-    );
+    const isAssigned = [
+      ...classRecord.classLeaderAssignments,
+      ...classRecord.advisorAssignments,
+    ].some((assignment) => assignment.userId === userId);
 
     if (!isAssigned) {
       throw new ForbiddenException('Bạn không được phân công phụ trách lớp này');
@@ -305,7 +247,13 @@ export class AdminClassCatalogService {
         const majorName = row.majorName?.trim() ?? '';
         const enrollmentYear = inferEnrollmentYear(code, name);
 
-        validateImportClassRow(code, name, facultyName, majorName, enrollmentYear);
+        validateImportClassRow(
+          code,
+          name,
+          facultyName,
+          majorName,
+          enrollmentYear,
+        );
 
         const duplicateRow = seenCodes.get(code);
         if (duplicateRow !== undefined) {
@@ -347,23 +295,31 @@ export class AdminClassCatalogService {
             facultyValues,
           )
         : [];
-    const majorsByValue = new Map<
-      string,
-      {
-        id: string;
-        name: string;
-        code: string;
-        faculty: { code: string; name: string };
-      }
-    >();
+    const majorsByValue = new Map<string, { id: string }>();
 
     for (const major of majors) {
-      majorsByValue.set(normalizeLookupValue(major.name), major);
-      majorsByValue.set(normalizeLookupValue(major.code), major);
+      const facultyKeys = [
+        normalizeLookupValue(major.faculty.name),
+        normalizeLookupValue(major.faculty.code),
+      ];
+      const majorKeys = [
+        normalizeLookupValue(major.name),
+        normalizeLookupValue(major.code),
+      ];
+
+      for (const facultyKey of facultyKeys) {
+        for (const majorKey of majorKeys) {
+          majorsByValue.set(`${facultyKey}::${majorKey}`, major);
+        }
+      }
     }
 
     for (const row of validRows) {
-      const major = majorsByValue.get(normalizeLookupValue(row.majorName));
+      const major = majorsByValue.get(
+        `${normalizeLookupValue(row.facultyName)}::${normalizeLookupValue(
+          row.majorName,
+        )}`,
+      );
 
       if (!major) {
         errors.push({
@@ -383,7 +339,9 @@ export class AdminClassCatalogService {
 
     for (const row of validRows) {
       const existing = existingByCode.get(row.code);
-      if (!existing) continue;
+      if (!existing) {
+        continue;
+      }
 
       errors.push({
         row: row.rowNumber,
@@ -404,15 +362,22 @@ export class AdminClassCatalogService {
     }
 
     const previewRows = validRows.map((row) => {
-      const major = majorsByValue.get(normalizeLookupValue(row.majorName));
-      if (!major) throw new BadRequestException('Không xác định được ngành của lớp');
+      const major = majorsByValue.get(
+        `${normalizeLookupValue(row.facultyName)}::${normalizeLookupValue(
+          row.majorName,
+        )}`,
+      );
+
+      if (!major) {
+        throw new BadRequestException('Không xác định được ngành của lớp');
+      }
 
       return {
         code: row.code,
         name: row.name,
         majorId: major.id,
-        facultyName: major.faculty.name,
-        majorName: major.name,
+        facultyName: row.facultyName,
+        majorName: row.majorName,
         enrollmentYear: row.enrollmentYear,
       };
     });
@@ -479,7 +444,9 @@ export class AdminClassCatalogService {
       );
       const createdClasses = plan.rows
         .map((row) => createdByCode.get(row.code))
-        .filter((record): record is NonNullable<typeof record> => Boolean(record))
+        .filter((record): record is NonNullable<typeof record> =>
+          Boolean(record),
+        )
         .map(mapToAdminClassResponse);
 
       return {
@@ -510,7 +477,8 @@ export class AdminClassCatalogService {
       await this.assertMajorExists(dto.majorId);
     }
 
-    const nextCode = dto.code !== undefined ? normalizeClassCode(dto.code) : undefined;
+    const nextCode =
+      dto.code !== undefined ? normalizeClassCode(dto.code) : undefined;
 
     if (nextCode !== undefined && nextCode !== current.code) {
       await this.assertCodeAvailable(nextCode);
@@ -534,6 +502,40 @@ export class AdminClassCatalogService {
     }
   }
 
+  async updateClassLeaders(
+    id: string,
+    dto: UpdateClassLeadersDto,
+  ): Promise<AdminClassDetailResponse> {
+    const classRecord = await this.repository.findActiveById(id);
+    if (!classRecord) {
+      throw new NotFoundException('Không tìm thấy lớp học');
+    }
+
+    const userIds = [...new Set(dto.userIds)];
+    if (userIds.length > 0) {
+      const users =
+        await this.repository.findAssignableClassLeaderUsers(userIds);
+      if (users.length !== userIds.length) {
+        throw new BadRequestException(
+          'Có tài khoản không hợp lệ, đã bị khóa/xóa hoặc không phải vai trò lớp trưởng',
+        );
+      }
+    }
+
+    try {
+      await this.repository.replaceClassLeaders(id, userIds);
+      return this.findOne(id);
+    } catch (error) {
+      this.handleKnownClassError(error);
+      throw error;
+    }
+  }
+
+  /**
+   * Xóa mềm lớp bằng cách cập nhật deletedAt + isActive=false.
+   * Chặn xóa nếu lớp còn sinh viên đang theo học hoặc đã phát sinh phiếu đánh giá,
+   * tránh mất dấu vết dữ liệu đã gắn với lớp.
+   */
   async remove(id: string): Promise<AdminClassResponse> {
     const classRecord = await this.repository.findActiveById(id);
 
@@ -558,18 +560,25 @@ export class AdminClassCatalogService {
     return mapToAdminClassResponse(removed);
   }
 
+  /** Kiểm tra ngành tồn tại và chưa xóa mềm trước khi gán cho lớp. */
   private async assertMajorExists(majorId: string): Promise<void> {
     const major = await this.repository.findActiveMajorById(majorId);
 
     if (!major) {
-      throw new NotFoundException('Không tìm thấy ngành');
+      throw new NotFoundException('Không tìm thấy ngành học');
     }
   }
 
+  /**
+   * Kiểm tra mã lớp còn dùng được không - phân biệt trùng với lớp đang hoạt động
+   * hay trùng với lớp đã xóa mềm (không tự động ghi đè/khôi phục bản ghi cũ).
+   */
   private async assertCodeAvailable(code: string): Promise<void> {
     const existing = await this.repository.findByCode(code);
 
-    if (!existing) return;
+    if (!existing) {
+      return;
+    }
 
     if (existing.deletedAt) {
       throw new ConflictException(
@@ -581,7 +590,9 @@ export class AdminClassCatalogService {
   }
 
   private handleKnownClassError(error: unknown): void {
-    if (!(error instanceof Prisma.PrismaClientKnownRequestError)) return;
+    if (!(error instanceof Prisma.PrismaClientKnownRequestError)) {
+      return;
+    }
 
     if (error.code === 'P2002') {
       throw new ConflictException('Mã lớp đã tồn tại');
@@ -607,9 +618,14 @@ function isExcelFile(file: UploadedClassExcelFile) {
 function parseUploadedClassFile(
   file: UploadedClassExcelFile | undefined,
 ): ImportClassRow[] {
-  if (!file) throw new BadRequestException('Vui lòng tải lên file Excel');
+  if (!file) {
+    throw new BadRequestException('Vui lòng tải lên file Excel');
+  }
+
   if (!isExcelFile(file)) {
-    throw new BadRequestException('File import phải có định dạng .xlsx hoặc .xls');
+    throw new BadRequestException(
+      'File import phải có định dạng .xlsx hoặc .xls',
+    );
   }
 
   const rows = parseClassRows(file.buffer);
@@ -623,23 +639,42 @@ function parseUploadedClassFile(
 function parseClassRows(buffer: Buffer): ImportClassRow[] {
   const workbook = read(buffer, { type: 'buffer' });
   const sheetName = workbook.SheetNames[0];
-  if (!sheetName) throw new BadRequestException('File Excel không có sheet dữ liệu');
+
+  if (!sheetName) {
+    throw new BadRequestException('File Excel không có sheet dữ liệu');
+  }
 
   const sheet = workbook.Sheets[sheetName];
-  if (!sheet) throw new BadRequestException('Không đọc được sheet dữ liệu trong file Excel');
+  if (!sheet) {
+    throw new BadRequestException(
+      'Không đọc được sheet dữ liệu trong file Excel',
+    );
+  }
 
-  const rows = utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '' });
+  const rows = utils.sheet_to_json<Record<string, unknown>>(sheet, {
+    defval: '',
+  });
+
   return rows
-    .map((row, index) => ({ rowNumber: index + 2, ...normalizeImportClassRow(row) }))
+    .map((row, index) => ({
+      rowNumber: index + 2,
+      ...normalizeImportClassRow(row),
+    }))
     .filter((row) => row.code || row.name || row.facultyName || row.majorName);
 }
 
 function normalizeImportClassRow(row: Record<string, unknown>) {
-  const normalized: { code?: string; name?: string; facultyName?: string; majorName?: string } = {};
+  const normalized: {
+    code?: string;
+    name?: string;
+    facultyName?: string;
+    majorName?: string;
+  } = {};
 
   for (const [key, value] of Object.entries(row)) {
     const normalizedKey = normalizeHeader(key);
-    const stringValue = value === null || value === undefined ? '' : String(value).trim();
+    const stringValue =
+      value === null || value === undefined ? '' : String(value).trim();
 
     if (['ma_lop', 'code', 'class_code'].includes(normalizedKey)) {
       normalized.code = stringValue;
@@ -651,12 +686,25 @@ function normalizeImportClassRow(row: Record<string, unknown>) {
       continue;
     }
 
-    if (['ten_khoa', 'ma_khoa', 'khoa', 'faculty', 'faculty_name'].includes(normalizedKey)) {
+    if (
+      ['ten_khoa', 'ma_khoa', 'khoa', 'faculty', 'faculty_name'].includes(
+        normalizedKey,
+      )
+    ) {
       normalized.facultyName = stringValue;
       continue;
     }
 
-    if (['ten_nganh', 'ma_nganh', 'nganh', 'major', 'major_name'].includes(normalizedKey)) {
+    if (
+      [
+        'ten_nganh',
+        'ma_nganh',
+        'nganh',
+        'major',
+        'major_name',
+        'major_code',
+      ].includes(normalizedKey)
+    ) {
       normalized.majorName = stringValue;
     }
   }
@@ -667,7 +715,7 @@ function normalizeImportClassRow(row: Record<string, unknown>) {
 function normalizeHeader(header: string): string {
   return header
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .replace(/đ/g, 'd')
     .replace(/Đ/g, 'D')
     .toLowerCase()
@@ -683,17 +731,36 @@ function validateImportClassRow(
   majorName: string,
   enrollmentYear: number,
 ): void {
-  if (!code) throw new BadRequestException('Mã lớp không được để trống');
-  if (code.length > 30) throw new BadRequestException('Mã lớp không được vượt quá 30 ký tự');
+  if (!code) {
+    throw new BadRequestException('Mã lớp không được để trống');
+  }
+
+  if (code.length > 30) {
+    throw new BadRequestException('Mã lớp không được vượt quá 30 ký tự');
+  }
+
   if (!/^[A-Z0-9_-]+$/.test(code)) {
     throw new BadRequestException(
       'Mã lớp chỉ được chứa chữ in hoa, số, dấu gạch dưới hoặc gạch ngang',
     );
   }
-  if (!name) throw new BadRequestException('Tên lớp không được để trống');
-  if (name.length > 255) throw new BadRequestException('Tên lớp không được vượt quá 255 ký tự');
-  if (!facultyName) throw new BadRequestException('Tên khoa không được để trống');
-  if (!majorName) throw new BadRequestException('Tên ngành không được để trống');
+
+  if (!name) {
+    throw new BadRequestException('Tên lớp không được để trống');
+  }
+
+  if (name.length > 255) {
+    throw new BadRequestException('Tên lớp không được vượt quá 255 ký tự');
+  }
+
+  if (!facultyName) {
+    throw new BadRequestException('Tên khoa không được để trống');
+  }
+
+  if (!majorName) {
+    throw new BadRequestException('Tên ngành không được để trống');
+  }
+
   if (enrollmentYear < 2000 || enrollmentYear > 2100) {
     throw new BadRequestException('Năm tuyển sinh không hợp lệ');
   }
@@ -702,7 +769,11 @@ function validateImportClassRow(
 function inferEnrollmentYear(code: string, name: string): number {
   const source = `${code} ${name}`;
   const cohortMatch = source.match(/K(\d{2})/i);
-  if (cohortMatch?.[1]) return 2000 + Number(cohortMatch[1]);
+
+  if (cohortMatch?.[1]) {
+    return 2000 + Number(cohortMatch[1]);
+  }
+
   return new Date().getFullYear();
 }
 

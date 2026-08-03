@@ -10,7 +10,6 @@ import {
   Matches,
   MaxLength,
   MinLength,
-  ValidateIf,
 } from 'class-validator';
 import { UserRole } from 'src/common/shared';
 import {
@@ -25,8 +24,8 @@ import {
 
 const MANAGED_USER_ROLES = [
   UserRole.Admin,
-  UserRole.Advisor,
   UserRole.ClassLeader,
+  UserRole.Advisor,
   UserRole.Faculty,
   UserRole.TrainingDepartment,
 ];
@@ -55,7 +54,7 @@ export class CreateAdminUserDto {
 
   @IsEnum(UserRole, { message: 'Vai trò không hợp lệ' })
   @IsIn(MANAGED_USER_ROLES, {
-    message: 'Không thể tạo tài khoản sinh viên tại đây. Vui lòng tạo tài khoản sinh viên tại chức năng quản lý sinh viên.',
+    message: 'Vui lòng dùng API /admin/students để tạo sinh viên',
   })
   role: UserRole;
 
@@ -68,14 +67,7 @@ export class CreateAdminUserDto {
   @Matches(DATE_ONLY_PATTERN, { message: DATE_ONLY_FORMAT_MESSAGE })
   dateOfBirth?: string;
 
-  @ValidateIf((dto: CreateAdminUserDto) => dto.role === UserRole.Faculty)
-  @IsUUID('4', { message: 'Vui lòng chọn khoa quản lý' })
-  facultyId?: string;
-
-  @ValidateIf(
-    (dto: CreateAdminUserDto) =>
-      dto.role === UserRole.Advisor || dto.role === UserRole.ClassLeader,
-  )
-  @IsUUID('4', { message: 'Vui lòng chọn lớp phụ trách' })
+  @IsOptional()
+  @IsUUID('4')
   classId?: string;
 }

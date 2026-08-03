@@ -14,7 +14,7 @@ export const adminUserSelect = {
   deletedAt: true,
   createdAt: true,
   updatedAt: true,
-  advisorAssignments: {
+  classLeaderAssignments: {
     select: {
       class: {
         select: {
@@ -27,7 +27,7 @@ export const adminUserSelect = {
     },
     orderBy: { assignedAt: 'desc' },
   },
-  classLeaderAssignments: {
+  advisorAssignments: {
     select: {
       class: {
         select: {

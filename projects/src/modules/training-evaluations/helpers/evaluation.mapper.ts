@@ -237,6 +237,7 @@ export function mapToStatusResponse(
     currentStep: toCurrentReviewStep(status),
     submittedAt: evaluation.submittedAt,
     classLeaderReviewedAt: evaluation.classLeaderReviewedAt,
+    classReviewedAt: evaluation.classReviewedAt,
     steps: [
       {
         key: 'student_submit',
