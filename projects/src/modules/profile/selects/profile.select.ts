@@ -40,41 +40,6 @@ export const profileSelect = {
       },
     },
   },
-  advisorAssignments: {
-    select: {
-      assignedAt: true,
-      class: {
-        select: {
-          id: true,
-          code: true,
-          name: true,
-          enrollmentYear: true,
-          _count: {
-            select: {
-              classStudents: true,
-            },
-          },
-          major: {
-            select: {
-              id: true,
-              code: true,
-              name: true,
-              faculty: {
-                select: {
-                  id: true,
-                  code: true,
-                  name: true,
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-    orderBy: {
-      assignedAt: 'desc',
-    },
-  },
   classLeaderAssignments: {
     select: {
       assignedAt: true,
@@ -110,16 +75,39 @@ export const profileSelect = {
       assignedAt: 'desc',
     },
   },
-  facultyAssignment: {
+  advisorAssignments: {
     select: {
       assignedAt: true,
-      faculty: {
+      class: {
         select: {
           id: true,
           code: true,
           name: true,
+          enrollmentYear: true,
+          _count: {
+            select: {
+              classStudents: true,
+            },
+          },
+          major: {
+            select: {
+              id: true,
+              code: true,
+              name: true,
+              faculty: {
+                select: {
+                  id: true,
+                  code: true,
+                  name: true,
+                },
+              },
+            },
+          },
         },
       },
+    },
+    orderBy: {
+      assignedAt: 'desc',
     },
   },
 } satisfies Prisma.UserSelect;

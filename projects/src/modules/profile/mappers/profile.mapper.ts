@@ -6,24 +6,10 @@ export function mapToProfileResponse(user: ProfileRecord) {
   const currentClass = currentEnrollment?.class ?? null;
   const currentMajor = currentClass?.major ?? null;
   const currentFaculty = currentMajor?.faculty ?? null;
-  const managedAssignments = [
-    ...user.advisorAssignments,
-    ...user.classLeaderAssignments,
-  ].sort((a, b) => b.assignedAt.getTime() - a.assignedAt.getTime());
-
-  const studentInfo = currentEnrollment
-    ? {
-        fullName: user.fullName,
-        dateOfBirth: formatDateOnly(user.dateOfBirth),
-        majorName: currentMajor?.name ?? null,
-        phone: user.phone,
-        email: user.email,
-        studentCode: currentEnrollment.studentCode,
-        classCode: currentClass?.code ?? null,
-        enrollmentYear: currentClass?.enrollmentYear ?? null,
-        facultyName: currentFaculty?.name ?? null,
-      }
-    : null;
+  const classAssignments =
+    user.role === 'advisor'
+      ? user.advisorAssignments
+      : user.classLeaderAssignments;
 
   return {
     id: user.id,
@@ -34,7 +20,6 @@ export function mapToProfileResponse(user: ProfileRecord) {
     dateOfBirth: formatDateOnly(user.dateOfBirth),
     role: user.role,
     isActive: user.isActive,
-    studentInfo,
     student: currentEnrollment
       ? {
           studentCode: currentEnrollment.studentCode,
@@ -63,7 +48,7 @@ export function mapToProfileResponse(user: ProfileRecord) {
             : null,
         }
       : null,
-    managedClasses: managedAssignments.map((assignment) => {
+    managedClasses: classAssignments.map((assignment) => {
       const assignedClass = assignment.class;
       const major = assignedClass.major;
 
@@ -86,14 +71,6 @@ export function mapToProfileResponse(user: ProfileRecord) {
         },
       };
     }),
-    managedFaculty: user.facultyAssignment
-      ? {
-          id: user.facultyAssignment.faculty.id,
-          code: user.facultyAssignment.faculty.code,
-          name: user.facultyAssignment.faculty.name,
-          assignedAt: user.facultyAssignment.assignedAt,
-        }
-      : null,
   };
 }
 

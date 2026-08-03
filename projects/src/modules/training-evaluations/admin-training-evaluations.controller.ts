@@ -35,9 +35,10 @@ import {
   // ngược cho client cũ. Sau khi FE xác nhận đã chuyển hẳn sang
   // /admin/evaluations, xóa alias này. Ngày thêm: 18/07/2026.
   'admin/training-evaluations',
+  'training-department/evaluations',
 ])
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.Admin)
+@Roles(UserRole.Admin, UserRole.TrainingDepartment)
 export class AdminTrainingEvaluationsController {
   constructor(
     private readonly adminTrainingEvaluationsService: AdminTrainingEvaluationsService,

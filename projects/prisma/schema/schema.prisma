@@ -14,19 +14,21 @@ generator client {
 // ============================================================
 
 enum UserRole {
-  student
-  class_leader
-  advisor
-  faculty
-  training_department
-  admin
+  admin // Phòng Đào tạo / quản trị hệ thống
+  student // Sinh viên tự đánh giá
+  class_leader // Lớp trưởng đánh giá bước lớp
+  advisor // Cố vấn học tập duyệt lớp
+  faculty // Khoa gửi danh sách lên Phòng Đào tạo
+  training_department // Phòng Đào tạo phê duyệt cuối
 }
 
 enum FormStatus {
   draft // Sinh viên đang điền
   submitted // SV đã nộp, chờ BCS/CVHT duyệt
-  class_approved // BCS/CVHT đã chấm, chờ Admin phê duyệt cuối
-  finalized // Học viện phê duyệt - kết quả chính thức
+  class_leader_approved // Lớp trưởng đã gửi danh sách lên CVHT
+  class_approved // CVHT đã chấm, chờ Khoa gửi lên PĐT
+  faculty_approved // Khoa đã gửi danh sách lên PĐT
+  finalized // PĐT phê duyệt - kết quả chính thức
   rejected // Trả về chỉnh sửa
 }
 
@@ -77,22 +79,37 @@ model User {
   deletedAt             DateTime? @map("deleted_at") @db.Timestamptz // Xóa mềm - null nghĩa là tài khoản còn hoạt động
 
   // Relations
-  classStudents          ClassStudent[]
-  advisorAssignments     AdvisorAssignment[]
-  classLeaderAssignments ClassLeaderAssignment[]
-  evaluationForms        EvaluationForm[]        @relation("StudentForms")
-  classReviewedForms     EvaluationForm[]        @relation("ClassReviewer")
-  adminFinalizedForms    EvaluationForm[]        @relation("AdminFinalizer")
-  posts                  Post[]
-  evidences              Evidence[]
-  notifications          Notification[]
-  passwordResetTokens    PasswordResetToken[]
-  facultyAssignment      FacultyAssignment?
+  classStudents            ClassStudent[]
+  advisorAssignments       AdvisorAssignment[]
+  classLeaderAssignments   ClassLeaderAssignment[]
+  evaluationForms          EvaluationForm[]      @relation("StudentForms")
+  classLeaderReviewedForms EvaluationForm[]      @relation("ClassLeaderReviewer")
+  classReviewedForms       EvaluationForm[]      @relation("ClassReviewer")
+  adminFinalizedForms      EvaluationForm[]      @relation("AdminFinalizer")
+  posts                    Post[]
+  evidences                Evidence[]
+  notifications            Notification[]
+  passwordResetTokens      PasswordResetToken[]
+  facultyAssignment        FacultyAssignment?
 
   // username đã @unique nên tự có index - đây là cột dùng để đăng nhập siêu nhanh.
   // Giữ nguyên index email cho các tra cứu liên hệ/báo cáo khác (ngoài phạm vi đổi login).
   @@index([email])
   @@map("users")
+}
+
+model Post {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title     String   @db.VarChar(255)
+  content   String   @db.Text
+  authorId  String   @map("author_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz // BỎ @default(now())
+
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([authorId])
+  @@map("posts")
 }
 
 // Token quên mật khẩu chỉ lưu hash, không lưu token gốc đã gửi qua email.
@@ -109,20 +126,6 @@ model PasswordResetToken {
   @@index([userId])
   @@index([expiresAt])
   @@map("password_reset_tokens")
-}
-
-model Post {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title     String   @db.VarChar(255)
-  content   String   @db.Text
-  authorId  String   @map("author_id") @db.Uuid
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz // BỎ @default(now())
-
-  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
-
-  @@index([authorId])
-  @@map("posts")
 }
 
 // Phân quyền tài khoản khoa cho một khoa cụ thể.
@@ -170,7 +173,7 @@ model Major {
   classes Class[]
 
   // Indexes
-  @@index([facultyId]) // Tối ưu khi lọc phiếu đánh giá theo Khoa (join qua Class -> Major -> Faculty)
+  @@index([facultyId]) // Tối ưu khi lọc phiếu đánh giá theo Khoa (join qua Class → Major → Faculty)
   @@map("majors")
 }
 
@@ -186,11 +189,11 @@ model Class {
   deletedAt      DateTime? @map("deleted_at") @db.Timestamptz // Xóa mềm - null nghĩa là lớp còn hoạt động
 
   // Relations
-  major                  Major                   @relation(fields: [majorId], references: [id], onDelete: Cascade)
-  classStudents          ClassStudent[]
-  advisorAssignments     AdvisorAssignment[]
-  classLeaderAssignments ClassLeaderAssignment[]
-  evaluationForms        EvaluationForm[]
+  major                   Major                    @relation(fields: [majorId], references: [id], onDelete: Cascade)
+  classStudents           ClassStudent[]
+  advisorAssignments      AdvisorAssignment[]
+  classLeaderAssignments  ClassLeaderAssignment[]
+  evaluationForms         EvaluationForm[]
 
   // Indexes
   @@index([majorId]) // Tối ưu khi tìm kiếm các lớp thuộc một Ngành học
@@ -199,11 +202,11 @@ model Class {
 
 // 5. Danh sách lớp - sinh viên thuộc lớp nào
 model ClassStudent {
-  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  classId     String    @map("class_id") @db.Uuid
-  studentId   String    @unique @map("student_id") @db.Uuid
-  studentCode String    @unique @map("student_code") @db.VarChar(20)
-  enrolledAt  DateTime  @default(now()) @map("enrolled_at") @db.Timestamptz
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  classId     String   @map("class_id") @db.Uuid
+  studentId   String   @unique @map("student_id") @db.Uuid
+  studentCode String   @unique @map("student_code") @db.VarChar(20)
+  enrolledAt  DateTime @default(now()) @map("enrolled_at") @db.Timestamptz
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz // Xóa mềm hồ sơ sinh viên - không đụng tới User
 
   // Relations
@@ -230,7 +233,7 @@ model ClassLeaderAssignment {
   @@map("class_leader_assignments")
 }
 
-// 6. Phân quyền advisor cho lớp cụ thể
+// 7. Phân quyền CVHT cho lớp cụ thể
 model AdvisorAssignment {
   id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId     String   @map("user_id") @db.Uuid // role = advisor
@@ -314,11 +317,13 @@ model EvaluationForm {
   roleData            Json    @default("{}") @map("role_data")
 
   // Audit trail - ai duyệt ở từng bước
-  classReviewedBy  String? @map("class_reviewed_by") @db.Uuid // advisor duyệt
-  adminFinalizedBy String? @map("admin_finalized_by") @db.Uuid // admin phê duyệt cuối
+  classLeaderReviewedBy String? @map("class_leader_reviewed_by") @db.Uuid // lớp trưởng gửi lên CVHT
+  classReviewedBy       String? @map("class_reviewed_by") @db.Uuid // advisor duyệt
+  adminFinalizedBy      String? @map("admin_finalized_by") @db.Uuid // admin phê duyệt cuối
 
-  classReviewedAt  DateTime? @map("class_reviewed_at") @db.Timestamptz
-  adminFinalizedAt DateTime? @map("admin_finalized_at") @db.Timestamptz
+  classLeaderReviewedAt DateTime? @map("class_leader_reviewed_at") @db.Timestamptz
+  classReviewedAt       DateTime? @map("class_reviewed_at") @db.Timestamptz
+  adminFinalizedAt      DateTime? @map("admin_finalized_at") @db.Timestamptz
 
   submittedAt DateTime? @map("submitted_at") @db.Timestamptz
   isLocked    Boolean   @default(false) @map("is_locked")
@@ -328,14 +333,15 @@ model EvaluationForm {
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz // BỎ @default(now())
 
   // Relations
-  student        User                @relation("StudentForms", fields: [studentId], references: [id], onDelete: Cascade)
-  class          Class               @relation(fields: [classId], references: [id], onDelete: Cascade)
-  semester       Semester            @relation(fields: [semesterId], references: [id], onDelete: Cascade)
-  classReviewer  User?               @relation("ClassReviewer", fields: [classReviewedBy], references: [id], onDelete: SetNull)
-  adminFinalizer User?               @relation("AdminFinalizer", fields: [adminFinalizedBy], references: [id], onDelete: SetNull)
-  criteriaScores FormCriteriaScore[]
-  attachments    FormAttachment[]
-  evidences      Evidence[]
+  student             User                @relation("StudentForms", fields: [studentId], references: [id], onDelete: Cascade)
+  class               Class               @relation(fields: [classId], references: [id], onDelete: Cascade)
+  semester            Semester            @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+  classLeaderReviewer User?               @relation("ClassLeaderReviewer", fields: [classLeaderReviewedBy], references: [id], onDelete: SetNull)
+  classReviewer       User?               @relation("ClassReviewer", fields: [classReviewedBy], references: [id], onDelete: SetNull)
+  adminFinalizer      User?               @relation("AdminFinalizer", fields: [adminFinalizedBy], references: [id], onDelete: SetNull)
+  criteriaScores      FormCriteriaScore[]
+  attachments         FormAttachment[]
+  evidences           Evidence[]
 
   // Constraints & Indexes
   @@unique([studentId, semesterId])
@@ -394,14 +400,14 @@ model FormAttachment {
 
 // 13. Minh chứng ảnh do sinh viên upload lên cloud ở FE, BE chỉ lưu URL
 model Evidence {
-  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  studentId        String   @map("student_id") @db.Uuid
-  evaluationFormId String   @map("evaluation_form_id") @db.Uuid
-  criterionId      String   @map("criterion_id") @db.Uuid
-  imageUrl         String   @map("image_url") @db.VarChar(1000)
-  publicId         String?  @map("public_id") @db.VarChar(500)
-  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId        String           @map("student_id") @db.Uuid
+  evaluationFormId String           @map("evaluation_form_id") @db.Uuid
+  criterionId      String           @map("criterion_id") @db.Uuid
+  imageUrl         String           @map("image_url") @db.VarChar(1000)
+  publicId         String?          @map("public_id") @db.VarChar(500)
+  createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime         @updatedAt @map("updated_at") @db.Timestamptz
 
   // Relations
   student        User               @relation(fields: [studentId], references: [id], onDelete: Cascade)

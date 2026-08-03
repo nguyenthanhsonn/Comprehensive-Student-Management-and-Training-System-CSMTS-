@@ -7,8 +7,7 @@ import { AdminClassCatalogService } from './admin-class-catalog.service';
 import {
   AdminClassesController,
   AdminStudentsController,
-  ClassesController,
-  AdvisorClassesController,
+  ClassLeaderClassesController,
 } from './admin-classes.controller';
 import { AdminClassesService } from './admin-classes.service';
 
@@ -17,8 +16,7 @@ import { AdminClassesService } from './admin-classes.service';
   controllers: [
     AdminClassesController,
     AdminStudentsController,
-    ClassesController,
-    AdvisorClassesController,
+    ClassLeaderClassesController,
   ],
   providers: [
     AdminClassesService,

@@ -131,13 +131,13 @@ async function main() {
       },
     });
 
-    const classCouncil = await prisma.user.upsert({
-      where: { email: 'class.council@csmts.edu.vn' },
+    const classLeader = await prisma.user.upsert({
+      where: { email: 'class.leader@csmts.edu.vn' },
       update: {
-        username: 'class.council',
-        fullName: 'Cố vấn học tập / Ban cán sự lớp',
+        username: 'class.leader',
+        fullName: 'Lớp trưởng',
         passwordHash,
-        role: UserRole.advisor,
+        role: UserRole.class_leader,
         phone: '0934567890',
         dateOfBirth: new Date('1990-03-25'),
         isActive: true,
@@ -145,13 +145,38 @@ async function main() {
         refreshTokenExpiresAt: null,
       },
       create: {
-        username: 'class.council',
-        email: 'class.council@csmts.edu.vn',
-        fullName: 'Cố vấn học tập / Ban cán sự lớp',
+        username: 'class.leader',
+        email: 'class.leader@csmts.edu.vn',
+        fullName: 'Lớp trưởng',
         passwordHash,
-        role: UserRole.advisor,
+        role: UserRole.class_leader,
         phone: '0934567890',
         dateOfBirth: new Date('1990-03-25'),
+        isActive: true,
+      },
+    });
+
+    const advisor = await prisma.user.upsert({
+      where: { email: 'advisor@csmts.edu.vn' },
+      update: {
+        username: 'advisor',
+        fullName: 'Cố vấn học tập',
+        passwordHash,
+        role: UserRole.advisor,
+        phone: '0934567891',
+        dateOfBirth: new Date('1988-03-25'),
+        isActive: true,
+        refreshTokenHash: null,
+        refreshTokenExpiresAt: null,
+      },
+      create: {
+        username: 'advisor',
+        email: 'advisor@csmts.edu.vn',
+        fullName: 'Cố vấn học tập',
+        passwordHash,
+        role: UserRole.advisor,
+        phone: '0934567891',
+        dateOfBirth: new Date('1988-03-25'),
         isActive: true,
       },
     });
@@ -275,16 +300,25 @@ async function main() {
       });
     }
 
-    await prisma.classCouncilAssignment.upsert({
+    await prisma.classLeaderAssignment.upsert({
+      where: { userId: classLeader.id },
+      update: {},
+      create: {
+        userId: classLeader.id,
+        classId: studentClass.id,
+      },
+    });
+
+    await prisma.advisorAssignment.upsert({
       where: {
         userId_classId: {
-          userId: classCouncil.id,
+          userId: advisor.id,
           classId: studentClass.id,
         },
       },
       update: {},
       create: {
-        userId: classCouncil.id,
+        userId: advisor.id,
         classId: studentClass.id,
       },
     });

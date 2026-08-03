@@ -123,6 +123,8 @@ export type EvaluationStatusResponse = {
   semesterIsActive: boolean;
   currentStep: string;
   submittedAt: Date | null;
+  classLeaderReviewedAt: Date | null;
+  classReviewedAt: Date | null;
   steps: ReviewStepResponse[];
 };
 

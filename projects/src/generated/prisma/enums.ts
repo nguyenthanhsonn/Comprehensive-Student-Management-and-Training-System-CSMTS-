@@ -10,12 +10,12 @@
 */
 
 export const UserRole = {
+  admin: 'admin',
   student: 'student',
   class_leader: 'class_leader',
   advisor: 'advisor',
   faculty: 'faculty',
-  training_department: 'training_department',
-  admin: 'admin'
+  training_department: 'training_department'
 } as const
 
 export type UserRole = (typeof UserRole)[keyof typeof UserRole]
@@ -24,7 +24,9 @@ export type UserRole = (typeof UserRole)[keyof typeof UserRole]
 export const FormStatus = {
   draft: 'draft',
   submitted: 'submitted',
+  class_leader_approved: 'class_leader_approved',
   class_approved: 'class_approved',
+  faculty_approved: 'faculty_approved',
   finalized: 'finalized',
   rejected: 'rejected'
 } as const

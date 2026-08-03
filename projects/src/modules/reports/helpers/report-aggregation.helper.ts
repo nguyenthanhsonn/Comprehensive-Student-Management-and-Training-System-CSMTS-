@@ -46,7 +46,9 @@ export function emptyStatusDistribution(): StatusDistribution {
   return {
     [FormStatus.draft]: 0,
     [FormStatus.submitted]: 0,
+    [FormStatus.class_leader_approved]: 0,
     [FormStatus.class_approved]: 0,
+    [FormStatus.faculty_approved]: 0,
     [FormStatus.finalized]: 0,
     [FormStatus.rejected]: 0,
   };
