@@ -24,7 +24,9 @@ export type UserRole = (typeof UserRole)[keyof typeof UserRole]
 export const FormStatus = {
   draft: 'draft',
   submitted: 'submitted',
+  class_leader_approved: 'class_leader_approved',
   class_approved: 'class_approved',
+  faculty_approved: 'faculty_approved',
   finalized: 'finalized',
   rejected: 'rejected'
 } as const

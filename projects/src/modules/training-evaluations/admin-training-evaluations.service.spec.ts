@@ -64,7 +64,7 @@ describe('AdminTrainingEvaluationsService', () => {
     expect(result.items[0]).not.toHaveProperty('studentScore');
   });
 
-  it('bulk finalizes valid forms and skips ids that are missing or not class approved', async () => {
+  it('bulk finalizes valid forms and skips ids that are missing or not faculty approved', async () => {
     const { prisma, service } = createService();
     prisma.evaluationForm.findMany.mockResolvedValueOnce([
       { id: 'valid', classScore: 80 },
@@ -86,7 +86,7 @@ describe('AdminTrainingEvaluationsService', () => {
             '00000000-0000-4000-8000-000000000000',
           ],
         },
-        status: FormStatus.class_approved,
+        status: FormStatus.faculty_approved,
       },
       select: { id: true, classScore: true },
     });
@@ -116,7 +116,7 @@ describe('AdminTrainingEvaluationsService', () => {
     ]);
   });
 
-  it('finalizeByFilter is idempotent when no class approved forms match', async () => {
+  it('finalizeByFilter is idempotent when no faculty approved forms match', async () => {
     const { prisma, service } = createService();
     prisma.evaluationForm.findMany.mockResolvedValueOnce([]);
 

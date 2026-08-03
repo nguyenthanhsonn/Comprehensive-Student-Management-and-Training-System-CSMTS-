@@ -59,7 +59,7 @@ export class AdminTrainingEvaluationsService {
     const search = query.search?.trim() || query.keyword?.trim();
 
     const where: Prisma.EvaluationFormWhereInput = {
-      status: query.status ?? FormStatus.class_approved,
+      status: query.status ?? FormStatus.faculty_approved,
       ...(query.classId && { classId: query.classId }),
       ...(query.facultyId && {
         class: { major: { facultyId: query.facultyId } },
@@ -132,6 +132,8 @@ export class AdminTrainingEvaluationsService {
         submittedAt: null,
         classScore: null,
         finalScore: null,
+        classLeaderReviewedBy: null,
+        classLeaderReviewedAt: null,
         classReviewedBy: null,
         classReviewedAt: null,
         adminFinalizedBy: null,
@@ -166,9 +168,9 @@ export class AdminTrainingEvaluationsService {
       throw new ConflictException('Biểu mẫu rèn luyện đã bị khóa vĩnh viễn!');
     }
 
-    if (current.status !== FormStatus.class_approved) {
+    if (current.status !== FormStatus.faculty_approved) {
       throw new ConflictException(
-        'Phiếu chưa được lớp/CVHT duyệt, không thể phê duyệt cuối',
+        'Phiếu chưa được khoa gửi lên Phòng Đào tạo, không thể phê duyệt cuối',
       );
     }
 
@@ -205,7 +207,7 @@ export class AdminTrainingEvaluationsService {
     }
 
     const forms = await this.prisma.evaluationForm.findMany({
-      where: { id: { in: dto.ids }, status: FormStatus.class_approved },
+      where: { id: { in: dto.ids }, status: FormStatus.faculty_approved },
       select: { id: true, classScore: true },
     });
 
@@ -232,7 +234,7 @@ export class AdminTrainingEvaluationsService {
     dto: FinalizeByFilterDto,
   ): Promise<FinalizeBatchResult> {
     const where: Prisma.EvaluationFormWhereInput = {
-      status: FormStatus.class_approved,
+      status: FormStatus.faculty_approved,
       ...(dto.semesterId && { semesterId: dto.semesterId }),
       ...(dto.classId && { classId: dto.classId }),
       ...(dto.facultyId && {

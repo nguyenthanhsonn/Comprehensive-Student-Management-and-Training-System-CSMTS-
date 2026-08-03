@@ -51,7 +51,7 @@ export function mapToListResponse(
     studentId: evaluation.studentId,
     semester: toApiSemester(evaluation.semester.semester),
     academicYear: toAcademicYear(evaluation.semester.year),
-    status: evaluation.status.toUpperCase(),
+    status: evaluation.status,
     isLocked: evaluation.isLocked,
     lockedAt: evaluation.lockedAt,
     semesterIsActive: evaluation.semester.isActive,
@@ -180,7 +180,9 @@ type SubmissionStatus = 'SUBMITTED' | 'NOT_SUBMITTED';
 function toSubmissionStatus(status: FormStatus): SubmissionStatus {
   if (
     status === FormStatus.submitted ||
+    status === FormStatus.class_leader_approved ||
     status === FormStatus.class_approved ||
+    status === FormStatus.faculty_approved ||
     status === FormStatus.finalized
   ) {
     return 'SUBMITTED';
@@ -218,7 +220,7 @@ export function mapToScoreSummaryResponse(
 
 /**
  * Chuyển đổi record phiếu sang response lịch sử duyệt (GET /:id/status).
- * Hiển thị 4 bước duyệt: SV nộp → Lớp/CVHT → Khoa → Học viện, kèm thời gian hoàn thành.
+ * Hiển thị timeline duyệt: SV nộp → Lớp trưởng → CVHT → Học viện, kèm thời gian hoàn thành.
  */
 export function mapToStatusResponse(
   evaluation: EvaluationStatusRecord,
@@ -227,13 +229,14 @@ export function mapToStatusResponse(
 
   return {
     evaluationId: evaluation.id,
-    status: status.toUpperCase(),
+    status,
     statusLabel: toStatusLabel(status),
     isLocked: evaluation.isLocked,
     lockedAt: evaluation.lockedAt,
     semesterIsActive: evaluation.semester.isActive,
     currentStep: toCurrentReviewStep(status),
     submittedAt: evaluation.submittedAt,
+    classLeaderReviewedAt: evaluation.classLeaderReviewedAt,
     steps: [
       {
         key: 'student_submit',
@@ -242,21 +245,46 @@ export function mapToStatusResponse(
         completedAt: evaluation.submittedAt,
       },
       {
-        key: 'class_review',
-        label: 'Lớp/CVHT duyệt',
+        key: 'class_leader_review',
+        label: 'Lớp trưởng gửi lên CVHT',
         status: toReviewStepStatus(
           status,
           FormStatus.submitted,
+          Boolean(evaluation.classLeaderReviewedAt),
+        ),
+        completedAt: evaluation.classLeaderReviewedAt,
+      },
+      {
+        key: 'advisor_review',
+        label: 'CVHT duyệt',
+        status: toReviewStepStatus(
+          status,
+          FormStatus.class_leader_approved,
           Boolean(evaluation.classReviewedAt),
         ),
         completedAt: evaluation.classReviewedAt,
       },
       {
-        key: 'admin_finalization',
-        label: 'Học viện phê duyệt',
+        key: 'faculty_review',
+        label: 'Khoa gửi PĐT',
         status: toReviewStepStatus(
           status,
           FormStatus.class_approved,
+          status === FormStatus.faculty_approved ||
+            status === FormStatus.finalized,
+        ),
+        completedAt:
+          status === FormStatus.faculty_approved ||
+          status === FormStatus.finalized
+            ? evaluation.updatedAt
+            : null,
+      },
+      {
+        key: 'admin_finalization',
+        label: 'PĐT phê duyệt',
+        status: toReviewStepStatus(
+          status,
+          FormStatus.faculty_approved,
           Boolean(evaluation.adminFinalizedAt),
         ),
         completedAt: evaluation.adminFinalizedAt,
@@ -425,7 +453,9 @@ export function toStatusLabel(status: FormStatus): string {
   const labels: Partial<Record<FormStatus, string>> = {
     [FormStatus.draft]: 'Nháp',
     [FormStatus.submitted]: 'Đã nộp',
-    [FormStatus.class_approved]: 'Lớp/CVHT đã duyệt',
+    [FormStatus.class_leader_approved]: 'Lớp trưởng đã gửi lên CVHT',
+    [FormStatus.class_approved]: 'CVHT đã duyệt, chờ Khoa',
+    [FormStatus.faculty_approved]: 'Khoa đã gửi lên Phòng Đào tạo',
     [FormStatus.finalized]: 'Đã phê duyệt',
     [FormStatus.rejected]: 'Bị trả về',
   };
@@ -440,8 +470,10 @@ export function toStatusLabel(status: FormStatus): string {
 export function toCurrentReviewStep(status: FormStatus): string {
   const stepMap: Partial<Record<FormStatus, string>> = {
     [FormStatus.draft]: 'student_draft',
-    [FormStatus.submitted]: 'class_review',
-    [FormStatus.class_approved]: 'admin_finalization',
+    [FormStatus.submitted]: 'class_leader_review',
+    [FormStatus.class_leader_approved]: 'advisor_review',
+    [FormStatus.class_approved]: 'faculty_review',
+    [FormStatus.faculty_approved]: 'admin_finalization',
     [FormStatus.finalized]: 'completed',
     [FormStatus.rejected]: 'student_revision',
   };
