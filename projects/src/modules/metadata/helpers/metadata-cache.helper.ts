@@ -34,4 +34,27 @@ export class MetadataCacheHelper {
     this.store.set(key, { data, expiresAt: Date.now() + ttlMs });
     return data;
   }
+
+  /**
+   * Xóa một key cụ thể hoặc tất cả key bắt đầu bằng `keyPrefix` khỏi cache.
+   */
+  invalidate(keyPrefix?: string): void {
+    if (!keyPrefix) {
+      this.store.clear();
+      return;
+    }
+
+    for (const key of this.store.keys()) {
+      if (key.startsWith(keyPrefix)) {
+        this.store.delete(key);
+      }
+    }
+  }
+
+  /**
+   * Xóa toàn bộ dữ liệu trong cache.
+   */
+  clear(): void {
+    this.store.clear();
+  }
 }

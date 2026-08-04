@@ -25,6 +25,7 @@ import {
   toSemesterNo,
   toSemesterName,
 } from './semesters.service';
+import { clearSemesterCache } from '../training-evaluations/helpers/semester.helper';
 import type { SemesterResponse } from './types/semester.types';
 
 type SemesterNotificationRecord = {
@@ -113,6 +114,7 @@ export class AdminSemestersService {
         });
       });
 
+      clearSemesterCache();
       return mapToSemesterResponse(created);
     } catch (error) {
       this.handleKnownSemesterError(error);
@@ -191,6 +193,7 @@ export class AdminSemestersService {
         });
       });
 
+      clearSemesterCache();
       this.notifyStudentsAfterActiveChange(updated, {
         opened: false,
         closedSemesters:
@@ -240,6 +243,7 @@ export class AdminSemestersService {
       });
     });
 
+    clearSemesterCache();
     this.notifyStudentsAfterActiveChange(updated, {
       opened: false,
       closedSemesters: !isActive && target.isActive ? [target] : closedSemesters,

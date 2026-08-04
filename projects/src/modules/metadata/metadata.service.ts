@@ -83,4 +83,11 @@ export class MetadataService {
       }),
     );
   }
+
+  /**
+   * Clear hoặc invalidate cache theo key/prefix (phục vụ khi Admin tạo/sửa/xóa Khoa, Ngành, Lớp).
+   */
+  invalidateCache(keyPrefix?: string): void {
+    this.cache.invalidate(keyPrefix);
+  }
 }

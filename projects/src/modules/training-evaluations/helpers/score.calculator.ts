@@ -103,7 +103,7 @@ export function calculateClassification(totalScore: number): EvalRank {
  *
  * Có hai nhánh tính:
  * - NORMAL_STUDENT: điểm hoạt động thông thường + thành tích đặc biệt
- * - Cán bộ lớp/BCH: điểm hoàn thành nhiệm vụ + kỹ năng quản lý
+ * - Cán bộ lớp/BCH: điểm hoàn thành nhiệm vụ + kỹ năng quản lý nếu có
  *
  * @throws BadRequestException nếu là cán bộ mà thiếu các trường bắt buộc
  */
@@ -118,15 +118,18 @@ export function calculateRoleScore(dto: UpdateRoleScoreDto): number {
 
   const { positionGroup, taskCompletionLevel, managementSkillLevel } = dto;
 
-  if (!positionGroup || !taskCompletionLevel || !managementSkillLevel) {
+  if (!positionGroup || !taskCompletionLevel) {
     throw new BadRequestException(
-      'positionGroup, taskCompletionLevel và managementSkillLevel là bắt buộc đối với cán bộ',
+      'positionGroup và taskCompletionLevel là bắt buộc đối với cán bộ',
     );
   }
 
   const taskScore = getOfficerTaskScore(positionGroup, taskCompletionLevel);
+  const managementSkillScore = managementSkillLevel
+    ? MANAGEMENT_SKILL_POINTS[managementSkillLevel]
+    : 0;
 
-  return Math.min(10, taskScore + MANAGEMENT_SKILL_POINTS[managementSkillLevel]);
+  return Math.min(10, taskScore + managementSkillScore);
 }
 
 /**

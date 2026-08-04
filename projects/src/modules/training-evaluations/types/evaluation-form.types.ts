@@ -77,8 +77,13 @@ export type EvaluationAttachmentResponse = {
 export type EvaluationAdminListItem = {
   id: string;
   status: string;
+  workflowStatus?: string;
+  submissionStatus?: string;
   statusLabel: string;
+  submissionStatusLabel?: string;
   submittedAt: Date | null;
+  classLeaderReviewedAt?: Date | null;
+  classReviewedAt?: Date | null;
   student: { id: string; fullName: string; email: string };
   class: { id: string; code: string; name: string };
   faculty: { id: string; code: string; name: string };
@@ -93,8 +98,13 @@ export type EvaluationAdminListItem = {
 export type EvaluationAdminApprovalListItem = {
   id: string;
   status: string;
+  workflowStatus?: string;
+  submissionStatus?: string;
   statusLabel: string;
+  submissionStatusLabel?: string;
   submittedAt: Date | null;
+  classLeaderReviewedAt?: Date | null;
+  classReviewedAt?: Date | null;
   student: { id: string; fullName: string; email: string };
   class: { id: string; code: string; name: string };
   faculty: { id: string; code: string; name: string };
