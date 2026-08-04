@@ -58,7 +58,12 @@ type ManageableClassRecord = {
   id: string;
   code: string;
   name: string;
-  major: { facultyId: string };
+  enrollmentYear: number;
+  major: {
+    name: string;
+    facultyId: string;
+    faculty: { name: string };
+  };
 };
 
 type ImportToCreate = {
@@ -167,7 +172,7 @@ export class AdminClassesService {
         : {}),
     };
 
-    const [students, total] = await Promise.all([
+    const [students, total, classLeaderAssignments] = await Promise.all([
       this.prisma.classStudent.findMany({
         where,
         select: adminClassStudentSelect,
@@ -176,10 +181,25 @@ export class AdminClassesService {
         take: limit,
       }),
       this.prisma.classStudent.count({ where }),
+      this.prisma.classLeaderAssignment.findMany({
+        where: { classId },
+        select: { id: true, userId: true, assignedAt: true },
+      }),
     ]);
+    const classLeaderAssignmentByUserId = new Map(
+      classLeaderAssignments.map((assignment) => [
+        assignment.userId,
+        { id: assignment.id, assignedAt: assignment.assignedAt },
+      ]),
+    );
 
     return {
-      items: students.map(mapToAdminClassStudentResponse),
+      items: students.map((student) =>
+        mapToAdminClassStudentResponse(
+          student,
+          classLeaderAssignmentByUserId.get(student.studentId) ?? null,
+        ),
+      ),
       page,
       limit,
       total,
@@ -1092,7 +1112,14 @@ export class AdminClassesService {
         id: true,
         code: true,
         name: true,
-        major: { select: { facultyId: true } },
+        enrollmentYear: true,
+        major: {
+          select: {
+            name: true,
+            facultyId: true,
+            faculty: { select: { name: true } },
+          },
+        },
       },
     });
   }
@@ -1225,7 +1252,14 @@ export class AdminClassesService {
         id: true,
         code: true,
         name: true,
-        major: { select: { facultyId: true } },
+        enrollmentYear: true,
+        major: {
+          select: {
+            name: true,
+            facultyId: true,
+            faculty: { select: { name: true } },
+          },
+        },
       },
     });
 
@@ -1246,19 +1280,25 @@ export class AdminClassesService {
       return;
     }
 
-    if (role !== SharedUserRole.ClassCouncil) {
+    if (![SharedUserRole.ClassLeader, SharedUserRole.Advisor].includes(role)) {
       throw new ForbiddenException('Bạn không có quyền quản lý lớp học này');
     }
 
-    const assignment = await this.prisma.classCouncilAssignment.findUnique({
-      where: {
-        userId_classId: {
-          userId,
-          classId: classRecord.id,
-        },
-      },
-      select: { id: true },
-    });
+    const assignment =
+      role === SharedUserRole.Advisor
+        ? await this.prisma.advisorAssignment.findUnique({
+            where: {
+              userId_classId: {
+                userId,
+                classId: classRecord.id,
+              },
+            },
+            select: { id: true },
+          })
+        : await this.prisma.classLeaderAssignment.findFirst({
+            where: { userId, classId: classRecord.id },
+            select: { id: true },
+          });
 
     if (!assignment) {
       throw new ForbiddenException(
@@ -1301,6 +1341,7 @@ export class AdminClassesService {
 
 function mapToAdminClassStudentResponse(
   record: AdminClassStudentRecord,
+  classLeaderAssignment: { id: string; assignedAt: Date } | null = null,
 ): AdminClassStudentResponse {
   return {
     id: record.id,
@@ -1309,10 +1350,13 @@ function mapToAdminClassStudentResponse(
     studentCode: record.studentCode,
     email: record.student.email,
     fullName: record.student.fullName,
+    role: record.student.role,
     phone: record.student.phone,
     dateOfBirth: record.student.dateOfBirth,
     isActive: record.student.isActive,
     enrolledAt: record.enrolledAt,
+    isClassLeader: Boolean(classLeaderAssignment),
+    classLeaderAssignment,
   };
 }
 
@@ -1344,6 +1388,9 @@ function buildPreviewStudentItem(params: {
     classId: params.classRecord.id,
     classCode: params.classRecord.code,
     className: params.classRecord.name,
+    majorName: params.classRecord.major.name,
+    enrollmentYear: params.classRecord.enrollmentYear,
+    facultyName: params.classRecord.major.faculty.name,
     note: params.note,
   };
 }

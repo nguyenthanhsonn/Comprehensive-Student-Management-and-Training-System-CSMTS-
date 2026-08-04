@@ -5,6 +5,7 @@ import {
   IsIn,
   IsOptional,
   IsString,
+  IsUUID,
   Length,
   Matches,
   MaxLength,
@@ -21,7 +22,13 @@ import {
   USERNAME_PATTERN,
 } from 'src/common/helpers/username.helper';
 
-const MANAGED_USER_ROLES = [UserRole.Admin, UserRole.ClassCouncil];
+const MANAGED_USER_ROLES = [
+  UserRole.Admin,
+  UserRole.ClassLeader,
+  UserRole.Advisor,
+  UserRole.Faculty,
+  UserRole.TrainingDepartment,
+];
 
 /** Dữ liệu tạo tài khoản mới - mật khẩu sẽ được hash bằng bcrypt trước khi lưu. */
 export class CreateAdminUserDto {
@@ -59,4 +66,8 @@ export class CreateAdminUserDto {
   @IsOptional()
   @Matches(DATE_ONLY_PATTERN, { message: DATE_ONLY_FORMAT_MESSAGE })
   dateOfBirth?: string;
+
+  @IsOptional()
+  @IsUUID('4')
+  classId?: string;
 }

@@ -33,7 +33,7 @@ import { CreateClassDto } from './dto/create-class.dto';
 import { GetClassesQueryDto } from './dto/get-classes-query.dto';
 import { GetClassStudentsQueryDto } from './dto/get-class-students-query.dto';
 import { UpdateClassDto } from './dto/update-class.dto';
-import { UpdateClassCouncilsDto } from './dto/update-class-councils.dto';
+import { UpdateClassLeadersDto } from './dto/update-class-leaders.dto';
 import {
   AdminClassesService,
   type UploadedExcelFile,
@@ -41,7 +41,7 @@ import {
 
 @Controller('admin/classes')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.Admin, UserRole.ClassCouncil)
+@Roles(UserRole.Admin, UserRole.ClassLeader, UserRole.Advisor)
 export class AdminClassesController {
   constructor(
     private readonly adminClassesService: AdminClassesService,
@@ -137,13 +137,13 @@ export class AdminClassesController {
     return this.adminClassCatalogService.findOne(id);
   }
 
-  @Patch(':id/councils')
+  @Patch(':id/class-leaders')
   @Roles(UserRole.Admin)
-  updateClassCouncils(
+  updateClassLeaders(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateClassCouncilsDto,
+    @Body() dto: UpdateClassLeadersDto,
   ) {
-    return this.adminClassCatalogService.updateCouncils(id, dto);
+    return this.adminClassCatalogService.updateClassLeaders(id, dto);
   }
 
   @Post()
@@ -168,11 +168,12 @@ export class AdminClassesController {
   }
 }
 
-@Controller('class-council/classes')
+@Controller('classes')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.ClassCouncil)
-export class ClassCouncilClassesController {
+@Roles(UserRole.ClassLeader, UserRole.Advisor)
+export class ClassLeaderClassesController {
   constructor(
+    private readonly adminClassesService: AdminClassesService,
     private readonly adminClassCatalogService: AdminClassCatalogService,
   ) {}
 
@@ -181,7 +182,17 @@ export class ClassCouncilClassesController {
     @CurrentUser('id') userId: string,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    return this.adminClassCatalogService.findOneForClassCouncil(userId, id);
+    return this.adminClassCatalogService.findOneForClassLeader(userId, id);
+  }
+
+  @Get(':classId/students')
+  findStudents(
+    @CurrentUser('id') userId: string,
+    @CurrentUser('role') role: UserRole,
+    @Param('classId', ParseUUIDPipe) classId: string,
+    @Query() query: GetClassStudentsQueryDto,
+  ) {
+    return this.adminClassesService.findStudents(userId, role, classId, query);
   }
 }
 

@@ -15,13 +15,28 @@ import { UserRole } from '../../common/shared';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { LinkEvidenceUrlDto } from './dto/link-evidence-url.dto';
 import { EvidencesService } from './evidences.service';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
+@ApiTags('Evidences')
+@ApiBearerAuth('access-token')
+@ApiResponse({ status: 401, description: 'Thiếu hoặc sai access token.' })
 @Controller('evidences')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.Student)
 export class EvidencesController {
   constructor(private readonly evidencesService: EvidencesService) {}
 
+  @ApiOperation({
+    summary: 'Tạo/Xử lý dữ liệu',
+    description: 'Endpoint POST link-url trong nhóm Evidences; xem schema DTO/query và response mẫu trực tiếp trong Swagger.',
+  })
+  @ApiResponse({ status: 201, description: 'Thao tác thành công.' })
+  @ApiResponse({ status: 400, description: 'Dữ liệu gửi lên không hợp lệ.' })
   @Post('link-url')
   linkUrl(
     @CurrentUser('id') userId: string,
@@ -30,11 +45,21 @@ export class EvidencesController {
     return this.evidencesService.linkUrl(userId, dto);
   }
 
+  @ApiOperation({
+    summary: 'Lấy dữ liệu',
+    description: 'Endpoint GET my trong nhóm Evidences; xem schema DTO/query và response mẫu trực tiếp trong Swagger.',
+  })
+  @ApiResponse({ status: 200, description: 'Thao tác thành công.' })
   @Get('my')
   findMine(@CurrentUser('id') userId: string) {
     return this.evidencesService.findMine(userId);
   }
 
+  @ApiOperation({
+    summary: 'Xóa dữ liệu',
+    description: 'Endpoint DELETE :id trong nhóm Evidences; xem schema DTO/query và response mẫu trực tiếp trong Swagger.',
+  })
+  @ApiResponse({ status: 200, description: 'Thao tác thành công.' })
   @Delete(':id')
   remove(
     @CurrentUser('id') userId: string,

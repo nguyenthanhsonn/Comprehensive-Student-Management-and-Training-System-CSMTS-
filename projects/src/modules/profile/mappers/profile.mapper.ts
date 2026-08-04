@@ -6,6 +6,10 @@ export function mapToProfileResponse(user: ProfileRecord) {
   const currentClass = currentEnrollment?.class ?? null;
   const currentMajor = currentClass?.major ?? null;
   const currentFaculty = currentMajor?.faculty ?? null;
+  const classAssignments =
+    user.role === 'advisor'
+      ? user.advisorAssignments
+      : user.classLeaderAssignments;
 
   return {
     id: user.id,
@@ -44,7 +48,7 @@ export function mapToProfileResponse(user: ProfileRecord) {
             : null,
         }
       : null,
-    managedClasses: user.classCouncilAssignments.map((assignment) => {
+    managedClasses: classAssignments.map((assignment) => {
       const assignedClass = assignment.class;
       const major = assignedClass.major;
 

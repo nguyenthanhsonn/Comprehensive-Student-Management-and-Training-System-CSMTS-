@@ -14,7 +14,7 @@ export const adminUserSelect = {
   deletedAt: true,
   createdAt: true,
   updatedAt: true,
-  classCouncilAssignments: {
+  classLeaderAssignments: {
     select: {
       class: {
         select: {
@@ -26,6 +26,31 @@ export const adminUserSelect = {
       assignedAt: true,
     },
     orderBy: { assignedAt: 'desc' },
+  },
+  advisorAssignments: {
+    select: {
+      class: {
+        select: {
+          id: true,
+          code: true,
+          name: true,
+        },
+      },
+      assignedAt: true,
+    },
+    orderBy: { assignedAt: 'desc' },
+  },
+  facultyAssignment: {
+    select: {
+      faculty: {
+        select: {
+          id: true,
+          code: true,
+          name: true,
+        },
+      },
+      assignedAt: true,
+    },
   },
 } satisfies Prisma.UserSelect;
 

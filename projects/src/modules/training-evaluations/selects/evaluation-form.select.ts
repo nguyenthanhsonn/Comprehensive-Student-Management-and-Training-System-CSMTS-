@@ -27,6 +27,7 @@ export const evaluationListSelect = {
   lockedAt: true,
   studentScore: true,
   rank: true,
+  updatedAt: true,
   semester: { select: { year: true, semester: true, isActive: true } },
 } satisfies Prisma.EvaluationFormSelect;
 
@@ -49,6 +50,7 @@ export const evaluationDetailSelect = {
   roleData: true,
   student: { select: { phone: true } },
   submittedAt: true,
+  classLeaderReviewedAt: true,
   classReviewedAt: true,
   adminFinalizedAt: true,
   // Minh chứng được FE upload lên cloud: trả imageUrl để admin xem ảnh trực tiếp.
@@ -132,8 +134,10 @@ export const evaluationStatusSelect = {
   lockedAt: true,
   semester: { select: { isActive: true } },
   submittedAt: true,
+  classLeaderReviewedAt: true,
   classReviewedAt: true,
   adminFinalizedAt: true,
+  updatedAt: true,
 } satisfies Prisma.EvaluationFormSelect;
 
 // ─── GET /:id/summary + POST /:id/submit ──────────────────────────────────────

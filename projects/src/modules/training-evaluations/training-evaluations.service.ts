@@ -16,9 +16,14 @@ import { NotificationType } from '../notifications/enums/notification-type.enum'
 import { notificationSelect } from '../notifications/selects/notification.select';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { AdminListEvaluationsQueryDto } from './dto/admin-list-evaluations-query.dto';
+import { ConfirmReviewDto } from './dto/confirm-review.dto';
 import { CreateTrainingEvaluationDto } from './dto/create-training-evaluation.dto';
+import { ReturnEvaluationToStudentDto } from './dto/return-evaluation-to-student.dto';
 import { ReviewTrainingEvaluationDto } from './dto/review-training-evaluation.dto';
 import { ReviewScoresDto } from './dto/review-scores.dto';
+import { SubmitClassToAdvisorDto } from './dto/submit-class-to-advisor.dto';
+import { SubmitClassToFacultyDto } from './dto/submit-class-to-faculty.dto';
+import { SubmitFacultyToTrainingDepartmentDto } from './dto/submit-faculty-to-training-department.dto';
 import { UpdateActivityScoreDto } from './dto/update-activity-score.dto';
 import { UpdateCommunityScoreDto } from './dto/update-community-score.dto';
 import { UpdateDisciplineScoreDto } from './dto/update-discipline-score.dto';
@@ -172,7 +177,13 @@ export class TrainingEvaluationsService {
     user: AuthenticatedUser,
     query: AdminListEvaluationsQueryDto,
   ): Promise<PaginatedResult<EvaluationAdminListItem>> {
-    await this.assertCanListEvaluations(user, query.classId);
+    const { facultyId: scopeFacultyId } = await this.assertCanListEvaluations(
+      user,
+      query.classId,
+      query.facultyId,
+    );
+
+    const targetFacultyId = scopeFacultyId ?? query.facultyId;
 
     const semesterId = await resolveSemesterId(
       this.prisma,
@@ -183,8 +194,8 @@ export class TrainingEvaluationsService {
     const where: Prisma.EvaluationFormWhereInput = {
       ...(query.status && { status: query.status }),
       ...(query.classId && { classId: query.classId }),
-      ...(query.facultyId && {
-        class: { major: { facultyId: query.facultyId } },
+      ...(targetFacultyId && {
+        class: { major: { facultyId: targetFacultyId } },
       }),
       ...(semesterId && { semesterId }),
       ...(query.keyword && {
@@ -232,6 +243,580 @@ export class TrainingEvaluationsService {
     });
 
     return evaluations.map(mapToListResponse);
+  }
+
+  /**
+   * Lớp trưởng gửi toàn bộ phiếu sinh viên đã nộp trong lớp lên CVHT.
+   * Chỉ chuyển các phiếu đang `submitted`; các phiếu nháp, bị trả về, đã gửi
+   * lên CVHT, đã CVHT duyệt hoặc đã chốt cuối được giữ nguyên để tránh ghi đè audit.
+   */
+  async submitClassToAdvisor(
+    reviewer: AuthenticatedUser,
+    classId: string,
+    dto: SubmitClassToAdvisorDto,
+  ) {
+    const classRecord = await this.prisma.class.findFirst({
+      where: { id: classId, deletedAt: null },
+      select: { id: true, code: true, name: true },
+    });
+
+    if (!classRecord) {
+      throw new NotFoundException('Không tìm thấy lớp học');
+    }
+
+    await this.assertReviewerAssigned(UserRole.ClassLeader, reviewer.id, classId);
+
+    const advisorAssignments = await this.prisma.advisorAssignment.findMany({
+      where: { classId },
+      select: {
+        userId: true,
+        user: { select: { id: true, fullName: true, isActive: true, deletedAt: true } },
+      },
+    });
+    const activeAdvisors = advisorAssignments.filter(
+      (assignment) => assignment.user.isActive && !assignment.user.deletedAt,
+    );
+
+    if (activeAdvisors.length === 0) {
+      throw new BadRequestException('Lớp chưa được gán cố vấn học tập');
+    }
+
+    const semester = dto.semesterId
+      ? await this.prisma.semester.findUnique({
+          where: { id: dto.semesterId },
+          select: { id: true, year: true, semester: true },
+        })
+      : await this.prisma.semester.findFirst({
+          where: { isActive: true },
+          select: { id: true, year: true, semester: true },
+          orderBy: [{ year: 'desc' }, { semester: 'desc' }],
+        });
+
+    if (!semester) {
+      throw new NotFoundException('Không tìm thấy học kỳ đánh giá');
+    }
+
+    const whereBase: Prisma.EvaluationFormWhereInput = {
+      classId,
+      semesterId: semester.id,
+    };
+    const targetWhere: Prisma.EvaluationFormWhereInput = {
+      ...whereBase,
+      ...(dto.evaluationIds && { id: { in: dto.evaluationIds } }),
+    };
+    const [
+      totalForms,
+      eligibleForms,
+      missingConfirmationCount,
+      alreadyForwardedCount,
+      notReadyCount,
+    ] = await Promise.all([
+      this.prisma.evaluationForm.count({ where: targetWhere }),
+      this.prisma.evaluationForm.findMany({
+        where: {
+          ...targetWhere,
+          status: FormStatus.submitted,
+          classLeaderReviewedAt: { not: null },
+          isLocked: false,
+        },
+        select: { id: true },
+      }),
+      this.prisma.evaluationForm.count({
+        where: {
+          ...targetWhere,
+          status: FormStatus.submitted,
+          classLeaderReviewedAt: null,
+          isLocked: false,
+        },
+      }),
+      this.prisma.evaluationForm.count({
+        where: {
+          ...targetWhere,
+          status: {
+            in: [
+              FormStatus.class_leader_approved,
+              FormStatus.class_approved,
+              FormStatus.faculty_approved,
+              FormStatus.finalized,
+            ],
+          },
+        },
+      }),
+      this.prisma.evaluationForm.count({
+        where: {
+          ...targetWhere,
+          status: { in: [FormStatus.draft, FormStatus.rejected] },
+        },
+      }),
+    ]);
+
+    if (eligibleForms.length === 0) {
+      throw new ConflictException(
+        missingConfirmationCount > 0
+          ? 'Các phiếu đang chờ gửi lên CVHT chưa được lớp trưởng xác nhận'
+          : 'Không có phiếu nào đang chờ lớp trưởng gửi lên CVHT',
+      );
+    }
+
+    const submittedToAdvisorAt = new Date();
+    const eligibleIds = eligibleForms.map((form) => form.id);
+    const { updatedCount, notifications } = await this.prisma.$transaction(
+      async (tx) => {
+        const updated = await tx.evaluationForm.updateMany({
+          where: { id: { in: eligibleIds }, status: FormStatus.submitted },
+          data: {
+            status: FormStatus.class_leader_approved,
+          },
+        });
+
+        const notifications =
+          updated.count > 0
+            ? await Promise.all(
+                activeAdvisors.map((assignment) =>
+                  tx.notification.create({
+                    data: {
+                      userId: assignment.userId,
+                      type: NotificationType.GENERAL,
+                      title: 'Lớp trưởng đã gửi danh sách đánh giá',
+                      content: `Lớp ${classRecord.code} đã gửi ${updated.count} phiếu đánh giá rèn luyện lên CVHT. Vui lòng kiểm tra và duyệt tiếp.`,
+                    },
+                    select: notificationSelect,
+                  }),
+                ),
+              )
+            : [];
+
+        return { updatedCount: updated.count, notifications };
+      },
+    );
+
+    for (const notification of notifications) {
+      this.notificationsService.emitCreated(
+        mapToNotificationResponse(notification),
+      );
+    }
+
+    return {
+      classId: classRecord.id,
+      classCode: classRecord.code,
+      className: classRecord.name,
+      semesterId: semester.id,
+      academicYear: `${semester.year}-${semester.year + 1}`,
+      fromStatus: FormStatus.submitted,
+      toStatus: FormStatus.class_leader_approved,
+      submittedToAdvisorAt,
+      submittedCount: updatedCount,
+      requestedCount: dto.evaluationIds?.length ?? null,
+      totalForms,
+      notReadyCount,
+      missingConfirmationCount,
+      alreadyForwardedCount,
+      advisorIds: activeAdvisors.map((assignment) => assignment.userId),
+      message: `Đã gửi ${updatedCount} phiếu đánh giá của lớp ${classRecord.code} lên CVHT.`,
+    };
+  }
+
+  /**
+   * CVHT gửi toàn bộ phiếu đã được lớp trưởng chuyển lên khoa/cấp trên.
+   * Chỉ chuyển các phiếu đang `class_leader_approved` và đã có `classScore`.
+   */
+  async submitClassToFaculty(
+    reviewer: AuthenticatedUser,
+    classId: string,
+    dto: SubmitClassToFacultyDto,
+  ) {
+    const classRecord = await this.prisma.class.findFirst({
+      where: { id: classId, deletedAt: null },
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        major: {
+          select: {
+            faculty: {
+              select: { id: true, code: true, name: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!classRecord) {
+      throw new NotFoundException('Không tìm thấy lớp học');
+    }
+
+    await this.assertReviewerAssigned(UserRole.Advisor, reviewer.id, classId);
+
+    const facultyAssignments = await this.prisma.facultyAssignment.findMany({
+      where: { facultyId: classRecord.major.faculty.id },
+      select: {
+        userId: true,
+        user: {
+          select: { id: true, fullName: true, isActive: true, deletedAt: true },
+        },
+      },
+    });
+    const activeFacultyUsers = facultyAssignments.filter(
+      (assignment) => assignment.user.isActive && !assignment.user.deletedAt,
+    );
+
+    if (activeFacultyUsers.length === 0) {
+      throw new BadRequestException('Khoa của lớp chưa được gán tài khoản phụ trách');
+    }
+
+    const semester = dto.semesterId
+      ? await this.prisma.semester.findUnique({
+          where: { id: dto.semesterId },
+          select: { id: true, year: true, semester: true },
+        })
+      : await this.prisma.semester.findFirst({
+          where: { isActive: true },
+          select: { id: true, year: true, semester: true },
+          orderBy: [{ year: 'desc' }, { semester: 'desc' }],
+        });
+
+    if (!semester) {
+      throw new NotFoundException('Không tìm thấy học kỳ đánh giá');
+    }
+
+    const whereBase: Prisma.EvaluationFormWhereInput = {
+      classId,
+      semesterId: semester.id,
+    };
+    const targetWhere: Prisma.EvaluationFormWhereInput = {
+      ...whereBase,
+      ...(dto.evaluationIds && { id: { in: dto.evaluationIds } }),
+    };
+    const [
+      totalForms,
+      eligibleForms,
+      missingClassScoreCount,
+      missingConfirmationCount,
+      alreadyForwardedCount,
+      notReadyCount,
+    ] = await Promise.all([
+      this.prisma.evaluationForm.count({ where: targetWhere }),
+      this.prisma.evaluationForm.findMany({
+        where: {
+          ...targetWhere,
+          status: FormStatus.class_leader_approved,
+          classScore: { not: null },
+          classReviewedAt: { not: null },
+          isLocked: false,
+        },
+        select: { id: true, classScore: true },
+      }),
+      this.prisma.evaluationForm.count({
+        where: {
+          ...targetWhere,
+          status: FormStatus.class_leader_approved,
+          classScore: null,
+          isLocked: false,
+        },
+      }),
+      this.prisma.evaluationForm.count({
+        where: {
+          ...targetWhere,
+          status: FormStatus.class_leader_approved,
+          classScore: { not: null },
+          classReviewedAt: null,
+          isLocked: false,
+        },
+      }),
+      this.prisma.evaluationForm.count({
+        where: {
+          ...targetWhere,
+          status: {
+            in: [
+              FormStatus.class_approved,
+              FormStatus.faculty_approved,
+              FormStatus.finalized,
+            ],
+          },
+        },
+      }),
+      this.prisma.evaluationForm.count({
+        where: {
+          ...targetWhere,
+          status: {
+            in: [
+              FormStatus.draft,
+              FormStatus.submitted,
+              FormStatus.rejected,
+            ],
+          },
+        },
+      }),
+    ]);
+
+    if (eligibleForms.length === 0) {
+      throw new ConflictException(
+        missingClassScoreCount > 0
+          ? 'Các phiếu đang chờ CVHT gửi lên khoa chưa có điểm CVHT'
+          : missingConfirmationCount > 0
+            ? 'Các phiếu đang chờ gửi lên khoa chưa được CVHT xác nhận'
+            : 'Không có phiếu nào đang chờ CVHT gửi lên khoa',
+      );
+    }
+
+    const submittedToFacultyAt = new Date();
+    const { updatedCount, notifications } = await this.prisma.$transaction(
+      async (tx) => {
+        let updatedCount = 0;
+
+        for (const form of eligibleForms) {
+          if (form.classScore === null) {
+            continue;
+          }
+
+          await tx.evaluationForm.update({
+            where: { id: form.id },
+            data: {
+              status: FormStatus.class_approved,
+              rank: calculateClassification(form.classScore),
+            },
+          });
+          updatedCount += 1;
+        }
+
+        const notifications =
+          updatedCount > 0
+            ? await Promise.all(
+                activeFacultyUsers.map((assignment) =>
+                  tx.notification.create({
+                    data: {
+                      userId: assignment.userId,
+                      type: NotificationType.GENERAL,
+                      title: 'CVHT đã gửi danh sách đánh giá',
+                      content: `Lớp ${classRecord.code} đã gửi ${updatedCount} phiếu đánh giá rèn luyện lên khoa ${classRecord.major.faculty.code}.`,
+                    },
+                    select: notificationSelect,
+                  }),
+                ),
+              )
+            : [];
+
+        return { updatedCount, notifications };
+      },
+    );
+
+    for (const notification of notifications) {
+      this.notificationsService.emitCreated(
+        mapToNotificationResponse(notification),
+      );
+    }
+
+    return {
+      classId: classRecord.id,
+      classCode: classRecord.code,
+      className: classRecord.name,
+      facultyId: classRecord.major.faculty.id,
+      facultyCode: classRecord.major.faculty.code,
+      facultyName: classRecord.major.faculty.name,
+      semesterId: semester.id,
+      academicYear: `${semester.year}-${semester.year + 1}`,
+      fromStatus: FormStatus.class_leader_approved,
+      toStatus: FormStatus.class_approved,
+      submittedToFacultyAt,
+      submittedCount: updatedCount,
+      requestedCount: dto.evaluationIds?.length ?? null,
+      totalForms,
+      notReadyCount,
+      missingClassScoreCount,
+      missingConfirmationCount,
+      alreadyForwardedCount,
+      facultyUserIds: activeFacultyUsers.map((assignment) => assignment.userId),
+      message: `Đã gửi ${updatedCount} phiếu đánh giá của lớp ${classRecord.code} lên khoa.`,
+    };
+  }
+
+  /**
+   * Khoa gửi toàn bộ phiếu đã được CVHT chốt lên Phòng Đào tạo.
+   * Trạng thái `faculty_approved` là hàng đợi để PĐT duyệt cuối.
+   */
+  async submitFacultyToTrainingDepartment(
+    reviewer: AuthenticatedUser,
+    facultyId: string,
+    dto: SubmitFacultyToTrainingDepartmentDto,
+  ) {
+    const assignment = await this.prisma.facultyAssignment.findUnique({
+      where: { userId: reviewer.id },
+      select: {
+        facultyId: true,
+        faculty: {
+          select: { id: true, code: true, name: true, isActive: true, deletedAt: true },
+        },
+      },
+    });
+
+    if (
+      !assignment ||
+      assignment.facultyId !== facultyId ||
+      !assignment.faculty.isActive ||
+      assignment.faculty.deletedAt
+    ) {
+      throw new ForbiddenException('Bạn không được phân công phụ trách khoa này');
+    }
+
+    if (dto.classId) {
+      const classRecord = await this.prisma.class.findFirst({
+        where: {
+          id: dto.classId,
+          deletedAt: null,
+          major: { facultyId },
+        },
+        select: { id: true, code: true, name: true },
+      });
+
+      if (!classRecord) {
+        throw new NotFoundException('Không tìm thấy lớp thuộc khoa đang phụ trách');
+      }
+    }
+
+    const trainingDepartmentUsers = await this.prisma.user.findMany({
+      where: {
+        role: UserRole.TrainingDepartment,
+        isActive: true,
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+
+    if (trainingDepartmentUsers.length === 0) {
+      throw new BadRequestException('Chưa có tài khoản Phòng Đào tạo đang hoạt động');
+    }
+
+    const semester = dto.semesterId
+      ? await this.prisma.semester.findUnique({
+          where: { id: dto.semesterId },
+          select: { id: true, year: true, semester: true },
+        })
+      : await this.prisma.semester.findFirst({
+          where: { isActive: true },
+          select: { id: true, year: true, semester: true },
+          orderBy: [{ year: 'desc' }, { semester: 'desc' }],
+        });
+
+    if (!semester) {
+      throw new NotFoundException('Không tìm thấy học kỳ đánh giá');
+    }
+
+    const whereBase: Prisma.EvaluationFormWhereInput = {
+      semesterId: semester.id,
+      ...(dto.classId && { classId: dto.classId }),
+      class: { major: { facultyId } },
+    };
+    const [
+      totalForms,
+      eligibleForms,
+      missingClassScoreCount,
+      alreadyForwardedCount,
+      notReadyCount,
+    ] = await Promise.all([
+      this.prisma.evaluationForm.count({ where: whereBase }),
+      this.prisma.evaluationForm.findMany({
+        where: {
+          ...whereBase,
+          status: FormStatus.class_approved,
+          classScore: { not: null },
+          isLocked: false,
+        },
+        select: { id: true },
+      }),
+      this.prisma.evaluationForm.count({
+        where: {
+          ...whereBase,
+          status: FormStatus.class_approved,
+          classScore: null,
+          isLocked: false,
+        },
+      }),
+      this.prisma.evaluationForm.count({
+        where: {
+          ...whereBase,
+          status: { in: [FormStatus.faculty_approved, FormStatus.finalized] },
+        },
+      }),
+      this.prisma.evaluationForm.count({
+        where: {
+          ...whereBase,
+          status: {
+            in: [
+              FormStatus.draft,
+              FormStatus.submitted,
+              FormStatus.class_leader_approved,
+              FormStatus.rejected,
+            ],
+          },
+        },
+      }),
+    ]);
+
+    if (eligibleForms.length === 0) {
+      throw new ConflictException(
+        missingClassScoreCount > 0
+          ? 'Các phiếu đang chờ khoa gửi lên PĐT chưa có điểm CVHT'
+          : 'Không có phiếu nào đang chờ khoa gửi lên PĐT',
+      );
+    }
+
+    const submittedToTrainingDepartmentAt = new Date();
+    const eligibleIds = eligibleForms.map((form) => form.id);
+    const { updatedCount, notifications } = await this.prisma.$transaction(
+      async (tx) => {
+        const updated = await tx.evaluationForm.updateMany({
+          where: {
+            id: { in: eligibleIds },
+            status: FormStatus.class_approved,
+          },
+          data: { status: FormStatus.faculty_approved },
+        });
+
+        const notifications =
+          updated.count > 0
+            ? await Promise.all(
+                trainingDepartmentUsers.map((user) =>
+                  tx.notification.create({
+                    data: {
+                      userId: user.id,
+                      type: NotificationType.GENERAL,
+                      title: 'Khoa đã gửi danh sách đánh giá',
+                      content: `Khoa ${assignment.faculty.code} đã gửi ${updated.count} phiếu đánh giá rèn luyện lên Phòng Đào tạo.`,
+                    },
+                    select: notificationSelect,
+                  }),
+                ),
+              )
+            : [];
+
+        return { updatedCount: updated.count, notifications };
+      },
+    );
+
+    for (const notification of notifications) {
+      this.notificationsService.emitCreated(
+        mapToNotificationResponse(notification),
+      );
+    }
+
+    return {
+      facultyId: assignment.faculty.id,
+      facultyCode: assignment.faculty.code,
+      facultyName: assignment.faculty.name,
+      classId: dto.classId ?? null,
+      semesterId: semester.id,
+      academicYear: `${semester.year}-${semester.year + 1}`,
+      fromStatus: FormStatus.class_approved,
+      toStatus: FormStatus.faculty_approved,
+      submittedToTrainingDepartmentAt,
+      submittedCount: updatedCount,
+      totalForms,
+      notReadyCount,
+      missingClassScoreCount,
+      alreadyForwardedCount,
+      trainingDepartmentUserIds: trainingDepartmentUsers.map((user) => user.id),
+      message: `Đã gửi ${updatedCount} phiếu đánh giá của khoa ${assignment.faculty.code} lên Phòng Đào tạo.`,
+    };
   }
 
   /**
@@ -329,21 +914,33 @@ export class TrainingEvaluationsService {
       roleScore: current.roleScore,
     });
 
-    const evaluation = await this.prisma.evaluationForm.update({
-      where: { id },
-      data: {
-        status: FormStatus.submitted,
-        submittedAt: new Date(),
-        studentScore: scoreResult.totalScore,
-        rank: scoreResult.rank,
-        classScore: null,
-        finalScore: null,
-        classReviewedBy: null,
-        classReviewedAt: null,
-        adminFinalizedBy: null,
-        adminFinalizedAt: null,
-      },
-      select: evaluationScoreSummarySelect,
+    const evaluation = await this.prisma.$transaction(async (tx) => {
+      await tx.formCriteriaScore.updateMany({
+        where: { formId: id },
+        data: {
+          classScore: null,
+          note: null,
+        },
+      });
+
+      return tx.evaluationForm.update({
+        where: { id },
+        data: {
+          status: FormStatus.submitted,
+          submittedAt: new Date(),
+          studentScore: scoreResult.totalScore,
+          rank: scoreResult.rank,
+          classScore: null,
+          finalScore: null,
+          classLeaderReviewedBy: null,
+          classLeaderReviewedAt: null,
+          classReviewedBy: null,
+          classReviewedAt: null,
+          adminFinalizedBy: null,
+          adminFinalizedAt: null,
+        },
+        select: evaluationScoreSummarySelect,
+      });
     });
 
     return mapToScoreSummaryResponse(evaluation);
@@ -351,10 +948,10 @@ export class TrainingEvaluationsService {
 
   /**
    * Lớp trưởng/CVHT cập nhật điểm thẩm định theo từng tiêu chí.
-   * Chỉ class_council được phân công đúng lớp của phiếu mới được thao tác.
+   * Chỉ người được phân công đúng lớp của phiếu mới được thao tác.
    */
   async reviewScores(
-    userId: string,
+    reviewer: AuthenticatedUser,
     id: string,
     dto: ReviewScoresDto,
   ): Promise<EvaluationScoreSummaryResponse> {
@@ -374,18 +971,19 @@ export class TrainingEvaluationsService {
 
     assertNotLocked(form);
     await this.assertReviewerAssigned(
-      UserRole.ClassCouncil,
-      userId,
+      reviewer.role,
+      reviewer.id,
       form.classId,
     );
 
-    if (
-      !(
-        [FormStatus.submitted, FormStatus.class_approved] as FormStatus[]
-      ).includes(form.status)
-    ) {
+    const editableStatuses: FormStatus[] =
+      reviewer.role === UserRole.ClassLeader
+        ? [FormStatus.submitted]
+        : [FormStatus.class_leader_approved];
+
+    if (!editableStatuses.includes(form.status)) {
       throw new ConflictException(
-        'Điểm thẩm định cấp lớp chỉ được cập nhật trước khi chuyển lên cấp khoa',
+        `Điểm thẩm định chỉ được cập nhật khi phiếu ở trạng thái ${editableStatuses.join(' hoặc ')}`,
       );
     }
 
@@ -450,9 +1048,21 @@ export class TrainingEvaluationsService {
         0,
       );
 
+      const confirmationResetData =
+        reviewer.role === UserRole.ClassLeader &&
+        form.status === FormStatus.submitted
+          ? {
+              classLeaderReviewedBy: null,
+              classLeaderReviewedAt: null,
+            }
+          : {
+              classReviewedBy: null,
+              classReviewedAt: null,
+            };
+
       return tx.evaluationForm.update({
         where: { id },
-        data: { classScore },
+        data: { classScore, ...confirmationResetData },
         select: evaluationScoreSummarySelect,
       });
     });
@@ -461,8 +1071,94 @@ export class TrainingEvaluationsService {
   }
 
   /**
+   * Xác nhận cột điểm đã được người duyệt hiện tại kiểm tra xong.
+   * Bước này chưa chuyển trạng thái phiếu; API batch gửi cấp tiếp theo sẽ chỉ
+   * nhận những phiếu đã có dấu xác nhận tương ứng.
+   */
+  async confirmReview(
+    reviewer: AuthenticatedUser,
+    id: string,
+    dto: ConfirmReviewDto = {},
+  ): Promise<EvaluationScoreSummaryResponse> {
+    if (dto.scores?.length) {
+      await this.reviewScores(reviewer, id, { scores: dto.scores });
+    }
+
+    const form = await this.prisma.evaluationForm.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        classId: true,
+        status: true,
+        isLocked: true,
+        classScore: true,
+      },
+    });
+
+    if (!form) {
+      throw new NotFoundException('Không tìm thấy phiếu đánh giá rèn luyện');
+    }
+
+    assertNotLocked(form);
+    await this.assertReviewerAssigned(
+      reviewer.role,
+      reviewer.id,
+      form.classId,
+    );
+
+    if (form.classScore === null) {
+      throw new ConflictException(
+        'Phiếu chưa có điểm lớp/CVHT đánh giá để xác nhận',
+      );
+    }
+
+    if (reviewer.role === UserRole.ClassLeader) {
+      if (form.status !== FormStatus.submitted) {
+        throw new ConflictException(
+          'Lớp trưởng chỉ xác nhận được phiếu trước khi gửi lên CVHT',
+        );
+      }
+
+      const confirmed = await this.prisma.evaluationForm.update({
+        where: { id },
+        data: {
+          classLeaderReviewedBy: reviewer.id,
+          classLeaderReviewedAt: new Date(),
+        },
+        select: evaluationScoreSummarySelect,
+      });
+
+      return mapToScoreSummaryResponse(confirmed);
+    }
+
+    if (reviewer.role === UserRole.Advisor) {
+      if (form.status !== FormStatus.class_leader_approved) {
+        throw new ConflictException(
+          'CVHT chỉ xác nhận được phiếu đang chờ CVHT đánh giá',
+        );
+      }
+
+      const confirmed = await this.prisma.evaluationForm.update({
+        where: { id },
+        data: {
+          rank: calculateClassification(form.classScore),
+          classReviewedBy: reviewer.id,
+          classReviewedAt: new Date(),
+        },
+        select: evaluationScoreSummarySelect,
+      });
+
+      return mapToScoreSummaryResponse(confirmed);
+    }
+
+    throw new ForbiddenException(
+      'Vai trò này không có quyền xác nhận phiếu đánh giá',
+    );
+  }
+
+  /**
    * Duyệt phiếu theo state machine đa cấp:
-   * submitted -> class_approved -> finalized.
+   * submitted -> class_leader_approved -> class_approved -> faculty_approved -> finalized.
    * REJECT ở bất kỳ cấp đang duyệt sẽ trả về rejected để sinh viên sửa lại.
    */
   async review(
@@ -495,11 +1191,27 @@ export class TrainingEvaluationsService {
     if (dto.action === 'reject') {
       const { rejected, notification } = await this.prisma.$transaction(
         async (tx) => {
+          await tx.formCriteriaScore.updateMany({
+            where: { formId: id },
+            data: {
+              classScore: null,
+              note: null,
+            },
+          });
+
           const rejected = await tx.evaluationForm.update({
             where: { id },
             data: {
               status: FormStatus.rejected,
               note: `${stage.notePrefix} ${dto.comment}`,
+              classScore: null,
+              finalScore: null,
+              classLeaderReviewedBy: null,
+              classLeaderReviewedAt: null,
+              classReviewedBy: null,
+              classReviewedAt: null,
+              adminFinalizedBy: null,
+              adminFinalizedAt: null,
             },
             select: evaluationScoreSummarySelect,
           });
@@ -531,10 +1243,13 @@ export class TrainingEvaluationsService {
       status: stage.nextApprovedStatus,
     };
 
-    if (reviewer.role === UserRole.ClassCouncil) {
+    if (reviewer.role === UserRole.ClassLeader) {
+      data.classLeaderReviewedBy = reviewer.id;
+      data.classLeaderReviewedAt = new Date();
+    } else if (reviewer.role === UserRole.Advisor) {
       if (dto.classScore === undefined) {
         throw new BadRequestException(
-          'classScore là bắt buộc khi lớp/CVHT duyệt phiếu',
+          'classScore là bắt buộc khi CVHT duyệt phiếu',
         );
       }
 
@@ -563,6 +1278,21 @@ export class TrainingEvaluationsService {
     });
 
     return mapToScoreSummaryResponse(approved);
+  }
+
+  /**
+   * Alias nghiệp vụ riêng cho CVHT trả phiếu về sinh viên kèm lý do.
+   * Dùng chung state machine reject để giữ audit, note và notification nhất quán.
+   */
+  async returnToStudent(
+    reviewer: AuthenticatedUser,
+    id: string,
+    dto: ReturnEvaluationToStudentDto,
+  ): Promise<EvaluationScoreSummaryResponse> {
+    return this.review(reviewer, id, {
+      action: 'reject',
+      comment: dto.reason,
+    });
   }
 
   /**
@@ -891,7 +1621,7 @@ export class TrainingEvaluationsService {
 
   /**
    * Query phiếu để đọc với phân quyền theo role.
-   * Student chỉ xem phiếu của mình; ClassCouncil/Admin xem phiếu theo quyền.
+   * Student chỉ xem phiếu của mình; các vai trò duyệt xem theo quyền được phân công.
    */
   private async findOwned<TSelect extends Prisma.EvaluationFormSelect, TResult>(
     userId: string,
@@ -945,8 +1675,8 @@ export class TrainingEvaluationsService {
       return;
     }
 
-    if (role === UserRole.ClassCouncil) {
-      const assignment = await this.prisma.classCouncilAssignment.findUnique({
+    if (role === UserRole.Advisor) {
+      const assignment = await this.prisma.advisorAssignment.findUnique({
         where: { userId_classId: { userId: reviewerId, classId } },
         select: { id: true },
       });
@@ -960,6 +1690,19 @@ export class TrainingEvaluationsService {
       return;
     }
 
+    if (role === UserRole.ClassLeader) {
+      const assignment = await this.prisma.classLeaderAssignment.findFirst({
+        where: { userId: reviewerId, classId },
+        select: { id: true },
+      });
+
+      if (!assignment) {
+        throw new ForbiddenException('Bạn không phải lớp trưởng của lớp này');
+      }
+
+      return;
+    }
+
     throw new ForbiddenException(
       'Vai trò này không có quyền duyệt phiếu đánh giá',
     );
@@ -968,12 +1711,27 @@ export class TrainingEvaluationsService {
   private async assertCanListEvaluations(
     user: AuthenticatedUser,
     classId: string | undefined,
-  ): Promise<void> {
+    facultyIdQuery?: string,
+  ): Promise<{ facultyId?: string }> {
     if (user.role === UserRole.Admin) {
-      return;
+      return {};
     }
 
-    if (user.role !== UserRole.ClassCouncil) {
+    if (user.role === UserRole.Faculty) {
+      const assignment = await this.prisma.facultyAssignment.findUnique({
+        where: { userId: user.id },
+        select: { facultyId: true },
+      });
+      if (!assignment) {
+        throw new ForbiddenException('Tài khoản khoa chưa được gán khoa quản lý');
+      }
+      if (facultyIdQuery && facultyIdQuery !== assignment.facultyId) {
+        throw new ForbiddenException('Bạn không có quyền xem dữ liệu của khoa khác');
+      }
+      return { facultyId: assignment.facultyId };
+    }
+
+    if (![UserRole.ClassLeader, UserRole.Advisor].includes(user.role)) {
       throw new ForbiddenException(
         'Bạn không có quyền xem danh sách phiếu này',
       );
@@ -983,10 +1741,8 @@ export class TrainingEvaluationsService {
       throw new BadRequestException('Vui lòng chọn lớp cần xem');
     }
 
-    await this.assertReviewerAssigned(
-      UserRole.ClassCouncil,
-      user.id,
-      classId,
-    );
+    await this.assertReviewerAssigned(user.role, user.id, classId);
+
+    return {};
   }
 }

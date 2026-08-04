@@ -46,7 +46,9 @@ export function emptyStatusDistribution(): StatusDistribution {
   return {
     [FormStatus.draft]: 0,
     [FormStatus.submitted]: 0,
+    [FormStatus.class_leader_approved]: 0,
     [FormStatus.class_approved]: 0,
+    [FormStatus.faculty_approved]: 0,
     [FormStatus.finalized]: 0,
     [FormStatus.rejected]: 0,
   };
@@ -105,7 +107,7 @@ export function calculateAverage(sum: number | null, count: number): number | nu
 }
 
 /**
- * Gom nhóm số liệu theo lớp lên theo khoa (Class → Major → Faculty).
+ * Gom nhóm số liệu theo lớp lên theo khoa (Class -> Major -> Faculty).
  * Tính trực tiếp từ tổng điểm + số lượng thô (không phải trung bình của trung bình
  * đã làm tròn) để đảm bảo điểm trung bình cấp khoa chính xác.
  */

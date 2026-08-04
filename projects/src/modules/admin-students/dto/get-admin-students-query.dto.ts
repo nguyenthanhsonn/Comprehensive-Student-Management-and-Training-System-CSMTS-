@@ -60,11 +60,6 @@ export class GetAdminStudentsQueryDto {
   @IsUUID()
   facultyId?: string;
 
-  @IsOptional()
-  @Transform(emptyToUndefined)
-  @IsUUID()
-  majorId?: string;
-
   /** Mặc định false - chỉ bật khi admin cần xem lại sinh viên đã xóa mềm. */
   @IsOptional()
   @Transform(toBoolean)

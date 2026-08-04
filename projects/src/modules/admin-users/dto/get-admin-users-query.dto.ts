@@ -12,7 +12,13 @@ import {
 } from 'class-validator';
 import { UserRole } from 'src/common/shared';
 
-const MANAGED_USER_ROLES = [UserRole.Admin, UserRole.ClassCouncil];
+const MANAGED_USER_ROLES = [
+  UserRole.Admin,
+  UserRole.ClassLeader,
+  UserRole.Advisor,
+  UserRole.Faculty,
+  UserRole.TrainingDepartment,
+];
 
 /** Chuyển chuỗi "true"/"false" từ query string sang boolean thật (tránh Boolean("false") = true). */
 function toBoolean({ value }: TransformFnParams): unknown {
@@ -49,7 +55,7 @@ export class GetAdminUsersQueryDto {
   @IsOptional()
   @IsEnum(UserRole)
   @IsIn(MANAGED_USER_ROLES, {
-    message: 'API /admin/users chỉ quản lý admin và class_council',
+    message: 'API /admin/users chỉ quản lý tài khoản nhân sự',
   })
   role?: UserRole;
 

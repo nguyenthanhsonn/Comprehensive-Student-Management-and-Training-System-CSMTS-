@@ -47,7 +47,7 @@ export class AdminStudentsService {
 
   /**
    * Lấy danh sách hồ sơ sinh viên có phân trang, tìm kiếm theo username/email/họ tên/
-   * số điện thoại/mã sinh viên và lọc theo lớp/ngành/khoa. Mặc định chỉ lấy sinh viên chưa xóa mềm.
+   * số điện thoại/mã sinh viên và lọc theo lớp/khoa. Mặc định chỉ lấy sinh viên chưa xóa mềm.
    */
   async findAll(
     query: GetAdminStudentsQueryDto,
@@ -57,23 +57,20 @@ export class AdminStudentsService {
     const skip = (page - 1) * limit;
     const keyword = query.keyword?.trim();
 
-    // Gộp mọi điều kiện lọc theo lớp/ngành/khoa vào 1 object duy nhất - tránh bug
+    // Gộp mọi điều kiện lọc theo lớp/khoa vào 1 object duy nhất - tránh bug
     // key "classStudents" bị ghi đè khi khai báo lặp lại nhiều lần trong cùng where.
     const classFilter: Prisma.ClassStudentWhereInput = { deletedAt: null };
     if (query.classId) {
       classFilter.classId = query.classId;
     }
-    if (query.majorId || query.facultyId) {
-      classFilter.class = {
-        ...(query.majorId && { majorId: query.majorId }),
-        ...(query.facultyId && { major: { facultyId: query.facultyId } }),
-      };
+    if (query.facultyId) {
+      classFilter.class = { major: { facultyId: query.facultyId } };
     }
 
     const where: Prisma.UserWhereInput = {
       role: UserRole.student,
       ...(query.includeDeleted ? {} : { deletedAt: null }),
-      ...((query.classId || query.majorId || query.facultyId) && {
+      ...((query.classId || query.facultyId) && {
         classStudents: { some: classFilter },
       }),
       ...(keyword
@@ -521,6 +518,17 @@ function mapToAdminStudentResponse(
     deletedAt: student.deletedAt,
     createdAt: student.createdAt,
     updatedAt: student.updatedAt,
+    studentInfo: {
+      fullName: student.fullName,
+      dateOfBirth: formatDateOnly(student.dateOfBirth),
+      majorName: currentMajor?.name ?? null,
+      phone: student.phone,
+      email: student.email,
+      studentCode: enrollment?.studentCode ?? null,
+      classCode: currentClass?.code ?? null,
+      enrollmentYear: currentClass?.enrollmentYear ?? null,
+      facultyName: currentFaculty?.name ?? null,
+    },
     studentCode: enrollment?.studentCode ?? null,
     enrolledAt: enrollment?.enrolledAt ?? null,
     class: currentClass

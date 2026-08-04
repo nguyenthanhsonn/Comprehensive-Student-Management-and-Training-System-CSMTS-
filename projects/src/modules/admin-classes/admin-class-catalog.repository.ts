@@ -156,13 +156,13 @@ export class AdminClassCatalogRepository {
     return this.prisma.class.createMany({ data });
   }
 
-  findAssignableClassCouncilUsers(
+  findAssignableClassLeaderUsers(
     userIds: string[],
   ): Promise<Array<{ id: string }>> {
     return this.prisma.user.findMany({
       where: {
         id: { in: userIds },
-        role: UserRole.ClassCouncil,
+        role: UserRole.ClassLeader,
         isActive: true,
         deletedAt: null,
       },
@@ -170,18 +170,18 @@ export class AdminClassCatalogRepository {
     });
   }
 
-  async replaceClassCouncils(
+  async replaceClassLeaders(
     classId: string,
     userIds: string[],
   ): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
-      await tx.classCouncilAssignment.deleteMany({ where: { classId } });
+      await tx.classLeaderAssignment.deleteMany({ where: { classId } });
 
       if (userIds.length === 0) {
         return;
       }
 
-      await tx.classCouncilAssignment.createMany({
+      await tx.classLeaderAssignment.createMany({
         data: userIds.map((userId) => ({ classId, userId })),
       });
     });

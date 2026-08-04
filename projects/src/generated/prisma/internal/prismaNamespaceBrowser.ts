@@ -53,11 +53,14 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   User: 'User',
   Post: 'Post',
+  PasswordResetToken: 'PasswordResetToken',
+  FacultyAssignment: 'FacultyAssignment',
   Faculty: 'Faculty',
   Major: 'Major',
   Class: 'Class',
   ClassStudent: 'ClassStudent',
-  ClassCouncilAssignment: 'ClassCouncilAssignment',
+  ClassLeaderAssignment: 'ClassLeaderAssignment',
+  AdvisorAssignment: 'AdvisorAssignment',
   Semester: 'Semester',
   EvaluationCriteria: 'EvaluationCriteria',
   EvaluationForm: 'EvaluationForm',
@@ -124,6 +127,28 @@ export const PostScalarFieldEnum = {
 export type PostScalarFieldEnum = (typeof PostScalarFieldEnum)[keyof typeof PostScalarFieldEnum]
 
 
+export const PasswordResetTokenScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  tokenHash: 'tokenHash',
+  expiresAt: 'expiresAt',
+  usedAt: 'usedAt',
+  createdAt: 'createdAt'
+} as const
+
+export type PasswordResetTokenScalarFieldEnum = (typeof PasswordResetTokenScalarFieldEnum)[keyof typeof PasswordResetTokenScalarFieldEnum]
+
+
+export const FacultyAssignmentScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  facultyId: 'facultyId',
+  assignedAt: 'assignedAt'
+} as const
+
+export type FacultyAssignmentScalarFieldEnum = (typeof FacultyAssignmentScalarFieldEnum)[keyof typeof FacultyAssignmentScalarFieldEnum]
+
+
 export const FacultyScalarFieldEnum = {
   id: 'id',
   code: 'code',
@@ -175,14 +200,24 @@ export const ClassStudentScalarFieldEnum = {
 export type ClassStudentScalarFieldEnum = (typeof ClassStudentScalarFieldEnum)[keyof typeof ClassStudentScalarFieldEnum]
 
 
-export const ClassCouncilAssignmentScalarFieldEnum = {
+export const ClassLeaderAssignmentScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
   classId: 'classId',
   assignedAt: 'assignedAt'
 } as const
 
-export type ClassCouncilAssignmentScalarFieldEnum = (typeof ClassCouncilAssignmentScalarFieldEnum)[keyof typeof ClassCouncilAssignmentScalarFieldEnum]
+export type ClassLeaderAssignmentScalarFieldEnum = (typeof ClassLeaderAssignmentScalarFieldEnum)[keyof typeof ClassLeaderAssignmentScalarFieldEnum]
+
+
+export const AdvisorAssignmentScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  classId: 'classId',
+  assignedAt: 'assignedAt'
+} as const
+
+export type AdvisorAssignmentScalarFieldEnum = (typeof AdvisorAssignmentScalarFieldEnum)[keyof typeof AdvisorAssignmentScalarFieldEnum]
 
 
 export const SemesterScalarFieldEnum = {
@@ -237,8 +272,10 @@ export const EvaluationFormScalarFieldEnum = {
   communityData: 'communityData',
   roleScore: 'roleScore',
   roleData: 'roleData',
+  classLeaderReviewedBy: 'classLeaderReviewedBy',
   classReviewedBy: 'classReviewedBy',
   adminFinalizedBy: 'adminFinalizedBy',
+  classLeaderReviewedAt: 'classLeaderReviewedAt',
   classReviewedAt: 'classReviewedAt',
   adminFinalizedAt: 'adminFinalizedAt',
   submittedAt: 'submittedAt',

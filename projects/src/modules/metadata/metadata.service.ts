@@ -2,11 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { SEMESTER_OPTIONS } from './constants/semester-options.constant';
 import { MetadataCacheHelper } from './helpers/metadata-cache.helper';
-import {
-  classMetadataSelect,
-  facultyMetadataSelect,
-  majorMetadataSelect,
-} from './selects/metadata.select';
+import { classMetadataSelect, facultyMetadataSelect, majorMetadataSelect } from './selects/metadata.select';
 import type { MetadataItem, SemesterOption } from './types/metadata.types';
 
 @Injectable()
@@ -55,14 +51,19 @@ export class MetadataService {
     );
   }
 
+
   /**
-   * Danh sách ngành đang hoạt động, sắp xếp theo tên.
-   * Có thể lọc theo `facultyId` để phục vụ combobox phân cấp Khoa → Ngành.
+   * Danh sách ngành đang hoạt động. Có thể lọc theo `facultyId` để phục vụ
+   * combobox phân cấp Khoa -> Ngành.
    */
   async getMajors(facultyId?: string): Promise<MetadataItem[]> {
     return this.cache.getOrLoad(`majors:${facultyId ?? 'all'}`, () =>
       this.prisma.major.findMany({
-        where: { isActive: true, ...(facultyId && { facultyId }) },
+        where: {
+          isActive: true,
+          deletedAt: null,
+          ...(facultyId && { facultyId }),
+        },
         select: majorMetadataSelect,
         orderBy: { name: 'asc' },
       }),
@@ -71,12 +72,12 @@ export class MetadataService {
 
   /**
    * Danh sách lớp đang hoạt động, lớp mới (khóa gần đây) hiện trước.
-   * Có thể lọc theo `majorId` để phục vụ combobox phân cấp Ngành → Lớp.
+   * Có thể lọc theo `majorId` để phục vụ combobox phân cấp Khoa -> Ngành -> Lớp.
    */
   async getClasses(majorId?: string): Promise<MetadataItem[]> {
     return this.cache.getOrLoad(`classes:${majorId ?? 'all'}`, () =>
       this.prisma.class.findMany({
-        where: { isActive: true, ...(majorId && { majorId }) },
+        where: { isActive: true, deletedAt: null, ...(majorId && { majorId }) },
         select: classMetadataSelect,
         orderBy: [{ enrollmentYear: 'desc' }, { name: 'asc' }],
       }),

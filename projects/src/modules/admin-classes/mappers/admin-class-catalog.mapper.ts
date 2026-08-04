@@ -34,7 +34,7 @@ export function mapToAdminClassDetailResponse(
 ): AdminClassDetailResponse {
   return {
     ...mapToAdminClassResponse(record),
-    councils: record.classCouncilAssignments.map((assignment) => ({
+    classLeaders: record.classLeaderAssignments.map((assignment) => ({
       id: assignment.id,
       userId: assignment.userId,
       username: assignment.user.username,

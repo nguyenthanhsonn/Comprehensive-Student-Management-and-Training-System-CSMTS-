@@ -40,7 +40,42 @@ export const profileSelect = {
       },
     },
   },
-  classCouncilAssignments: {
+  classLeaderAssignments: {
+    select: {
+      assignedAt: true,
+      class: {
+        select: {
+          id: true,
+          code: true,
+          name: true,
+          enrollmentYear: true,
+          _count: {
+            select: {
+              classStudents: true,
+            },
+          },
+          major: {
+            select: {
+              id: true,
+              code: true,
+              name: true,
+              faculty: {
+                select: {
+                  id: true,
+                  code: true,
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    orderBy: {
+      assignedAt: 'desc',
+    },
+  },
+  advisorAssignments: {
     select: {
       assignedAt: true,
       class: {

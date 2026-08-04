@@ -7,7 +7,20 @@ export function mapStudentProfile(student: StudentProfileRecord) {
   const currentMajor = currentClass?.major ?? null;
   const currentFaculty = currentMajor?.faculty ?? null;
 
+  const studentInfo = {
+    fullName: student.fullName,
+    dateOfBirth: formatDateOnly(student.dateOfBirth),
+    majorName: currentMajor?.name ?? null,
+    phone: student.phone,
+    email: student.email,
+    studentCode: currentEnrollment?.studentCode ?? null,
+    classCode: currentClass?.code ?? null,
+    enrollmentYear: currentClass?.enrollmentYear ?? null,
+    facultyName: currentFaculty?.name ?? null,
+  };
+
   return {
+    studentInfo,
     user: {
       id: student.id,
       email: student.email,

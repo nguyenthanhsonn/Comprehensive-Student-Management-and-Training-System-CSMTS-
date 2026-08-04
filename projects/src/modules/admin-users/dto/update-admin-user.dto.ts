@@ -6,6 +6,7 @@ import {
   IsIn,
   IsOptional,
   IsString,
+  IsUUID,
   Length,
   Matches,
   MaxLength,
@@ -23,7 +24,10 @@ import {
 
 const MANAGED_USER_ROLES = [
   UserRole.Admin,
-  UserRole.ClassCouncil,
+  UserRole.ClassLeader,
+  UserRole.Advisor,
+  UserRole.Faculty,
+  UserRole.TrainingDepartment,
 ];
 
 /**
@@ -71,4 +75,8 @@ export class UpdateAdminUserDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @IsUUID('4')
+  classId?: string;
 }

@@ -14,7 +14,7 @@ import { AdminClassCatalogRepository } from './admin-class-catalog.repository';
 import { CreateClassDto } from './dto/create-class.dto';
 import { GetClassesQueryDto } from './dto/get-classes-query.dto';
 import { UpdateClassDto } from './dto/update-class.dto';
-import { UpdateClassCouncilsDto } from './dto/update-class-councils.dto';
+import { UpdateClassLeadersDto } from './dto/update-class-leaders.dto';
 import {
   mapToAdminClassDetailResponse,
   mapToAdminClassResponse,
@@ -144,7 +144,7 @@ export class AdminClassCatalogService {
     return mapToAdminClassDetailResponse(classRecord);
   }
 
-  async findOneForClassCouncil(
+  async findOneForClassLeader(
     userId: string,
     id: string,
   ): Promise<AdminClassDetailResponse> {
@@ -154,9 +154,10 @@ export class AdminClassCatalogService {
       throw new NotFoundException('Không tìm thấy lớp học');
     }
 
-    const isAssigned = classRecord.classCouncilAssignments.some(
-      (assignment) => assignment.userId === userId,
-    );
+    const isAssigned = [
+      ...classRecord.classLeaderAssignments,
+      ...classRecord.advisorAssignments,
+    ].some((assignment) => assignment.userId === userId);
 
     if (!isAssigned) {
       throw new ForbiddenException('Bạn không được phân công phụ trách lớp này');
@@ -501,9 +502,9 @@ export class AdminClassCatalogService {
     }
   }
 
-  async updateCouncils(
+  async updateClassLeaders(
     id: string,
-    dto: UpdateClassCouncilsDto,
+    dto: UpdateClassLeadersDto,
   ): Promise<AdminClassDetailResponse> {
     const classRecord = await this.repository.findActiveById(id);
     if (!classRecord) {
@@ -513,16 +514,16 @@ export class AdminClassCatalogService {
     const userIds = [...new Set(dto.userIds)];
     if (userIds.length > 0) {
       const users =
-        await this.repository.findAssignableClassCouncilUsers(userIds);
+        await this.repository.findAssignableClassLeaderUsers(userIds);
       if (users.length !== userIds.length) {
         throw new BadRequestException(
-          'Có tài khoản không hợp lệ, đã bị khóa/xóa hoặc không phải vai trò cố vấn học tập',
+          'Có tài khoản không hợp lệ, đã bị khóa/xóa hoặc không phải vai trò lớp trưởng',
         );
       }
     }
 
     try {
-      await this.repository.replaceClassCouncils(id, userIds);
+      await this.repository.replaceClassLeaders(id, userIds);
       return this.findOne(id);
     } catch (error) {
       this.handleKnownClassError(error);

@@ -242,7 +242,8 @@ export type ClassWhereInput = {
   deletedAt?: Prisma.DateTimeNullableFilter<"Class"> | Date | string | null
   major?: Prisma.XOR<Prisma.MajorScalarRelationFilter, Prisma.MajorWhereInput>
   classStudents?: Prisma.ClassStudentListRelationFilter
-  classCouncilAssignments?: Prisma.ClassCouncilAssignmentListRelationFilter
+  advisorAssignments?: Prisma.AdvisorAssignmentListRelationFilter
+  classLeaderAssignments?: Prisma.ClassLeaderAssignmentListRelationFilter
   evaluationForms?: Prisma.EvaluationFormListRelationFilter
 }
 
@@ -257,7 +258,8 @@ export type ClassOrderByWithRelationInput = {
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   major?: Prisma.MajorOrderByWithRelationInput
   classStudents?: Prisma.ClassStudentOrderByRelationAggregateInput
-  classCouncilAssignments?: Prisma.ClassCouncilAssignmentOrderByRelationAggregateInput
+  advisorAssignments?: Prisma.AdvisorAssignmentOrderByRelationAggregateInput
+  classLeaderAssignments?: Prisma.ClassLeaderAssignmentOrderByRelationAggregateInput
   evaluationForms?: Prisma.EvaluationFormOrderByRelationAggregateInput
 }
 
@@ -275,7 +277,8 @@ export type ClassWhereUniqueInput = Prisma.AtLeast<{
   deletedAt?: Prisma.DateTimeNullableFilter<"Class"> | Date | string | null
   major?: Prisma.XOR<Prisma.MajorScalarRelationFilter, Prisma.MajorWhereInput>
   classStudents?: Prisma.ClassStudentListRelationFilter
-  classCouncilAssignments?: Prisma.ClassCouncilAssignmentListRelationFilter
+  advisorAssignments?: Prisma.AdvisorAssignmentListRelationFilter
+  classLeaderAssignments?: Prisma.ClassLeaderAssignmentListRelationFilter
   evaluationForms?: Prisma.EvaluationFormListRelationFilter
 }, "id" | "code">
 
@@ -319,7 +322,8 @@ export type ClassCreateInput = {
   deletedAt?: Date | string | null
   major: Prisma.MajorCreateNestedOneWithoutClassesInput
   classStudents?: Prisma.ClassStudentCreateNestedManyWithoutClassInput
-  classCouncilAssignments?: Prisma.ClassCouncilAssignmentCreateNestedManyWithoutClassInput
+  advisorAssignments?: Prisma.AdvisorAssignmentCreateNestedManyWithoutClassInput
+  classLeaderAssignments?: Prisma.ClassLeaderAssignmentCreateNestedManyWithoutClassInput
   evaluationForms?: Prisma.EvaluationFormCreateNestedManyWithoutClassInput
 }
 
@@ -333,7 +337,8 @@ export type ClassUncheckedCreateInput = {
   createdAt?: Date | string
   deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedCreateNestedManyWithoutClassInput
-  classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedCreateNestedManyWithoutClassInput
+  advisorAssignments?: Prisma.AdvisorAssignmentUncheckedCreateNestedManyWithoutClassInput
+  classLeaderAssignments?: Prisma.ClassLeaderAssignmentUncheckedCreateNestedManyWithoutClassInput
   evaluationForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutClassInput
 }
 
@@ -347,7 +352,8 @@ export type ClassUpdateInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   major?: Prisma.MajorUpdateOneRequiredWithoutClassesNestedInput
   classStudents?: Prisma.ClassStudentUpdateManyWithoutClassNestedInput
-  classCouncilAssignments?: Prisma.ClassCouncilAssignmentUpdateManyWithoutClassNestedInput
+  advisorAssignments?: Prisma.AdvisorAssignmentUpdateManyWithoutClassNestedInput
+  classLeaderAssignments?: Prisma.ClassLeaderAssignmentUpdateManyWithoutClassNestedInput
   evaluationForms?: Prisma.EvaluationFormUpdateManyWithoutClassNestedInput
 }
 
@@ -361,7 +367,8 @@ export type ClassUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedUpdateManyWithoutClassNestedInput
-  classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedUpdateManyWithoutClassNestedInput
+  advisorAssignments?: Prisma.AdvisorAssignmentUncheckedUpdateManyWithoutClassNestedInput
+  classLeaderAssignments?: Prisma.ClassLeaderAssignmentUncheckedUpdateManyWithoutClassNestedInput
   evaluationForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutClassNestedInput
 }
 
@@ -517,18 +524,32 @@ export type ClassUpdateOneRequiredWithoutClassStudentsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ClassUpdateToOneWithWhereWithoutClassStudentsInput, Prisma.ClassUpdateWithoutClassStudentsInput>, Prisma.ClassUncheckedUpdateWithoutClassStudentsInput>
 }
 
-export type ClassCreateNestedOneWithoutClassCouncilAssignmentsInput = {
-  create?: Prisma.XOR<Prisma.ClassCreateWithoutClassCouncilAssignmentsInput, Prisma.ClassUncheckedCreateWithoutClassCouncilAssignmentsInput>
-  connectOrCreate?: Prisma.ClassCreateOrConnectWithoutClassCouncilAssignmentsInput
+export type ClassCreateNestedOneWithoutClassLeaderAssignmentsInput = {
+  create?: Prisma.XOR<Prisma.ClassCreateWithoutClassLeaderAssignmentsInput, Prisma.ClassUncheckedCreateWithoutClassLeaderAssignmentsInput>
+  connectOrCreate?: Prisma.ClassCreateOrConnectWithoutClassLeaderAssignmentsInput
   connect?: Prisma.ClassWhereUniqueInput
 }
 
-export type ClassUpdateOneRequiredWithoutClassCouncilAssignmentsNestedInput = {
-  create?: Prisma.XOR<Prisma.ClassCreateWithoutClassCouncilAssignmentsInput, Prisma.ClassUncheckedCreateWithoutClassCouncilAssignmentsInput>
-  connectOrCreate?: Prisma.ClassCreateOrConnectWithoutClassCouncilAssignmentsInput
-  upsert?: Prisma.ClassUpsertWithoutClassCouncilAssignmentsInput
+export type ClassUpdateOneRequiredWithoutClassLeaderAssignmentsNestedInput = {
+  create?: Prisma.XOR<Prisma.ClassCreateWithoutClassLeaderAssignmentsInput, Prisma.ClassUncheckedCreateWithoutClassLeaderAssignmentsInput>
+  connectOrCreate?: Prisma.ClassCreateOrConnectWithoutClassLeaderAssignmentsInput
+  upsert?: Prisma.ClassUpsertWithoutClassLeaderAssignmentsInput
   connect?: Prisma.ClassWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.ClassUpdateToOneWithWhereWithoutClassCouncilAssignmentsInput, Prisma.ClassUpdateWithoutClassCouncilAssignmentsInput>, Prisma.ClassUncheckedUpdateWithoutClassCouncilAssignmentsInput>
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ClassUpdateToOneWithWhereWithoutClassLeaderAssignmentsInput, Prisma.ClassUpdateWithoutClassLeaderAssignmentsInput>, Prisma.ClassUncheckedUpdateWithoutClassLeaderAssignmentsInput>
+}
+
+export type ClassCreateNestedOneWithoutAdvisorAssignmentsInput = {
+  create?: Prisma.XOR<Prisma.ClassCreateWithoutAdvisorAssignmentsInput, Prisma.ClassUncheckedCreateWithoutAdvisorAssignmentsInput>
+  connectOrCreate?: Prisma.ClassCreateOrConnectWithoutAdvisorAssignmentsInput
+  connect?: Prisma.ClassWhereUniqueInput
+}
+
+export type ClassUpdateOneRequiredWithoutAdvisorAssignmentsNestedInput = {
+  create?: Prisma.XOR<Prisma.ClassCreateWithoutAdvisorAssignmentsInput, Prisma.ClassUncheckedCreateWithoutAdvisorAssignmentsInput>
+  connectOrCreate?: Prisma.ClassCreateOrConnectWithoutAdvisorAssignmentsInput
+  upsert?: Prisma.ClassUpsertWithoutAdvisorAssignmentsInput
+  connect?: Prisma.ClassWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ClassUpdateToOneWithWhereWithoutAdvisorAssignmentsInput, Prisma.ClassUpdateWithoutAdvisorAssignmentsInput>, Prisma.ClassUncheckedUpdateWithoutAdvisorAssignmentsInput>
 }
 
 export type ClassCreateNestedOneWithoutEvaluationFormsInput = {
@@ -554,7 +575,8 @@ export type ClassCreateWithoutMajorInput = {
   createdAt?: Date | string
   deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentCreateNestedManyWithoutClassInput
-  classCouncilAssignments?: Prisma.ClassCouncilAssignmentCreateNestedManyWithoutClassInput
+  advisorAssignments?: Prisma.AdvisorAssignmentCreateNestedManyWithoutClassInput
+  classLeaderAssignments?: Prisma.ClassLeaderAssignmentCreateNestedManyWithoutClassInput
   evaluationForms?: Prisma.EvaluationFormCreateNestedManyWithoutClassInput
 }
 
@@ -567,7 +589,8 @@ export type ClassUncheckedCreateWithoutMajorInput = {
   createdAt?: Date | string
   deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedCreateNestedManyWithoutClassInput
-  classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedCreateNestedManyWithoutClassInput
+  advisorAssignments?: Prisma.AdvisorAssignmentUncheckedCreateNestedManyWithoutClassInput
+  classLeaderAssignments?: Prisma.ClassLeaderAssignmentUncheckedCreateNestedManyWithoutClassInput
   evaluationForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutClassInput
 }
 
@@ -620,7 +643,8 @@ export type ClassCreateWithoutClassStudentsInput = {
   createdAt?: Date | string
   deletedAt?: Date | string | null
   major: Prisma.MajorCreateNestedOneWithoutClassesInput
-  classCouncilAssignments?: Prisma.ClassCouncilAssignmentCreateNestedManyWithoutClassInput
+  advisorAssignments?: Prisma.AdvisorAssignmentCreateNestedManyWithoutClassInput
+  classLeaderAssignments?: Prisma.ClassLeaderAssignmentCreateNestedManyWithoutClassInput
   evaluationForms?: Prisma.EvaluationFormCreateNestedManyWithoutClassInput
 }
 
@@ -633,7 +657,8 @@ export type ClassUncheckedCreateWithoutClassStudentsInput = {
   isActive?: boolean
   createdAt?: Date | string
   deletedAt?: Date | string | null
-  classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedCreateNestedManyWithoutClassInput
+  advisorAssignments?: Prisma.AdvisorAssignmentUncheckedCreateNestedManyWithoutClassInput
+  classLeaderAssignments?: Prisma.ClassLeaderAssignmentUncheckedCreateNestedManyWithoutClassInput
   evaluationForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutClassInput
 }
 
@@ -662,7 +687,8 @@ export type ClassUpdateWithoutClassStudentsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   major?: Prisma.MajorUpdateOneRequiredWithoutClassesNestedInput
-  classCouncilAssignments?: Prisma.ClassCouncilAssignmentUpdateManyWithoutClassNestedInput
+  advisorAssignments?: Prisma.AdvisorAssignmentUpdateManyWithoutClassNestedInput
+  classLeaderAssignments?: Prisma.ClassLeaderAssignmentUpdateManyWithoutClassNestedInput
   evaluationForms?: Prisma.EvaluationFormUpdateManyWithoutClassNestedInput
 }
 
@@ -675,11 +701,12 @@ export type ClassUncheckedUpdateWithoutClassStudentsInput = {
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedUpdateManyWithoutClassNestedInput
+  advisorAssignments?: Prisma.AdvisorAssignmentUncheckedUpdateManyWithoutClassNestedInput
+  classLeaderAssignments?: Prisma.ClassLeaderAssignmentUncheckedUpdateManyWithoutClassNestedInput
   evaluationForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutClassNestedInput
 }
 
-export type ClassCreateWithoutClassCouncilAssignmentsInput = {
+export type ClassCreateWithoutClassLeaderAssignmentsInput = {
   id?: string
   code: string
   name: string
@@ -689,10 +716,11 @@ export type ClassCreateWithoutClassCouncilAssignmentsInput = {
   deletedAt?: Date | string | null
   major: Prisma.MajorCreateNestedOneWithoutClassesInput
   classStudents?: Prisma.ClassStudentCreateNestedManyWithoutClassInput
+  advisorAssignments?: Prisma.AdvisorAssignmentCreateNestedManyWithoutClassInput
   evaluationForms?: Prisma.EvaluationFormCreateNestedManyWithoutClassInput
 }
 
-export type ClassUncheckedCreateWithoutClassCouncilAssignmentsInput = {
+export type ClassUncheckedCreateWithoutClassLeaderAssignmentsInput = {
   id?: string
   code: string
   name: string
@@ -702,26 +730,27 @@ export type ClassUncheckedCreateWithoutClassCouncilAssignmentsInput = {
   createdAt?: Date | string
   deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedCreateNestedManyWithoutClassInput
+  advisorAssignments?: Prisma.AdvisorAssignmentUncheckedCreateNestedManyWithoutClassInput
   evaluationForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutClassInput
 }
 
-export type ClassCreateOrConnectWithoutClassCouncilAssignmentsInput = {
+export type ClassCreateOrConnectWithoutClassLeaderAssignmentsInput = {
   where: Prisma.ClassWhereUniqueInput
-  create: Prisma.XOR<Prisma.ClassCreateWithoutClassCouncilAssignmentsInput, Prisma.ClassUncheckedCreateWithoutClassCouncilAssignmentsInput>
+  create: Prisma.XOR<Prisma.ClassCreateWithoutClassLeaderAssignmentsInput, Prisma.ClassUncheckedCreateWithoutClassLeaderAssignmentsInput>
 }
 
-export type ClassUpsertWithoutClassCouncilAssignmentsInput = {
-  update: Prisma.XOR<Prisma.ClassUpdateWithoutClassCouncilAssignmentsInput, Prisma.ClassUncheckedUpdateWithoutClassCouncilAssignmentsInput>
-  create: Prisma.XOR<Prisma.ClassCreateWithoutClassCouncilAssignmentsInput, Prisma.ClassUncheckedCreateWithoutClassCouncilAssignmentsInput>
+export type ClassUpsertWithoutClassLeaderAssignmentsInput = {
+  update: Prisma.XOR<Prisma.ClassUpdateWithoutClassLeaderAssignmentsInput, Prisma.ClassUncheckedUpdateWithoutClassLeaderAssignmentsInput>
+  create: Prisma.XOR<Prisma.ClassCreateWithoutClassLeaderAssignmentsInput, Prisma.ClassUncheckedCreateWithoutClassLeaderAssignmentsInput>
   where?: Prisma.ClassWhereInput
 }
 
-export type ClassUpdateToOneWithWhereWithoutClassCouncilAssignmentsInput = {
+export type ClassUpdateToOneWithWhereWithoutClassLeaderAssignmentsInput = {
   where?: Prisma.ClassWhereInput
-  data: Prisma.XOR<Prisma.ClassUpdateWithoutClassCouncilAssignmentsInput, Prisma.ClassUncheckedUpdateWithoutClassCouncilAssignmentsInput>
+  data: Prisma.XOR<Prisma.ClassUpdateWithoutClassLeaderAssignmentsInput, Prisma.ClassUncheckedUpdateWithoutClassLeaderAssignmentsInput>
 }
 
-export type ClassUpdateWithoutClassCouncilAssignmentsInput = {
+export type ClassUpdateWithoutClassLeaderAssignmentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
@@ -731,10 +760,11 @@ export type ClassUpdateWithoutClassCouncilAssignmentsInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   major?: Prisma.MajorUpdateOneRequiredWithoutClassesNestedInput
   classStudents?: Prisma.ClassStudentUpdateManyWithoutClassNestedInput
+  advisorAssignments?: Prisma.AdvisorAssignmentUpdateManyWithoutClassNestedInput
   evaluationForms?: Prisma.EvaluationFormUpdateManyWithoutClassNestedInput
 }
 
-export type ClassUncheckedUpdateWithoutClassCouncilAssignmentsInput = {
+export type ClassUncheckedUpdateWithoutClassLeaderAssignmentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
@@ -744,6 +774,79 @@ export type ClassUncheckedUpdateWithoutClassCouncilAssignmentsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedUpdateManyWithoutClassNestedInput
+  advisorAssignments?: Prisma.AdvisorAssignmentUncheckedUpdateManyWithoutClassNestedInput
+  evaluationForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutClassNestedInput
+}
+
+export type ClassCreateWithoutAdvisorAssignmentsInput = {
+  id?: string
+  code: string
+  name: string
+  enrollmentYear: number
+  isActive?: boolean
+  createdAt?: Date | string
+  deletedAt?: Date | string | null
+  major: Prisma.MajorCreateNestedOneWithoutClassesInput
+  classStudents?: Prisma.ClassStudentCreateNestedManyWithoutClassInput
+  classLeaderAssignments?: Prisma.ClassLeaderAssignmentCreateNestedManyWithoutClassInput
+  evaluationForms?: Prisma.EvaluationFormCreateNestedManyWithoutClassInput
+}
+
+export type ClassUncheckedCreateWithoutAdvisorAssignmentsInput = {
+  id?: string
+  code: string
+  name: string
+  majorId: string
+  enrollmentYear: number
+  isActive?: boolean
+  createdAt?: Date | string
+  deletedAt?: Date | string | null
+  classStudents?: Prisma.ClassStudentUncheckedCreateNestedManyWithoutClassInput
+  classLeaderAssignments?: Prisma.ClassLeaderAssignmentUncheckedCreateNestedManyWithoutClassInput
+  evaluationForms?: Prisma.EvaluationFormUncheckedCreateNestedManyWithoutClassInput
+}
+
+export type ClassCreateOrConnectWithoutAdvisorAssignmentsInput = {
+  where: Prisma.ClassWhereUniqueInput
+  create: Prisma.XOR<Prisma.ClassCreateWithoutAdvisorAssignmentsInput, Prisma.ClassUncheckedCreateWithoutAdvisorAssignmentsInput>
+}
+
+export type ClassUpsertWithoutAdvisorAssignmentsInput = {
+  update: Prisma.XOR<Prisma.ClassUpdateWithoutAdvisorAssignmentsInput, Prisma.ClassUncheckedUpdateWithoutAdvisorAssignmentsInput>
+  create: Prisma.XOR<Prisma.ClassCreateWithoutAdvisorAssignmentsInput, Prisma.ClassUncheckedCreateWithoutAdvisorAssignmentsInput>
+  where?: Prisma.ClassWhereInput
+}
+
+export type ClassUpdateToOneWithWhereWithoutAdvisorAssignmentsInput = {
+  where?: Prisma.ClassWhereInput
+  data: Prisma.XOR<Prisma.ClassUpdateWithoutAdvisorAssignmentsInput, Prisma.ClassUncheckedUpdateWithoutAdvisorAssignmentsInput>
+}
+
+export type ClassUpdateWithoutAdvisorAssignmentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  enrollmentYear?: Prisma.IntFieldUpdateOperationsInput | number
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  major?: Prisma.MajorUpdateOneRequiredWithoutClassesNestedInput
+  classStudents?: Prisma.ClassStudentUpdateManyWithoutClassNestedInput
+  classLeaderAssignments?: Prisma.ClassLeaderAssignmentUpdateManyWithoutClassNestedInput
+  evaluationForms?: Prisma.EvaluationFormUpdateManyWithoutClassNestedInput
+}
+
+export type ClassUncheckedUpdateWithoutAdvisorAssignmentsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  majorId?: Prisma.StringFieldUpdateOperationsInput | string
+  enrollmentYear?: Prisma.IntFieldUpdateOperationsInput | number
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  classStudents?: Prisma.ClassStudentUncheckedUpdateManyWithoutClassNestedInput
+  classLeaderAssignments?: Prisma.ClassLeaderAssignmentUncheckedUpdateManyWithoutClassNestedInput
   evaluationForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutClassNestedInput
 }
 
@@ -757,7 +860,8 @@ export type ClassCreateWithoutEvaluationFormsInput = {
   deletedAt?: Date | string | null
   major: Prisma.MajorCreateNestedOneWithoutClassesInput
   classStudents?: Prisma.ClassStudentCreateNestedManyWithoutClassInput
-  classCouncilAssignments?: Prisma.ClassCouncilAssignmentCreateNestedManyWithoutClassInput
+  advisorAssignments?: Prisma.AdvisorAssignmentCreateNestedManyWithoutClassInput
+  classLeaderAssignments?: Prisma.ClassLeaderAssignmentCreateNestedManyWithoutClassInput
 }
 
 export type ClassUncheckedCreateWithoutEvaluationFormsInput = {
@@ -770,7 +874,8 @@ export type ClassUncheckedCreateWithoutEvaluationFormsInput = {
   createdAt?: Date | string
   deletedAt?: Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedCreateNestedManyWithoutClassInput
-  classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedCreateNestedManyWithoutClassInput
+  advisorAssignments?: Prisma.AdvisorAssignmentUncheckedCreateNestedManyWithoutClassInput
+  classLeaderAssignments?: Prisma.ClassLeaderAssignmentUncheckedCreateNestedManyWithoutClassInput
 }
 
 export type ClassCreateOrConnectWithoutEvaluationFormsInput = {
@@ -799,7 +904,8 @@ export type ClassUpdateWithoutEvaluationFormsInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   major?: Prisma.MajorUpdateOneRequiredWithoutClassesNestedInput
   classStudents?: Prisma.ClassStudentUpdateManyWithoutClassNestedInput
-  classCouncilAssignments?: Prisma.ClassCouncilAssignmentUpdateManyWithoutClassNestedInput
+  advisorAssignments?: Prisma.AdvisorAssignmentUpdateManyWithoutClassNestedInput
+  classLeaderAssignments?: Prisma.ClassLeaderAssignmentUpdateManyWithoutClassNestedInput
 }
 
 export type ClassUncheckedUpdateWithoutEvaluationFormsInput = {
@@ -812,7 +918,8 @@ export type ClassUncheckedUpdateWithoutEvaluationFormsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedUpdateManyWithoutClassNestedInput
-  classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedUpdateManyWithoutClassNestedInput
+  advisorAssignments?: Prisma.AdvisorAssignmentUncheckedUpdateManyWithoutClassNestedInput
+  classLeaderAssignments?: Prisma.ClassLeaderAssignmentUncheckedUpdateManyWithoutClassNestedInput
 }
 
 export type ClassCreateManyMajorInput = {
@@ -834,7 +941,8 @@ export type ClassUpdateWithoutMajorInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUpdateManyWithoutClassNestedInput
-  classCouncilAssignments?: Prisma.ClassCouncilAssignmentUpdateManyWithoutClassNestedInput
+  advisorAssignments?: Prisma.AdvisorAssignmentUpdateManyWithoutClassNestedInput
+  classLeaderAssignments?: Prisma.ClassLeaderAssignmentUpdateManyWithoutClassNestedInput
   evaluationForms?: Prisma.EvaluationFormUpdateManyWithoutClassNestedInput
 }
 
@@ -847,7 +955,8 @@ export type ClassUncheckedUpdateWithoutMajorInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   classStudents?: Prisma.ClassStudentUncheckedUpdateManyWithoutClassNestedInput
-  classCouncilAssignments?: Prisma.ClassCouncilAssignmentUncheckedUpdateManyWithoutClassNestedInput
+  advisorAssignments?: Prisma.AdvisorAssignmentUncheckedUpdateManyWithoutClassNestedInput
+  classLeaderAssignments?: Prisma.ClassLeaderAssignmentUncheckedUpdateManyWithoutClassNestedInput
   evaluationForms?: Prisma.EvaluationFormUncheckedUpdateManyWithoutClassNestedInput
 }
 
@@ -868,13 +977,15 @@ export type ClassUncheckedUpdateManyWithoutMajorInput = {
 
 export type ClassCountOutputType = {
   classStudents: number
-  classCouncilAssignments: number
+  advisorAssignments: number
+  classLeaderAssignments: number
   evaluationForms: number
 }
 
 export type ClassCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   classStudents?: boolean | ClassCountOutputTypeCountClassStudentsArgs
-  classCouncilAssignments?: boolean | ClassCountOutputTypeCountClassCouncilAssignmentsArgs
+  advisorAssignments?: boolean | ClassCountOutputTypeCountAdvisorAssignmentsArgs
+  classLeaderAssignments?: boolean | ClassCountOutputTypeCountClassLeaderAssignmentsArgs
   evaluationForms?: boolean | ClassCountOutputTypeCountEvaluationFormsArgs
 }
 
@@ -898,8 +1009,15 @@ export type ClassCountOutputTypeCountClassStudentsArgs<ExtArgs extends runtime.T
 /**
  * ClassCountOutputType without action
  */
-export type ClassCountOutputTypeCountClassCouncilAssignmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.ClassCouncilAssignmentWhereInput
+export type ClassCountOutputTypeCountAdvisorAssignmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AdvisorAssignmentWhereInput
+}
+
+/**
+ * ClassCountOutputType without action
+ */
+export type ClassCountOutputTypeCountClassLeaderAssignmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ClassLeaderAssignmentWhereInput
 }
 
 /**
@@ -921,7 +1039,8 @@ export type ClassSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   deletedAt?: boolean
   major?: boolean | Prisma.MajorDefaultArgs<ExtArgs>
   classStudents?: boolean | Prisma.Class$classStudentsArgs<ExtArgs>
-  classCouncilAssignments?: boolean | Prisma.Class$classCouncilAssignmentsArgs<ExtArgs>
+  advisorAssignments?: boolean | Prisma.Class$advisorAssignmentsArgs<ExtArgs>
+  classLeaderAssignments?: boolean | Prisma.Class$classLeaderAssignmentsArgs<ExtArgs>
   evaluationForms?: boolean | Prisma.Class$evaluationFormsArgs<ExtArgs>
   _count?: boolean | Prisma.ClassCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["class"]>
@@ -965,7 +1084,8 @@ export type ClassOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = ru
 export type ClassInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   major?: boolean | Prisma.MajorDefaultArgs<ExtArgs>
   classStudents?: boolean | Prisma.Class$classStudentsArgs<ExtArgs>
-  classCouncilAssignments?: boolean | Prisma.Class$classCouncilAssignmentsArgs<ExtArgs>
+  advisorAssignments?: boolean | Prisma.Class$advisorAssignmentsArgs<ExtArgs>
+  classLeaderAssignments?: boolean | Prisma.Class$classLeaderAssignmentsArgs<ExtArgs>
   evaluationForms?: boolean | Prisma.Class$evaluationFormsArgs<ExtArgs>
   _count?: boolean | Prisma.ClassCountOutputTypeDefaultArgs<ExtArgs>
 }
@@ -981,7 +1101,8 @@ export type $ClassPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   objects: {
     major: Prisma.$MajorPayload<ExtArgs>
     classStudents: Prisma.$ClassStudentPayload<ExtArgs>[]
-    classCouncilAssignments: Prisma.$ClassCouncilAssignmentPayload<ExtArgs>[]
+    advisorAssignments: Prisma.$AdvisorAssignmentPayload<ExtArgs>[]
+    classLeaderAssignments: Prisma.$ClassLeaderAssignmentPayload<ExtArgs>[]
     evaluationForms: Prisma.$EvaluationFormPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -1389,7 +1510,8 @@ export interface Prisma__ClassClient<T, Null = never, ExtArgs extends runtime.Ty
   readonly [Symbol.toStringTag]: "PrismaPromise"
   major<T extends Prisma.MajorDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MajorDefaultArgs<ExtArgs>>): Prisma.Prisma__MajorClient<runtime.Types.Result.GetResult<Prisma.$MajorPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   classStudents<T extends Prisma.Class$classStudentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Class$classStudentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ClassStudentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  classCouncilAssignments<T extends Prisma.Class$classCouncilAssignmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Class$classCouncilAssignmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ClassCouncilAssignmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  advisorAssignments<T extends Prisma.Class$advisorAssignmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Class$advisorAssignmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AdvisorAssignmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  classLeaderAssignments<T extends Prisma.Class$classLeaderAssignmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Class$classLeaderAssignmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ClassLeaderAssignmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   evaluationForms<T extends Prisma.Class$evaluationFormsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Class$evaluationFormsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EvaluationFormPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1862,27 +1984,51 @@ export type Class$classStudentsArgs<ExtArgs extends runtime.Types.Extensions.Int
 }
 
 /**
- * Class.classCouncilAssignments
+ * Class.advisorAssignments
  */
-export type Class$classCouncilAssignmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type Class$advisorAssignmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
-   * Select specific fields to fetch from the ClassCouncilAssignment
+   * Select specific fields to fetch from the AdvisorAssignment
    */
-  select?: Prisma.ClassCouncilAssignmentSelect<ExtArgs> | null
+  select?: Prisma.AdvisorAssignmentSelect<ExtArgs> | null
   /**
-   * Omit specific fields from the ClassCouncilAssignment
+   * Omit specific fields from the AdvisorAssignment
    */
-  omit?: Prisma.ClassCouncilAssignmentOmit<ExtArgs> | null
+  omit?: Prisma.AdvisorAssignmentOmit<ExtArgs> | null
   /**
    * Choose, which related nodes to fetch as well
    */
-  include?: Prisma.ClassCouncilAssignmentInclude<ExtArgs> | null
-  where?: Prisma.ClassCouncilAssignmentWhereInput
-  orderBy?: Prisma.ClassCouncilAssignmentOrderByWithRelationInput | Prisma.ClassCouncilAssignmentOrderByWithRelationInput[]
-  cursor?: Prisma.ClassCouncilAssignmentWhereUniqueInput
+  include?: Prisma.AdvisorAssignmentInclude<ExtArgs> | null
+  where?: Prisma.AdvisorAssignmentWhereInput
+  orderBy?: Prisma.AdvisorAssignmentOrderByWithRelationInput | Prisma.AdvisorAssignmentOrderByWithRelationInput[]
+  cursor?: Prisma.AdvisorAssignmentWhereUniqueInput
   take?: number
   skip?: number
-  distinct?: Prisma.ClassCouncilAssignmentScalarFieldEnum | Prisma.ClassCouncilAssignmentScalarFieldEnum[]
+  distinct?: Prisma.AdvisorAssignmentScalarFieldEnum | Prisma.AdvisorAssignmentScalarFieldEnum[]
+}
+
+/**
+ * Class.classLeaderAssignments
+ */
+export type Class$classLeaderAssignmentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ClassLeaderAssignment
+   */
+  select?: Prisma.ClassLeaderAssignmentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ClassLeaderAssignment
+   */
+  omit?: Prisma.ClassLeaderAssignmentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ClassLeaderAssignmentInclude<ExtArgs> | null
+  where?: Prisma.ClassLeaderAssignmentWhereInput
+  orderBy?: Prisma.ClassLeaderAssignmentOrderByWithRelationInput | Prisma.ClassLeaderAssignmentOrderByWithRelationInput[]
+  cursor?: Prisma.ClassLeaderAssignmentWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ClassLeaderAssignmentScalarFieldEnum | Prisma.ClassLeaderAssignmentScalarFieldEnum[]
 }
 
 /**

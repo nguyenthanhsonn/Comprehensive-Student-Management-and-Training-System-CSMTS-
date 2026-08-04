@@ -27,6 +27,7 @@ export const adminStudentSelect = {
           id: true,
           code: true,
           name: true,
+          enrollmentYear: true,
           major: {
             select: {
               id: true,

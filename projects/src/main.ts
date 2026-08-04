@@ -45,6 +45,43 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalInterceptors(new ResponseInterceptor());
 
+  const swaggerEnabled = process.env.SWAGGER_ENABLED !== 'false';
+  if (swaggerEnabled) {
+    if (debugStartup) console.time('setup-swagger');
+    const { DocumentBuilder, SwaggerModule } = await import('@nestjs/swagger');
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('CSMTS API')
+      .setDescription(
+        'Comprehensive Student Management and Training System API documentation',
+      )
+      .setVersion('1.0.0')
+      .addBearerAuth(
+        {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          description: 'Nhập accessToken nhận được từ POST /api/v1/auth/login',
+        },
+        'access-token',
+      )
+      .build();
+
+    const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig, {
+      ignoreGlobalPrefix: false,
+    });
+
+    SwaggerModule.setup('api/docs', app, swaggerDocument, {
+      jsonDocumentUrl: 'api/docs-json',
+      swaggerOptions: {
+        persistAuthorization: true,
+        tagsSorter: 'alpha',
+        operationsSorter: 'alpha',
+      },
+      customSiteTitle: 'CSMTS API Docs',
+    });
+    if (debugStartup) console.timeEnd('setup-swagger');
+  }
+
   const port = Number(configService.get('app.port') ?? 5050);
 
   console.log('Đang chạy backend...');
@@ -52,8 +89,27 @@ async function bootstrap() {
 
   await app.listen(port, '0.0.0.0');
 
+  const { networkInterfaces } = await import('node:os');
+  const zerotierIp = Object.values(networkInterfaces())
+    .flat()
+    .find((networkInterface) => {
+      return (
+        networkInterface?.family === 'IPv4' &&
+        !networkInterface.internal &&
+        networkInterface.address.startsWith('10.36.120.')
+      );
+    })?.address;
+
   console.log(`Backend local: http://localhost:${port}/api/v1`);
-  console.log(`Backend ZeroTier: http://10.36.120.48:${port}`);
+  if (zerotierIp) {
+    console.log(`Backend ZeroTier: http://${zerotierIp}:${port}/api/v1`);
+  }
+  if (swaggerEnabled) {
+    console.log(`Swagger docs: http://localhost:${port}/api/docs`);
+    if (zerotierIp) {
+      console.log(`Swagger ZeroTier docs: http://${zerotierIp}:${port}/api/docs`);
+    }
+  }
   if (debugStartup) console.timeEnd('startup');
 }
 

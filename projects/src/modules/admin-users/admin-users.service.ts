@@ -33,7 +33,10 @@ import type { AdminUserResponse } from './types/admin-user.types';
 
 const MANAGED_PRISMA_USER_ROLES = [
   PrismaUserRole.admin,
-  PrismaUserRole.class_council,
+  PrismaUserRole.class_leader,
+  PrismaUserRole.advisor,
+  PrismaUserRole.faculty,
+  PrismaUserRole.training_department,
 ];
 
 @Injectable()
@@ -119,17 +122,33 @@ export class AdminUsersService {
     const passwordHash = await bcrypt.hash(dto.password, PASSWORD_SALT_ROUNDS);
 
     try {
-      const user = await this.prisma.user.create({
-        data: {
-          username: dto.username,
-          email: normalizeEmail(dto.email),
-          fullName: dto.fullName.trim(),
-          passwordHash,
-          role: toPrismaManagedUserRole(dto.role),
-          phone: dto.phone,
-          dateOfBirth: parseOptionalDateOnly(dto.dateOfBirth),
-        },
-        select: adminUserSelect,
+      const user = await this.prisma.$transaction(async (tx) => {
+        if (dto.classId) {
+          await assertClassExists(tx, dto.classId);
+        }
+
+        const created = await tx.user.create({
+          data: {
+            username: dto.username,
+            email: normalizeEmail(dto.email),
+            fullName: dto.fullName.trim(),
+            passwordHash,
+            role: toPrismaManagedUserRole(dto.role),
+            phone: dto.phone,
+            dateOfBirth: parseOptionalDateOnly(dto.dateOfBirth),
+          },
+          select: adminUserSelect,
+        });
+
+        if (dto.classId) {
+          await replaceManagedClassAssignment(tx, created.id, dto.role, dto.classId);
+          return tx.user.findUniqueOrThrow({
+            where: { id: created.id },
+            select: adminUserSelect,
+          });
+        }
+
+        return created;
       });
 
       const response = mapToAdminUserResponse(user);
@@ -179,22 +198,46 @@ export class AdminUsersService {
         : {};
 
     try {
-      const user = await this.prisma.user.update({
-        where: { id },
-        data: {
-          ...(dto.fullName !== undefined && { fullName: dto.fullName.trim() }),
-          ...(dto.username !== undefined && { username: dto.username }),
-          ...(dto.email !== undefined && { email: normalizeEmail(dto.email) }),
-          ...(dto.phone !== undefined && { phone: dto.phone }),
-          ...(dto.dateOfBirth !== undefined && {
-            dateOfBirth: parseOptionalDateOnly(dto.dateOfBirth),
-          }),
-          ...(dto.role !== undefined && {
-            role: toPrismaManagedUserRole(dto.role),
-          }),
-          ...activeStateData,
-        },
-        select: adminUserSelect,
+      const user = await this.prisma.$transaction(async (tx) => {
+        if (dto.classId) {
+          await assertClassExists(tx, dto.classId);
+        }
+
+        const updated = await tx.user.update({
+          where: { id },
+          data: {
+            ...(dto.fullName !== undefined && { fullName: dto.fullName.trim() }),
+            ...(dto.username !== undefined && { username: dto.username }),
+            ...(dto.email !== undefined && { email: normalizeEmail(dto.email) }),
+            ...(dto.phone !== undefined && { phone: dto.phone }),
+            ...(dto.dateOfBirth !== undefined && {
+              dateOfBirth: parseOptionalDateOnly(dto.dateOfBirth),
+            }),
+            ...(dto.role !== undefined && {
+              role: toPrismaManagedUserRole(dto.role),
+            }),
+            ...activeStateData,
+          },
+          select: adminUserSelect,
+        });
+
+        if (dto.role !== undefined && !isClassManagedRole(dto.role)) {
+          await clearManagedClassAssignments(tx, id);
+        }
+
+        if (dto.classId) {
+          await replaceManagedClassAssignment(
+            tx,
+            id,
+            dto.role ?? (updated.role as SharedUserRole),
+            dto.classId,
+          );
+        }
+
+        return tx.user.findUniqueOrThrow({
+          where: { id },
+          select: adminUserSelect,
+        });
       });
 
       if (dto.isActive === false) {
@@ -277,7 +320,7 @@ export class AdminUsersService {
     }
   }
 
-  /** Đảm bảo tài khoản admin/class_council tồn tại và chưa bị xóa mềm trước khi cho phép chỉnh sửa thông tin. */
+  /** Đảm bảo tài khoản nhân sự được quản lý tồn tại và chưa bị xóa mềm trước khi cho phép chỉnh sửa thông tin. */
   private async assertManagedActiveExists(id: string): Promise<void> {
     const user = await this.prisma.user.findFirst({
       where: {
@@ -328,7 +371,7 @@ export class AdminUsersService {
   private async sendCreatedManagedUserEmail(
     dto: CreateAdminUserDto,
   ): Promise<{ sent: boolean; error: string | null }> {
-    if (dto.role !== SharedUserRole.ClassCouncil) {
+    if (![SharedUserRole.ClassLeader, SharedUserRole.Advisor].includes(dto.role)) {
       return { sent: false, error: null };
     }
 
@@ -346,7 +389,8 @@ export class AdminUsersService {
         fullName: dto.fullName.trim(),
         username: dto.username,
         password: dto.password,
-        roleLabel: 'Lớp/CVHT',
+        roleLabel:
+          dto.role === SharedUserRole.ClassLeader ? 'Lớp trưởng' : 'CVHT',
       });
 
       return { sent: true, error: null };
@@ -354,7 +398,7 @@ export class AdminUsersService {
       const message =
         error instanceof Error ? error.message : 'Gửi email tài khoản thất bại';
       this.logger.error(
-        `Gửi email tài khoản class_council thất bại: ${message}`,
+        `Gửi email tài khoản ${dto.role} thất bại: ${message}`,
       );
 
       return {
@@ -396,21 +440,99 @@ function normalizeEmail(email: string): string {
   return email.toLowerCase().trim();
 }
 
+type ManagedClassAssignmentTx = Pick<
+  Prisma.TransactionClient,
+  'class' | 'classLeaderAssignment' | 'advisorAssignment'
+>;
+
+async function assertClassExists(
+  tx: ManagedClassAssignmentTx,
+  classId: string,
+): Promise<void> {
+  const classRecord = await tx.class.findFirst({
+    where: { id: classId, deletedAt: null },
+    select: { id: true },
+  });
+
+  if (!classRecord) {
+    throw new NotFoundException('Không tìm thấy lớp phụ trách');
+  }
+}
+
+function isClassManagedRole(role: SharedUserRole): boolean {
+  return role === SharedUserRole.ClassLeader || role === SharedUserRole.Advisor;
+}
+
+async function clearManagedClassAssignments(
+  tx: ManagedClassAssignmentTx,
+  userId: string,
+): Promise<void> {
+  await Promise.all([
+    tx.classLeaderAssignment.deleteMany({ where: { userId } }),
+    tx.advisorAssignment.deleteMany({ where: { userId } }),
+  ]);
+}
+
+async function replaceManagedClassAssignment(
+  tx: ManagedClassAssignmentTx,
+  userId: string,
+  role: SharedUserRole,
+  classId: string,
+): Promise<void> {
+  if (!isClassManagedRole(role)) {
+    throw new BadRequestException(
+      'Chỉ lớp trưởng hoặc CVHT mới được gán lớp phụ trách',
+    );
+  }
+
+  await clearManagedClassAssignments(tx, userId);
+
+  if (role === SharedUserRole.ClassLeader) {
+    await tx.classLeaderAssignment.create({
+      data: { userId, classId },
+      select: { id: true },
+    });
+    return;
+  }
+
+  await tx.advisorAssignment.create({
+    data: { userId, classId },
+    select: { id: true },
+  });
+}
+
 function toPrismaManagedUserRole(role: SharedUserRole): PrismaUserRole {
   if (role === SharedUserRole.Admin) {
     return PrismaUserRole.admin;
   }
 
-  if (role === SharedUserRole.ClassCouncil) {
-    return PrismaUserRole.class_council;
+  if (role === SharedUserRole.ClassLeader) {
+    return PrismaUserRole.class_leader;
+  }
+
+  if (role === SharedUserRole.Advisor) {
+    return PrismaUserRole.advisor;
+  }
+
+  if (role === SharedUserRole.Faculty) {
+    return PrismaUserRole.faculty;
+  }
+
+  if (role === SharedUserRole.TrainingDepartment) {
+    return PrismaUserRole.training_department;
   }
 
   throw new BadRequestException(
-    'API /admin/users chỉ quản lý admin và class_council',
+    'API /admin/users chỉ quản lý tài khoản nhân sự',
   );
 }
 
 function mapToAdminUserResponse(user: AdminUserRecord): AdminUserResponse {
+  const classAssignments =
+    user.role === PrismaUserRole.advisor
+      ? user.advisorAssignments
+      : user.classLeaderAssignments;
+
   return {
     id: user.id,
     username: user.username,
@@ -424,11 +546,19 @@ function mapToAdminUserResponse(user: AdminUserRecord): AdminUserResponse {
     deletedAt: user.deletedAt,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
-    managedClasses: user.classCouncilAssignments.map((assignment) => ({
+    managedClasses: classAssignments.map((assignment) => ({
       id: assignment.class.id,
       code: assignment.class.code,
       name: assignment.class.name,
       assignedAt: assignment.assignedAt,
     })),
+    managedFaculty: user.facultyAssignment
+      ? {
+          id: user.facultyAssignment.faculty.id,
+          code: user.facultyAssignment.faculty.code,
+          name: user.facultyAssignment.faculty.name,
+          assignedAt: user.facultyAssignment.assignedAt,
+        }
+      : null,
   };
 }
