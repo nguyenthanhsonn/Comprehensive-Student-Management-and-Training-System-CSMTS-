@@ -106,7 +106,9 @@ export class StudentAccountMailService {
       from,
       fromName: process.env.SMTP_FROM_NAME ?? 'CSMTS',
       portalUrl:
-        process.env.STUDENT_PORTAL_URL ?? process.env.FRONTEND_URL ?? '',
+        process.env.STUDENT_PORTAL_URL ??
+        process.env.FRONTEND_URL ??
+        DEFAULT_LOGIN_URL,
     };
   }
 
@@ -323,10 +325,20 @@ function buildMimeMessage(config: SmtpConfig, message: MailMessage) {
   return `${headers.join('\r\n')}\r\n\r\n${dotStuff(body.join('\r\n'))}\r\n.\r\n`;
 }
 
+const DEFAULT_LOGIN_URL = 'https://apagdanhgiarenluyen.vercel.app/login';
+
+function getLoginUrl(portalUrl?: string): string {
+  if (!portalUrl) return DEFAULT_LOGIN_URL;
+  const trimmed = portalUrl.trim();
+  if (trimmed.endsWith('/login')) return trimmed;
+  return `${trimmed.replace(/\/+$/, '')}/login`;
+}
+
 function buildAccountText(
   payload: StudentAccountMailPayload,
   portalUrl: string,
 ) {
+  const loginUrl = getLoginUrl(portalUrl);
   return [
     `Xin chào ${payload.fullName},`,
     '',
@@ -334,7 +346,7 @@ function buildAccountText(
     `- Mã sinh viên: ${payload.studentCode}`,
     `- Tên đăng nhập: ${payload.username}`,
     `- Mật khẩu: ${payload.password}`,
-    portalUrl ? `- Địa chỉ đăng nhập: ${portalUrl}` : '',
+    `- Địa chỉ đăng nhập: ${loginUrl}`,
     '',
     'Lưu ý:',
     '- Không chia sẻ tài khoản này cho bất kỳ ai.',
@@ -348,14 +360,12 @@ function buildAccountHtml(
   payload: StudentAccountMailPayload,
   portalUrl: string,
 ) {
-  const loginLine = portalUrl
-    ? `<li style="margin: 6px 0;">Địa chỉ đăng nhập: <a href="${escapeHtml(
-        portalUrl,
-      )}" style="color: #2563eb; text-decoration: underline;">${escapeHtml(
-        portalUrl,
-      )}</a></li>`
-    : '';
-  const portalLabel = portalUrl ? 'cổng hệ thống' : 'hệ thống';
+  const loginUrl = getLoginUrl(portalUrl);
+  const loginLine = `<li style="margin: 6px 0;">Địa chỉ đăng nhập: <a href="${escapeHtml(
+    loginUrl,
+  )}" style="color: #b9101a; font-weight: 700; text-decoration: underline;">${escapeHtml(
+    loginUrl,
+  )}</a></li>`;
 
   return `
     <div style="margin: 0; padding: 0; background: #ffffff; font-family: Arial, Helvetica, sans-serif; color: #252525;">
@@ -373,16 +383,16 @@ function buildAccountHtml(
               payload.fullName,
             )}</strong>,</p>
 
-            <p style="margin: 0 0 14px 0; color: #4f7faa; font-size: 20px; line-height: 1.45; font-weight: 700;">
+            <p style="margin: 0 0 14px 0; color: #b9101a; font-size: 20px; line-height: 1.45; font-weight: 700;">
               CHÚC MỪNG bạn đã được tạo tài khoản sinh viên trên hệ thống quản lý sinh viên và đánh giá rèn luyện.
             </p>
 
             <p style="margin: 0 0 26px 0;">
-              Thông tin tài khoản của bạn được gửi bên dưới, vui lòng đăng nhập vào
-              <span style="background: #ffe69a; padding: 0 4px; font-weight: 700;">${escapeHtml(
-                portalLabel,
-              )}</span>
-              và trải nghiệm.
+              Thông tin tài khoản của bạn được gửi bên dưới, vui lòng truy cập
+              <a href="${escapeHtml(
+                loginUrl,
+              )}" style="background: #ffe69a; color: #b9101a; padding: 2px 6px; font-weight: 700; text-decoration: underline;">Trang đăng nhập hệ thống</a>
+              để thực hiện đánh giá.
             </p>
 
             <p style="margin: 0 0 10px 0; font-size: 17px;"><strong>Thông tin sinh viên của bạn:</strong></p>
@@ -404,10 +414,10 @@ function buildAccountHtml(
                 payload.password,
               )}</strong></li>
               ${loginLine}
-              <li style="margin: 6px 0;"><em>Lưu ý:</em></li>
             </ul>
 
-            <ul style="margin: 0 0 0 72px; padding: 0;">
+            <p style="margin: 20px 0 10px 0; font-size: 16px;"><strong>Lưu ý:</strong></p>
+            <ul style="margin: 0 0 0 28px; padding: 0;">
               <li style="margin: 6px 0;">Không chia sẻ tài khoản này cho bất kỳ ai.</li>
               <li style="margin: 6px 0;">Sau khi đăng nhập thành công, bạn nên đổi mật khẩu ngay.</li>
               <li style="margin: 6px 0;">Nếu quên mật khẩu, vui lòng liên hệ quản trị viên để được hỗ trợ.</li>
@@ -423,6 +433,7 @@ function buildStaffAccountText(
   payload: StaffAccountMailPayload,
   portalUrl: string,
 ) {
+  const loginUrl = getLoginUrl(portalUrl);
   return [
     `Xin chào ${payload.fullName},`,
     '',
@@ -430,7 +441,7 @@ function buildStaffAccountText(
     `- Vai trò: ${payload.roleLabel}`,
     `- Tên đăng nhập: ${payload.username}`,
     `- Mật khẩu: ${payload.password}`,
-    portalUrl ? `- Địa chỉ đăng nhập: ${portalUrl}` : '',
+    `- Địa chỉ đăng nhập: ${loginUrl}`,
     '',
     'Lưu ý:',
     '- Không chia sẻ tài khoản này cho bất kỳ ai.',
@@ -444,28 +455,66 @@ function buildStaffAccountHtml(
   payload: StaffAccountMailPayload,
   portalUrl: string,
 ) {
-  const loginLine = portalUrl
-    ? `<li>Địa chỉ đăng nhập: <a href="${escapeHtml(portalUrl)}">${escapeHtml(
-        portalUrl,
-      )}</a></li>`
-    : '';
+  const loginUrl = getLoginUrl(portalUrl);
+  const loginLine = `<li style="margin: 6px 0;">Địa chỉ đăng nhập: <a href="${escapeHtml(
+    loginUrl,
+  )}" style="color: #b9101a; font-weight: 700; text-decoration: underline;">${escapeHtml(
+    loginUrl,
+  )}</a></li>`;
 
   return `
-    <div style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.6;">
-      <p><strong>Thông tin tài khoản hệ thống CSMTS của bạn:</strong></p>
-      <ul>
-        <li>Vai trò: ${escapeHtml(payload.roleLabel)}</li>
-        <li>Họ và tên: ${escapeHtml(payload.fullName)}</li>
-        <li>Tên đăng nhập: <strong>${escapeHtml(payload.username)}</strong></li>
-        <li>Mật khẩu: <strong>${escapeHtml(payload.password)}</strong></li>
-        ${loginLine}
-      </ul>
-      <p><strong>Lưu ý:</strong></p>
-      <ul>
-        <li>Không chia sẻ tài khoản này cho bất kỳ ai.</li>
-        <li>Sau khi đăng nhập thành công, bạn nên đổi mật khẩu ngay.</li>
-        <li>Nếu quên mật khẩu, vui lòng liên hệ quản trị viên để được hỗ trợ.</li>
-      </ul>
+    <div style="margin: 0; padding: 0; background: #ffffff; font-family: Arial, Helvetica, sans-serif; color: #252525;">
+      <table role="presentation" cellpadding="0" cellspacing="0" style="width: 100%; max-width: 760px; margin: 0 auto; border: 18px solid #b9101a; border-collapse: collapse; background: #ffffff;">
+        <tr>
+          <td style="padding: 0;">
+            <div style="height: 118px; background: #ffffff; position: relative; overflow: hidden;">
+              <div style="height: 86px; border-bottom: 10px solid #b9101a; transform: skewY(-4deg); transform-origin: left bottom; box-shadow: 0 4px 8px rgba(0,0,0,0.2);"></div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td style="background: #eef3f1; padding: 28px 34px 34px 34px; font-size: 16px; line-height: 1.65;">
+            <p style="margin: 0 0 12px 0;">Chào <strong>${escapeHtml(
+              payload.fullName,
+            )}</strong>,</p>
+
+            <p style="margin: 0 0 14px 0; color: #b9101a; font-size: 20px; line-height: 1.45; font-weight: 700;">
+              THÔNG TIN TÀI KHOẢN HỆ THỐNG CSMTS (${escapeHtml(
+                payload.roleLabel,
+              ).toUpperCase()})
+            </p>
+
+            <p style="margin: 0 0 26px 0;">
+              Tài khoản làm việc của bạn đã được khởi tạo. Vui lòng truy cập
+              <a href="${escapeHtml(
+                loginUrl,
+              )}" style="background: #ffe69a; color: #b9101a; padding: 2px 6px; font-weight: 700; text-decoration: underline;">Trang đăng nhập hệ thống</a>
+              để bắt đầu làm việc.
+            </p>
+
+            <p style="margin: 0 0 10px 0; font-size: 17px;"><strong>Thông tin tài khoản của bạn:</strong></p>
+            <ul style="margin: 0 0 18px 28px; padding: 0;">
+              <li style="margin: 6px 0;">Vai trò: <strong>${escapeHtml(
+                payload.roleLabel,
+              )}</strong></li>
+              <li style="margin: 6px 0;">Tên đăng nhập: <strong>${escapeHtml(
+                payload.username,
+              )}</strong></li>
+              <li style="margin: 6px 0;">Mật khẩu: <strong>${escapeHtml(
+                payload.password,
+              )}</strong></li>
+              ${loginLine}
+            </ul>
+
+            <p style="margin: 20px 0 10px 0; font-size: 16px;"><strong>Lưu ý:</strong></p>
+            <ul style="margin: 0 0 0 28px; padding: 0;">
+              <li style="margin: 6px 0;">Không chia sẻ tài khoản này cho bất kỳ ai.</li>
+              <li style="margin: 6px 0;">Sau khi đăng nhập thành công, bạn nên đổi mật khẩu ngay.</li>
+              <li style="margin: 6px 0;">Nếu gặp sự cố, vui lòng liên hệ quản trị viên để được hỗ trợ.</li>
+            </ul>
+          </td>
+        </tr>
+      </table>
     </div>
   `;
 }
@@ -490,17 +539,26 @@ function buildPasswordResetHtml(payload: PasswordResetMailPayload) {
   const resetAction = payload.resetUrl
     ? `<p style="margin: 22px 0;"><a href="${escapeHtml(
         payload.resetUrl,
-      )}" style="display: inline-block; background: #b9101a; color: #ffffff; padding: 12px 18px; border-radius: 6px; text-decoration: none; font-weight: 700;">Đặt lại mật khẩu</a></p>
+      )}" style="display: inline-block; background: #b9101a; color: #ffffff; padding: 12px 20px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 16px;">Tạo mật khẩu mới</a></p>
          <p style="margin: 0 0 18px 0; color: #4b5563; word-break: break-all;">Hoặc copy đường dẫn: <a href="${escapeHtml(
            payload.resetUrl,
-         )}" style="color: #2563eb;">${escapeHtml(payload.resetUrl)}</a></p>`
+         )}" style="color: #b9101a; font-weight: 700;">${escapeHtml(
+           payload.resetUrl,
+         )}</a></p>`
     : '<p style="margin: 22px 0; color: #b9101a; font-weight: 700;">Không tạo được đường dẫn đặt lại mật khẩu. Vui lòng liên hệ quản trị viên.</p>';
 
   return `
-    <div style="margin: 0; padding: 24px 0; background: #f3f4f6; font-family: Arial, Helvetica, sans-serif; color: #1f2937;">
-      <table role="presentation" cellpadding="0" cellspacing="0" style="width: 100%; max-width: 680px; margin: 0 auto; border-collapse: collapse; background: #ffffff; border: 1px solid #e5e7eb;">
+    <div style="margin: 0; padding: 0; background: #ffffff; font-family: Arial, Helvetica, sans-serif; color: #252525;">
+      <table role="presentation" cellpadding="0" cellspacing="0" style="width: 100%; max-width: 760px; margin: 0 auto; border: 18px solid #b9101a; border-collapse: collapse; background: #ffffff;">
         <tr>
-          <td style="padding: 30px 34px; font-size: 16px; line-height: 1.65;">
+          <td style="padding: 0;">
+            <div style="height: 118px; background: #ffffff; position: relative; overflow: hidden;">
+              <div style="height: 86px; border-bottom: 10px solid #b9101a; transform: skewY(-4deg); transform-origin: left bottom; box-shadow: 0 4px 8px rgba(0,0,0,0.2);"></div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td style="background: #eef3f1; padding: 28px 34px 34px 34px; font-size: 16px; line-height: 1.65;">
             <p style="margin: 0 0 12px 0;">Xin chào <strong>${escapeHtml(
               payload.fullName,
             )}</strong>,</p>
@@ -508,11 +566,13 @@ function buildPasswordResetHtml(payload: PasswordResetMailPayload) {
               Yêu cầu đặt lại mật khẩu tài khoản CSMTS
             </p>
             <p style="margin: 0 0 12px 0;">
-              Hệ thống nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn. Vui lòng sử dụng nút bên dưới để tạo mật khẩu mới.
+              Hệ thống nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn. Vui lòng nhấn vào nút bên dưới để tạo mật khẩu mới.
             </p>
             ${resetAction}
             <p style="margin: 0 0 12px 0;">
-              Đường dẫn này chỉ có hiệu lực trong <strong>${payload.expiresInMinutes} phút</strong> và chỉ sử dụng được một lần.
+              Đường dẫn này chỉ có hiệu lực trong <strong>${
+                payload.expiresInMinutes
+              } phút</strong> và chỉ sử dụng được một lần.
             </p>
             <p style="margin: 0; color: #6b7280;">
               Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.

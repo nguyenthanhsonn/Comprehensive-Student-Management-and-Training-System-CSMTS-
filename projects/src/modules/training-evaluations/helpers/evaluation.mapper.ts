@@ -132,9 +132,14 @@ export function mapToAdminListItem(
 
   return {
     id: evaluation.id,
-    status: submissionStatus,
-    statusLabel: toSubmissionStatusLabel(submissionStatus),
+    status: evaluation.status,
+    workflowStatus: evaluation.status,
+    submissionStatus,
+    statusLabel: toStatusLabel(evaluation.status),
+    submissionStatusLabel: toSubmissionStatusLabel(submissionStatus),
     submittedAt: evaluation.submittedAt,
+    classLeaderReviewedAt: evaluation.classLeaderReviewedAt ?? null,
+    classReviewedAt: evaluation.classReviewedAt ?? null,
     student: evaluation.student,
     class: {
       id: evaluation.class.id,
@@ -158,9 +163,14 @@ export function mapToAdminApprovalListItem(
 
   return {
     id: evaluation.id,
-    status: submissionStatus,
-    statusLabel: toSubmissionStatusLabel(submissionStatus),
+    status: evaluation.status,
+    workflowStatus: evaluation.status,
+    submissionStatus,
+    statusLabel: toStatusLabel(evaluation.status),
+    submissionStatusLabel: toSubmissionStatusLabel(submissionStatus),
     submittedAt: evaluation.submittedAt,
+    classLeaderReviewedAt: evaluation.classLeaderReviewedAt ?? null,
+    classReviewedAt: evaluation.classReviewedAt ?? null,
     student: evaluation.student,
     class: {
       id: evaluation.class.id,

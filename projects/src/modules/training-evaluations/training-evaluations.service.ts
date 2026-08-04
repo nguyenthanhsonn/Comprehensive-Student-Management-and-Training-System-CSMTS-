@@ -1410,8 +1410,7 @@ export class TrainingEvaluationsService {
 
   /**
    * Cập nhật điểm Mục II – Ý thức chấp hành kỷ luật.
-   * Điểm được FE nhập trực tiếp trong khoảng 0–25.
-   * Danh sách vi phạm chỉ còn là dữ liệu mô tả kèm theo, không tự động trừ điểm.
+   * Điểm lưu vào phiếu = điểm nền trừ tổng điểm vi phạm, tối thiểu 0.
    */
   async updateDisciplineScore(
     userId: string,
@@ -1432,7 +1431,12 @@ export class TrainingEvaluationsService {
       count: v.count,
       deductScore: v.deductScore,
     }));
-    const score = dto.baseScore;
+    const deductedScore = violations.reduce(
+      (total, violation) =>
+        total + violation.count * violation.deductScore,
+      0,
+    );
+    const score = Math.max(0, dto.baseScore - deductedScore);
 
     const { totalScore, rank } = calculateScoreResult({
       studyScore: current.studyScore,
