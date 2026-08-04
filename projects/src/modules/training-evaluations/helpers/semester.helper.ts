@@ -36,6 +36,21 @@ export function toSemesterNo(semester: TrainingEvaluationSemester): SemesterNo {
   return map[semester];
 }
 
+type SemesterCacheEntry = {
+  id: string;
+  expiresAt: number;
+};
+
+const semesterIdCache = new Map<string, SemesterCacheEntry>();
+const SEMESTER_CACHE_TTL_MS = 10 * 60 * 1000; // 10 phút
+
+/**
+ * Xóa cache học kỳ khi Admin cập nhật hoặc đổi trạng thái học kỳ.
+ */
+export function clearSemesterCache(): void {
+  semesterIdCache.clear();
+}
+
 /**
  * Quy đổi cặp (học kỳ, năm học) từ query string sang semesterId thực tế trong DB.
  * Hai tham số bắt buộc phải đi cùng nhau — thiếu 1 trong 2 sẽ báo lỗi 400.
@@ -61,6 +76,13 @@ export async function resolveSemesterId(
   }
 
   const year = parseAcademicYearStart(academicYear);
+  const cacheKey = `${year}:${semester}`;
+  const cached = semesterIdCache.get(cacheKey);
+
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.id;
+  }
+
   const semesterRecord = await prisma.semester.findUnique({
     where: { year_semester: { year, semester: toSemesterNo(semester) } },
     select: { id: true },
@@ -71,6 +93,11 @@ export async function resolveSemesterId(
       'Không tìm thấy thông tin học kỳ cho năm học được yêu cầu',
     );
   }
+
+  semesterIdCache.set(cacheKey, {
+    id: semesterRecord.id,
+    expiresAt: Date.now() + SEMESTER_CACHE_TTL_MS,
+  });
 
   return semesterRecord.id;
 }
